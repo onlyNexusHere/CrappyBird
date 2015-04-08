@@ -1,0 +1,87 @@
+-- Merging decision tree log ---
+manifest
+ADDED from AndroidManifest.xml:2:1
+	package
+		ADDED from AndroidManifest.xml:3:1
+		INJECTED from AndroidManifest.xml:0:0
+		INJECTED from AndroidManifest.xml:0:0
+	android:versionName
+		ADDED from AndroidManifest.xml:5:1
+		INJECTED from AndroidManifest.xml:0:0
+		INJECTED from AndroidManifest.xml:0:0
+	android:versionCode
+		ADDED from AndroidManifest.xml:4:1
+		INJECTED from AndroidManifest.xml:0:0
+		INJECTED from AndroidManifest.xml:0:0
+	xmlns:android
+		ADDED from AndroidManifest.xml:2:11
+uses-sdk
+ADDED from AndroidManifest.xml:7:1
+MERGED from com.android.support:appcompat-v7:21.0.3:15:5
+MERGED from com.android.support:support-v4:21.0.3:15:5
+MERGED from CrappyBird:andengine:unspecified:7:5
+MERGED from com.android.support:appcompat-v7:21.0.3:15:5
+MERGED from com.android.support:support-v4:21.0.3:15:5
+	android:targetSdkVersion
+		ADDED from AndroidManifest.xml:9:5
+		INJECTED from AndroidManifest.xml:0:0
+		INJECTED from AndroidManifest.xml:0:0
+	android:minSdkVersion
+		ADDED from AndroidManifest.xml:8:5
+		INJECTED from AndroidManifest.xml:0:0
+		INJECTED from AndroidManifest.xml:0:0
+uses-feature#0x00020000
+ADDED from AndroidManifest.xml:11:1
+	android:glEsVersion
+		ADDED from AndroidManifest.xml:11:15
+	android:required
+		ADDED from AndroidManifest.xml:11:48
+uses-feature#android.hardware.touchscreen
+ADDED from AndroidManifest.xml:12:1
+	android:required
+		ADDED from AndroidManifest.xml:12:59
+	android:name
+		ADDED from AndroidManifest.xml:12:15
+uses-permission#android.permission.WAKE_LOCK
+ADDED from AndroidManifest.xml:14:1
+	android:name
+		ADDED from AndroidManifest.xml:14:18
+uses-permission#android.permission.INTERNET
+ADDED from AndroidManifest.xml:15:1
+	android:name
+		ADDED from AndroidManifest.xml:15:18
+application
+ADDED from AndroidManifest.xml:17:1
+MERGED from com.android.support:appcompat-v7:21.0.3:16:5
+MERGED from com.android.support:support-v4:21.0.3:16:5
+MERGED from CrappyBird:andengine:unspecified:11:5
+MERGED from com.android.support:appcompat-v7:21.0.3:16:5
+MERGED from com.android.support:support-v4:21.0.3:16:5
+	android:label
+		ADDED from AndroidManifest.xml:20:5
+	android:debuggable
+		ADDED from CrappyBird:andengine:unspecified:11:18
+	android:allowBackup
+		ADDED from AndroidManifest.xml:18:5
+	android:icon
+		ADDED from AndroidManifest.xml:19:5
+	android:theme
+		ADDED from AndroidManifest.xml:21:5
+activity#com.application.nick.crappybird.GameActivity
+ADDED from AndroidManifest.xml:22:5
+	android:label
+		ADDED from AndroidManifest.xml:24:9
+	android:configChanges
+		ADDED from AndroidManifest.xml:25:9
+	android:name
+		ADDED from AndroidManifest.xml:23:9
+intent-filter#android.intent.action.MAIN+android.intent.category.LAUNCHER
+ADDED from AndroidManifest.xml:26:9
+action#android.intent.action.MAIN
+ADDED from AndroidManifest.xml:27:13
+	android:name
+		ADDED from AndroidManifest.xml:27:21
+category#android.intent.category.LAUNCHER
+ADDED from AndroidManifest.xml:28:13
+	android:name
+		ADDED from AndroidManifest.xml:28:23
