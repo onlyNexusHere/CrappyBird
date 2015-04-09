@@ -7,6 +7,7 @@ import org.andengine.engine.handler.timer.ITimerCallback;
 import org.andengine.engine.handler.timer.TimerHandler;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
+import org.andengine.engine.options.resolutionpolicy.CroppedResolutionPolicy;
 import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
 import org.andengine.entity.scene.Scene;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
@@ -15,7 +16,7 @@ import org.andengine.ui.activity.SimpleBaseGameActivity;
 public class GameActivity extends SimpleBaseGameActivity {
 
     public static final int CAMERA_WIDTH = 320;
-    public static final int CAMERA_HEIGHT = 480;
+    public static final int CAMERA_HEIGHT = 533;
 
     private Camera mCamera;
     private ResourceManager mResourceManager;
@@ -25,7 +26,7 @@ public class GameActivity extends SimpleBaseGameActivity {
     public EngineOptions onCreateEngineOptions() {
         mCamera = new Camera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
 
-        final EngineOptions engineOptions = new EngineOptions(true, ScreenOrientation.PORTRAIT_FIXED, new RatioResolutionPolicy(CAMERA_WIDTH, CAMERA_HEIGHT), mCamera);
+        final EngineOptions engineOptions = new EngineOptions(true, ScreenOrientation.PORTRAIT_FIXED, new CroppedResolutionPolicy(CAMERA_WIDTH, CAMERA_HEIGHT), mCamera);
         engineOptions.getAudioOptions().setNeedsSound(true).setNeedsMusic(true);
         return engineOptions;
     }

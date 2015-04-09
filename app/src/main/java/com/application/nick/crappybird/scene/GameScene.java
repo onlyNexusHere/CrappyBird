@@ -3,6 +3,8 @@ package com.application.nick.crappybird.scene;
 import android.hardware.SensorManager;
 
 import com.application.nick.crappybird.SceneManager;
+import com.application.nick.crappybird.entity.Crap;
+import com.application.nick.crappybird.entity.CrapPool;
 import com.application.nick.crappybird.entity.Pipe;
 import com.application.nick.crappybird.entity.PipePool;
 import com.badlogic.gdx.math.Vector2;
@@ -37,6 +39,9 @@ import org.andengine.input.touch.TouchEvent;
 import org.andengine.util.HorizontalAlign;
 import org.andengine.util.color.Color;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by Nick on 4/5/2015.
  */
@@ -52,6 +57,9 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
     private Pipe mPipe;
     private PipePool mPipePool;
+
+    private CrapPool mCrapPool;
+    private List<Crap> mCraps = new ArrayList<Crap>();
 
     private boolean mGameOver;
     private float mPipeWidth;
@@ -100,6 +108,9 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         mPipePool.batchAllocatePoolItems(10);
         mPipe = mPipePool.obtainPoolItem();
 
+        mCrapPool = new CrapPool(mResourceManager.mCrapTextureRegion, mVertexBufferObjectManager, birdX);
+        mCrapPool.batchAllocatePoolItems(15);
+
         attachChild(ground);
         attachChild(roof);
         attachChild(mPipe);
@@ -136,6 +147,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                     mGameOver = true;
                     mResourceManager.mSound.play();
                     mBird.stopAnimation(0);
+                    stopCrap();
                     mPipe.die();
                     mAutoParallaxBackground.setParallaxChangePerSecond(0);
                     return;
@@ -164,25 +176,31 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                     Vector2Pool.recycle(newVelocity);
                 }
 
+                if(mCraps.size() > 0) {
+                    flushCrap();
+                }
+
+
                 mPhysicsWorld.onUpdate(pSecondsElapsed);
 
             }
         });
 
-        final float labelX = (SCREEN_WIDTH - mResourceManager.mStateTextureRegion.getWidth()) / 2;
+
+        final float labelX = (SCREEN_WIDTH - mResourceManager.mResumedTextureRegion.getWidth()) / 2;
         final float labelY = 100;
 
-
-
         //create CameraScene for get ready
-        final float readyX = (SCREEN_WIDTH - mResourceManager.mResumedTextureRegion.getWidth()) / 2;
-        final float readyY = labelY;
+        final float readyX = (SCREEN_WIDTH - mResourceManager.mStateTextureRegion.getWidth()) / 2;
+        final float readyY = labelY - mResourceManager.mStateTextureRegion.getHeight();
 
         mGameReadyScene = new CameraScene(mCamera);
-        final TiledSprite label2Sprite = new TiledSprite(labelX, labelY, mResourceManager.mStateTextureRegion, mVertexBufferObjectManager);
+        //"Get Ready" picture
+        final TiledSprite label2Sprite = new TiledSprite(readyX, readyY, mResourceManager.mStateTextureRegion, mVertexBufferObjectManager);
         label2Sprite.setCurrentTileIndex(0);
         mGameReadyScene.attachChild(label2Sprite);
-        final Sprite resumedSprite = new Sprite(readyX, readyY, mResourceManager.mResumedTextureRegion, mVertexBufferObjectManager);
+        //how to picture
+        final Sprite resumedSprite = new Sprite(labelX, labelY, mResourceManager.mResumedTextureRegion, mVertexBufferObjectManager);
         mGameReadyScene.attachChild(resumedSprite);
 
         mGameReadyScene.setBackgroundEnabled(false);
@@ -224,7 +242,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
         mGameOverScene = new CameraScene(mCamera);
 
-        final TiledSprite labelSprite = new TiledSprite(labelX, labelY, mResourceManager.mStateTextureRegion, mVertexBufferObjectManager);
+        final TiledSprite labelSprite = new TiledSprite(readyX, readyY, mResourceManager.mStateTextureRegion, mVertexBufferObjectManager);
         labelSprite.setCurrentTileIndex(1);
         mGameOverScene.attachChild(labelSprite);
 
@@ -282,6 +300,47 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         mCamera.setHUD(gameHUD);
     }
 
+    /**
+     * Check if crap has left screen. If so, recycle
+     */
+    private void flushCrap() {
+            if(mCraps.size() < 15) {
+                for(int i = 0; i < mCraps.size(); i++) {
+                    if(mCraps.get(i).getX() < -mResourceManager.mCrapTextureRegion.getWidth()) {
+                        detachChild(mCraps.get(i));
+                        mCrapPool.recyclePoolItem(mCraps.get(i));
+                    }
+                }
+            } else {
+                for(int i = mCraps.size() - 15; i < mCraps.size(); i++) {
+                    if(mCraps.get(i).getX() < -mResourceManager.mCrapTextureRegion.getWidth()) {
+                        detachChild(mCraps.get(i));
+                        mCrapPool.recyclePoolItem(mCraps.get(i));
+                    }
+                }
+            }
+
+
+    }
+
+    /**
+     * Stops crap when gameover
+     */
+    private void stopCrap() {
+        if(mCraps.size() > 0) {
+            if(mCraps.size() < 15) {
+                for(int i = 0; i < mCraps.size(); i++) {
+                    mCraps.get(i).setXVelocity(0);
+                }
+            } else {
+                for(int i = mCraps.size() - 15; i < mCraps.size(); i++) {
+                    mCraps.get(i).setXVelocity(0);
+                }
+            }
+
+        }
+    }
+
     @Override
     public boolean onSceneTouchEvent(Scene pScene, TouchEvent pSceneTouchEvent) {
         if(mPhysicsWorld != null) {
@@ -334,18 +393,29 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
             }
         }; */
 
-        final TiledSprite crap = new TiledSprite(currentXPosition, currentYPosition, mResourceManager.mCrapTextureRegion, mVertexBufferObjectManager);
-        crap.setCurrentTileIndex(0);
 
-        crap.setCullingEnabled(true);
-        attachChild(crap);
+        mCraps.add(mCrapPool.obtainPoolItem());
+        int crapIndex = mCrapPool.getCrapIndex();
+
+        Crap crap = mCraps.get(crapIndex);
+
+        crap.setY(currentYPosition + (mBird.getHeight()));
+
+        TiledSprite crapSprite = crap.getCrapSprite();
+
+        crapSprite.setCullingEnabled(true);
+        attachChild(crapSprite);
 
         final FixtureDef crapFixtureDef = PhysicsFactory.createFixtureDef(1, 0, 0);
-        final Body crapBody = PhysicsFactory.createCircleBody(mPhysicsWorld, crap, BodyDef.BodyType.DynamicBody, crapFixtureDef);
-        crapBody.setUserData("crap");
-        crap.setUserData(crapBody);
 
-        mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(crap, crapBody, true, false));
+        final Body crapBody = PhysicsFactory.createCircleBody(mPhysicsWorld, crapSprite, BodyDef.BodyType.DynamicBody, crapFixtureDef);
+        crapBody.setUserData("crap" + crapIndex);
+        crapSprite.setUserData(crapBody);
+
+        crapBody.setLinearVelocity(-1, 5); //initial gas propulsion and drag
+
+
+        mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(crapSprite, crapBody, true, false));
 
     }
 
@@ -380,7 +450,20 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                     mostText.setText(String.valueOf(most));
                     medalSprite.setCurrentTileIndex(score>100 ? 3 : (score>50 ? 2 : (score>10 ? 1 : 0)));
                     setChildScene(mGameOverScene, false, true, true);
-                } else if (("crap".equals(userDataA) && "ground".equals(userDataB)) || ("ground".equals(userDataA) && "crap".equals(userDataB))) {
+                } else if (("crap".equals(userDataA.substring(0,4)) && "ground".equals(userDataB)) || ("ground".equals(userDataA) && "crap".equals(userDataB.substring(0,4)))) {
+                    Crap crap;
+                    if(userDataA.substring(0,4).equals("crap")) {
+                        //get crapIndex from userData
+                        crap = mCraps.get(Integer.parseInt(userDataA.substring(4)));
+                    } else {
+                        crap = mCraps.get(Integer.parseInt(userDataB.substring(4)));
+                    }
+
+                    crap.hitsGround();
+
+                    if(!mGameOver) {
+                        crap.setLinearVelocity(-5,0);
+                    }
 
                 }
             }
