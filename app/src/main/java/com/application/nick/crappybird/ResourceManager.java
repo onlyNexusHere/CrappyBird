@@ -42,9 +42,20 @@ public class ResourceManager {
     private BitmapTextureAtlas mBitmapTextureAtlas2;
     public TiledTextureRegion mCrapTextureRegion;
 
+    private BitmapTextureAtlas mBitmapTextureAtlas3;
+    private BitmapTextureAtlas mBitmapTextureAtlas4;
+    private BitmapTextureAtlas mBitmapTextureAtlas5;
+    private BitmapTextureAtlas mBitmapTextureAtlas6;
+    private BitmapTextureAtlas mBitmapTextureAtlas7;
+
+    public TiledTextureRegion mObstacleHouseTextureRegion;
+    public TiledTextureRegion mObstacleTreesTextureRegion;
+    public TiledTextureRegion mObstaclePlanesTextureRegion;
+
     private BitmapTextureAtlas mSubBitmapTextureAtlas;
     public TiledTextureRegion mStateTextureRegion;
     public ITextureRegion mPausedTextureRegion;
+    public ITextureRegion mMeterTextureRegion;
     public ITextureRegion mResumedTextureRegion;
     public TiledTextureRegion mButtonTextureRegion;
     public TiledTextureRegion mMedalTextureRegion;
@@ -94,14 +105,30 @@ public class ResourceManager {
         mParallaxLayerBack = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mAutoParallaxBackgroundTexture, mActivity, "Flappy_Background2.png", 0, 150);
         mAutoParallaxBackgroundTexture.load();
 
-        mBitmapTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 128, 512, TextureOptions.BILINEAR);
-        mBirdTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "Flappy_Birdies.png", 0, 0, 1, 3);
-        mPipeTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "Flappy_Pipe.png", 0, 125, 2, 1);
+        mBitmapTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 120, 24, TextureOptions.BILINEAR);
+        mBirdTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "birds.png", 0, 0, 3, 1);
+        //mPipeTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "Flappy_Pipe.png", 0, 125, 2, 1);
         mBitmapTextureAtlas.load();
 
         mBitmapTextureAtlas2 = new BitmapTextureAtlas(mActivity.getTextureManager(), 128, 512, TextureOptions.BILINEAR);
         mCrapTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas2, mActivity, "Flappy_Crappies2.png", 0, 0, 1, 3);
         mBitmapTextureAtlas2.load();
+
+        mBitmapTextureAtlas3 = new BitmapTextureAtlas(mActivity.getTextureManager(), 320, 20, TextureOptions.BILINEAR);
+        mMeterTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mBitmapTextureAtlas3, mActivity, "Crap_Supply_Meter.png", 0, 0);
+        mBitmapTextureAtlas3.load();
+
+        mBitmapTextureAtlas4 = new BitmapTextureAtlas(mActivity.getTextureManager(), 97, 97, TextureOptions.BILINEAR);
+        mObstacleHouseTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas4, mActivity, "house.png", 0, 0, 1, 1);
+        mBitmapTextureAtlas4.load();
+
+        mBitmapTextureAtlas5 = new BitmapTextureAtlas(mActivity.getTextureManager(), 97, 97, TextureOptions.BILINEAR);
+        mObstacleTreesTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas5, mActivity, "two-trees.png", 0, 0, 2, 1);
+        mBitmapTextureAtlas5.load();
+
+        mBitmapTextureAtlas6 = new BitmapTextureAtlas(mActivity.getTextureManager(), 383, 49, TextureOptions.BILINEAR);
+        mObstaclePlanesTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas6, mActivity, "planes.png", 0, 0, 4, 1);
+        mBitmapTextureAtlas6.load();
 
         mSubBitmapTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 512, 512, TextureOptions.BILINEAR);
         mStateTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mSubBitmapTextureAtlas, mActivity, "ready_over.png", 0, 0, 2, 1);
@@ -151,6 +178,11 @@ public class ResourceManager {
         mAutoParallaxBackgroundTexture.unload();
         mBitmapTextureAtlas.unload();
         mBitmapTextureAtlas2.unload();
+        mBitmapTextureAtlas3.unload();
+        mBitmapTextureAtlas4.unload();
+        mBitmapTextureAtlas5.unload();
+        mBitmapTextureAtlas6.unload();
+        mBitmapTextureAtlas7.unload();
         mSubBitmapTextureAtlas.unload();
 
         mAutoParallaxBackgroundTexture = null;
@@ -162,8 +194,13 @@ public class ResourceManager {
         mCrapTextureRegion = null;
         mPipeTextureRegion = null;
 
+        mObstacleHouseTextureRegion = null;
+        mObstaclePlanesTextureRegion = null;
+        mObstacleTreesTextureRegion = null;
+
         mSubBitmapTextureAtlas = null;
         mStateTextureRegion = null;
+        mMeterTextureRegion = null;
         mPausedTextureRegion = null;
         mResumedTextureRegion = null;
         mButtonTextureRegion = null;
