@@ -38,6 +38,8 @@ public class MainMenuScene extends BaseScene implements MenuScene.IOnMenuItemCli
         AutoParallaxBackground autoParallaxBackground = new AutoParallaxBackground(0, 0, 0, 10);
         autoParallaxBackground.attachParallaxEntity(new ParallaxBackground.ParallaxEntity(-5.0f, new Sprite(0, SCREEN_HEIGHT - mResourceManager.mParallaxLayerBack.getHeight(), mResourceManager.mParallaxLayerBack, mVertexBufferObjectManager)));
         autoParallaxBackground.attachParallaxEntity(new ParallaxBackground.ParallaxEntity(-10.0f, new Sprite(0, SCREEN_HEIGHT - mResourceManager.mParallaxLayerFront.getHeight(), mResourceManager.mParallaxLayerFront, mVertexBufferObjectManager)));
+        autoParallaxBackground.attachParallaxEntity(new ParallaxBackground.ParallaxEntity(-10.0f, new Sprite(0, SCREEN_HEIGHT - mResourceManager.mParallaxLayerFront.getHeight() - mResourceManager.mParallaxLayerMiddle.getHeight(), mResourceManager.mParallaxLayerMiddle, mVertexBufferObjectManager)));
+
         setBackground(autoParallaxBackground);
 
         Text nameText = new Text(0, 0, mResourceManager.mFont2, "Crappy Bird", new TextOptions(HorizontalAlign.LEFT), mVertexBufferObjectManager);

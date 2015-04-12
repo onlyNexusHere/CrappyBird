@@ -4,6 +4,8 @@ import android.hardware.SensorManager;
 import android.util.Log;
 
 import com.application.nick.crappybird.SceneManager;
+import com.application.nick.crappybird.entity.Collectable;
+import com.application.nick.crappybird.entity.CollectablePool;
 import com.application.nick.crappybird.entity.Crap;
 import com.application.nick.crappybird.entity.CrapPool;
 import com.application.nick.crappybird.entity.Obstacle;
@@ -62,6 +64,9 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
     private List<Obstacle> mObstacles;
     private ObstaclePool mObstaclePool;
 
+    private List<Collectable> mCollectables;
+    private CollectablePool mCollectablePool;
+
     private CrapPool mCrapPool;
     private List<Crap> mCraps = new ArrayList<Crap>();
 
@@ -76,6 +81,10 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
     private Text mostText;
     private TiledSprite medalSprite;
 
+    private float MAX_CRAP_METER_SIZE;
+
+    private final int MAX_OBSTACLES = 5;
+
     @Override
     public void createScene() {
         mEngine.registerUpdateHandler(new FPSLogger());
@@ -85,6 +94,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         mAutoParallaxBackground = new AutoParallaxBackground(0, 0, 0, 10);
         mAutoParallaxBackground.attachParallaxEntity(new ParallaxBackground.ParallaxEntity(-5.0f, new Sprite(0, SCREEN_HEIGHT - mResourceManager.mParallaxLayerBack.getHeight(), mResourceManager.mParallaxLayerBack, mVertexBufferObjectManager)));
         mAutoParallaxBackground.attachParallaxEntity(new ParallaxBackground.ParallaxEntity(-10.0f, new Sprite(0, SCREEN_HEIGHT - mResourceManager.mParallaxLayerFront.getHeight(), mResourceManager.mParallaxLayerFront, mVertexBufferObjectManager)));
+        mAutoParallaxBackground.attachParallaxEntity(new ParallaxBackground.ParallaxEntity(-10.0f, new Sprite(0, SCREEN_HEIGHT - mResourceManager.mParallaxLayerFront.getHeight() - mResourceManager.mParallaxLayerMiddle.getHeight(), mResourceManager.mParallaxLayerMiddle, mVertexBufferObjectManager)));
         setBackground(mAutoParallaxBackground);
 
         //create entities
@@ -112,12 +122,19 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         mObstacles = new ArrayList<Obstacle>();
         mObstacles.add(mObstaclePool.obtainPoolItem());
 
+        mCollectablePool = new CollectablePool(mResourceManager, mVertexBufferObjectManager, ground.getY());
+        mCollectablePool.batchAllocatePoolItems(5);
+
+        mCollectables = new ArrayList<Collectable>();
+        mCollectables.add(mCollectablePool.obtainPoolItem());
+
         mCrapPool = new CrapPool(mResourceManager.mCrapTextureRegion, mVertexBufferObjectManager);
         mCrapPool.batchAllocatePoolItems(15);
 
         attachChild(ground);
         attachChild(roof);
         attachChild(mObstacles.get(mObstacles.size() - 1));
+        attachChild(mCollectables.get(mCollectables.size() - 1));
 
         mPhysicsWorld = new PhysicsWorld(new Vector2(0, SensorManager.GRAVITY_EARTH * 1.5f), false);
         mPhysicsWorld.setContactListener(createContactListener());
@@ -148,13 +165,26 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
                 checkForObstacleLeavingScreen();
 
-                addNewObstacle(score * 10); //add a new obstacle if the earliest added obstacle on the screen passes x
+                checkForCollectableBirdContact();
 
-                //Update Score (Take into account multiple obstacles on screen)
+                checkForCollectableLeavingScreen();
+
+                addNewCollectable(0); //add a new collectable if the earliest added obstacle on the screen passes x
+
                 int scoreDifference = mObstaclePool.getObstacleIndex() - score;
+
+                if(scoreDifference <= MAX_OBSTACLES) { //max obstacles on the screen (that haven't been passed) can't be more than x
+                    if (score < 40) {
+                        addNewObstacle(score * 5); //add a new obstacle if the earliest added obstacle on the screen passes x
+                    } else {
+                        addNewObstacle(200);
+                    }
+                }
+                //Update Score (Take into account multiple obstacles on screen)
                 int nextObstacleIndex = mObstacles.size() - scoreDifference;
-                if (scoreDifference != 0 && mBird.getX() > (mObstacles.get(nextObstacleIndex).getX()+ mObstacles.get(nextObstacleIndex).getWidth())) {
-                    score = mObstaclePool.getObstacleIndex();
+                if (scoreDifference != 0 && !mObstacles.get(nextObstacleIndex).getScoreAdded() && mBird.getX() > (mObstacles.get(nextObstacleIndex).getX()+ mObstacles.get(nextObstacleIndex).getWidth())) {
+                    mObstacles.get(nextObstacleIndex).setScoreAdded();
+                    score++;
                     mHudText.setText(String.valueOf(score));
                 }
 
@@ -301,8 +331,10 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         mCrapMeter = new Sprite((SCREEN_WIDTH - mResourceManager.mMeterTextureRegion.getWidth()) / 2, mResourceManager.mMeterTextureRegion.getHeight(), mResourceManager.mMeterTextureRegion, mVertexBufferObjectManager);
         mCrapMeter.setScale(0.75f);
         mCrapMeter.setX((SCREEN_WIDTH - mCrapMeter.getWidth()) / 2);
+        MAX_CRAP_METER_SIZE = mCrapMeter.getWidth();
         mCrapMeter.setVisible(false);
         gameHUD.attachChild(mCrapMeter);
+
         mCamera.setHUD(gameHUD);
     }
 
@@ -319,21 +351,60 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         }
     }
 
+    private void checkForCollectableLeavingScreen() {
+        for(int i = mCollectables.size() - 1; i >= 0; i--) {
+            Collectable collectable = mCollectables.get(i);
+            if (!collectable.hasParent()) {
+                break;
+            } else if (collectable.getX() <  -collectable.getWidth()) {
+                detachChild(collectable);
+                mCollectablePool.recyclePoolItem(collectable);
+                mCollectablePool.shufflePoolItems();
+            }
+        }
+}
+
     /**
      * adds a new obstacle when the earliest added obstacle still on the screen reaches a certain x value
      * @param x the x value to check
      */
     private void addNewObstacle(float x) {
-        for(int i = mObstacles.size() - 1; i >= 0; i--) {
-            Obstacle obstacle = mObstacles.get(i);
-            if(!obstacle.hasParent()) {
-                break;
-            } else {
-                if (obstacle.getX() < x && !obstacle.getPassedAddXValue()) {
-                    obstacle.passedAddXValue();
-                    mObstacles.add(mObstaclePool.obtainPoolItem());
-                    attachChild(mObstacles.get(mObstacles.size() - 1));
-                    sortChildren();
+        if(!mGameOver) {
+            for (int i = mObstacles.size() - 1; i >= 0; i--) {
+                Obstacle obstacle = mObstacles.get(i);
+                if (!obstacle.hasParent()) {
+                    break;
+                } else {
+                    if (obstacle.getX() < x && !obstacle.getPassedAddXValue()) {
+                        obstacle.passedAddXValue();
+                        mObstacles.add(mObstaclePool.obtainPoolItem());
+                        Obstacle newObstacle = mObstacles.get(mObstacles.size() - 1);
+                        newObstacle.setX(SCREEN_WIDTH);
+                        attachChild(newObstacle);
+                        sortChildren();
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * adds a new collectable when the earliest added collectable still on the screen reaches a certain x value
+     * @param x the x value to check
+     */
+    private void addNewCollectable(float x) {
+        if(!mGameOver) {
+            for(int i = mCollectables.size() - 1; i >= 0; i--) {
+                Collectable collectable = mCollectables.get(i);
+                if(!collectable.hasParent()) {
+                    break;
+                } else {
+                    if (collectable.getX() < x && !collectable.getPassedAddXValue()) {
+                        collectable.passedAddXValue();
+                        mCollectables.add(mCollectablePool.obtainPoolItem());
+                        attachChild(mCollectables.get(mCollectables.size() - 1));
+                        sortChildren();
+                    }
                 }
             }
         }
@@ -358,6 +429,24 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         }
     }
 
+    /**
+     * used when bird hits ground
+     */
+    private void killCollectables() {
+
+        for(int i = mCollectables.size() - 1; i >= 0; i--) {
+            Collectable collectable = mCollectables.get(i);
+            if(!collectable.hasParent()) {
+                break;
+            } else {
+                collectable.setVisible(false);
+                collectable.die();
+            }
+        }
+    }
+
+
+
     private void checkForObstacleBirdContact() {
         for(int i = mObstacles.size() - 1; i >= 0; i--) {
             Obstacle obstacle = mObstacles.get(i);
@@ -369,14 +458,27 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                 mBird.stopAnimation(0);
                 stopCrap();
 
-                if(!obstacle.getClass().getName().equals("com.application.nick.crappybird.entity.ObstaclePlane")) {
-                    obstacle.die();
-                } else { //plane keeps flying just at a lower velocity because scrolling stops
-                    obstacle.setVelocity(-150f, 0);
-                }
+                killObstacles();
+                killCollectables();
 
                 mAutoParallaxBackground.setParallaxChangePerSecond(0);
                 return;
+            }
+
+
+        }
+    }
+
+    private void checkForCollectableBirdContact() {
+        for(int i = mCollectables.size() - 1; i >= 0; i--) {
+            Collectable collectable = mCollectables.get(i);
+            if(!mCollectables.get(i).hasParent()) {
+                break;
+            } else if (!mGameOver && collectable.collidesWith(mBird)) {
+                //mResourceManager.mSound.play();
+                collectable.setVisible(false);
+
+                growCrapMeter(MAX_CRAP_METER_SIZE); //fill crap meter
             }
 
 
@@ -406,6 +508,15 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
             mGameOver = true;
         } else {
             mCrapMeter.setWidth(currentWidth - amountToShrink);
+        }
+    }
+
+    private void growCrapMeter(float amountToGrow) {
+        float currentWidth = mCrapMeter.getWidth();
+        if(currentWidth + amountToGrow > MAX_CRAP_METER_SIZE) {
+            mCrapMeter.setWidth(MAX_CRAP_METER_SIZE);
+        } else {
+            mCrapMeter.setWidth(currentWidth + amountToGrow);
         }
     }
 
@@ -511,6 +622,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                     mGameOver = true;
                     mBird.stopAnimation(0);
                     killObstacles();
+                    killCollectables();
                     mAutoParallaxBackground.setParallaxChangePerSecond(0);
 
                     if (score > most) {
