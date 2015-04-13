@@ -55,6 +55,8 @@ public class ResourceManager {
 
     public TiledTextureRegion mCollectablePizzaTextureRegion;
 
+    public TiledTextureRegion mTargetPerson1TextureRegion;
+
     private BitmapTextureAtlas mSubBitmapTextureAtlas;
     public TiledTextureRegion mStateTextureRegion;
     public ITextureRegion mPausedTextureRegion;
@@ -109,9 +111,9 @@ public class ResourceManager {
         mParallaxLayerBack = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mAutoParallaxBackgroundTexture, mActivity, "background.png", 0, 175);
         mAutoParallaxBackgroundTexture.load();
 
-        mBitmapTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 120, 24, TextureOptions.BILINEAR);
+        mBitmapTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 200, 200, TextureOptions.BILINEAR);
         mBirdTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "birds.png", 0, 0, 3, 1);
-        //mPipeTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "Flappy_Pipe.png", 0, 125, 2, 1);
+        mTargetPerson1TextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "person1.png", 0, 30, 8, 4);
         mBitmapTextureAtlas.load();
 
         mBitmapTextureAtlas2 = new BitmapTextureAtlas(mActivity.getTextureManager(), 128, 512, TextureOptions.BILINEAR);
@@ -206,6 +208,8 @@ public class ResourceManager {
         mObstacleHouseTextureRegion = null;
         mObstaclePlanesTextureRegion = null;
         mObstacleTreesTextureRegion = null;
+
+        mTargetPerson1TextureRegion = null;
 
         mSubBitmapTextureAtlas = null;
         mStateTextureRegion = null;
