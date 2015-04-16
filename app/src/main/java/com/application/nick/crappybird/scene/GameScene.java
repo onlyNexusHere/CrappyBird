@@ -3,6 +3,7 @@ package com.application.nick.crappybird.scene;
 import android.hardware.SensorManager;
 
 import com.application.nick.crappybird.SceneManager;
+import com.application.nick.crappybird.entity.BasicBird;
 import com.application.nick.crappybird.entity.Collectable;
 import com.application.nick.crappybird.entity.CollectablePool;
 import com.application.nick.crappybird.entity.Crap;
@@ -224,7 +225,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         });
 
 
-        final float labelX = (SCREEN_WIDTH - mResourceManager.mResumedTextureRegion.getWidth()) / 2;
+        final float labelX = (SCREEN_WIDTH - mResourceManager.mHelpTextureRegion.getWidth()) / 2;
         final float labelY = 100;
 
         //create CameraScene for get ready
@@ -237,7 +238,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         label2Sprite.setCurrentTileIndex(0);
         mGameReadyScene.attachChild(label2Sprite);
         //how to picture
-        final Sprite resumedSprite = new Sprite(labelX, labelY, mResourceManager.mResumedTextureRegion, mVertexBufferObjectManager);
+        final Sprite resumedSprite = new Sprite(labelX, labelY, mResourceManager.mHelpTextureRegion, mVertexBufferObjectManager);
         mGameReadyScene.attachChild(resumedSprite);
 
         mGameReadyScene.setBackgroundEnabled(false);
@@ -260,11 +261,11 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
 
         //create CameraScene for game over
-        final float overX = (SCREEN_WIDTH - mResourceManager.mPausedTextureRegion.getWidth()) / 2;
+        final float overX = (SCREEN_WIDTH - mResourceManager.mBoardTextureRegion.getWidth()) / 2;
         final float overY = labelY + mResourceManager.mStateTextureRegion.getHeight();
 
-        final float playX = overX;
-        final float playY = overY + mResourceManager.mPausedTextureRegion.getHeight();
+        final float playX = (SCREEN_WIDTH - mResourceManager.mButtonTextureRegion.getWidth()) / 2;
+        final float playY = overY + mResourceManager.mBoardTextureRegion.getHeight();
 
         final float posX = SCREEN_WIDTH/2;
         final float posY = playY;
@@ -272,26 +273,20 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         final float medalX = overX + 46;
         final float medalY = overY + 46;
 
-        final float scoreX = overX + 165;
+        final float scoreX = overX + 55;
         final float scoreY = overY + 40;
 
-        final float mostX = scoreX;
-        final float mostY = scoreY + 25;
+        final float mostX = overX + 165;
+        final float mostY = scoreY;
 
         mGameOverScene = new CameraScene(mCamera);
 
-        final TiledSprite labelSprite = new TiledSprite(readyX, readyY, mResourceManager.mStateTextureRegion, mVertexBufferObjectManager);
+        final TiledSprite labelSprite = new TiledSprite(readyX, readyY + mResourceManager.mStateTextureRegion.getHeight(), mResourceManager.mStateTextureRegion, mVertexBufferObjectManager);
         labelSprite.setCurrentTileIndex(1);
         mGameOverScene.attachChild(labelSprite);
 
-        final Sprite pauseSprite = new Sprite(overX, overY, mResourceManager.mPausedTextureRegion, mVertexBufferObjectManager);
-        pauseSprite.setScale(0.75f);
-        mGameOverScene.attachChild(pauseSprite);
-
-        medalSprite = new TiledSprite(medalX, medalY, mResourceManager.mMedalTextureRegion, mVertexBufferObjectManager);
-        medalSprite.setCurrentTileIndex(0);
-        medalSprite.setScale(0.75f);
-        mGameOverScene.attachChild(medalSprite);
+        final Sprite boardSprite = new Sprite(overX, overY, mResourceManager.mBoardTextureRegion, mVertexBufferObjectManager);
+        mGameOverScene.attachChild(boardSprite);
 
         scoreText = new Text(scoreX, scoreY, mResourceManager.mFont4, "0123456789", new TextOptions(HorizontalAlign.LEFT), mVertexBufferObjectManager);
         scoreText.setText("0");
@@ -305,6 +300,9 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
             @Override
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+                if (pSceneTouchEvent.isActionDown()) {
+                    setCurrentTileIndex(1);
+                }
                 if (pSceneTouchEvent.isActionUp()) {
                     clearChildScene();
                     mSceneManager.setScene(SceneManager.SceneType.SCENE_GAME);
@@ -317,11 +315,12 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         mGameOverScene.registerTouchArea(playSprite);
         mGameOverScene.attachChild(playSprite);
 
-        final TiledSprite posSprite = new TiledSprite(posX, posY, mResourceManager.mButtonTextureRegion, mVertexBufferObjectManager);
+       /* final TiledSprite posSprite = new TiledSprite(posX, posY, mResourceManager.mButtonTextureRegion, mVertexBufferObjectManager);
         posSprite.setCurrentTileIndex(1);
         posSprite.setScale(0.75f);
         mGameOverScene.registerTouchArea(posSprite);
         mGameOverScene.attachChild(posSprite);
+        */
 
         mGameOverScene.setBackgroundEnabled(false);
 
@@ -403,6 +402,14 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                     mObstacles.add(mObstaclePool.obtainPoolItem());
                     Obstacle newObstacle = mObstacles.get(mObstacles.size() - 1);
                     newObstacle.setX(SCREEN_WIDTH);
+                    //scale plane velocity according to score
+                    if(newObstacle.getClass().getName().equals("com.application.nick.crappybird.entity.ObstaclePlane")) {
+                        if(score < 100) {
+                            newObstacle.setVelocity(-200f - score, 0);
+                        } else {
+                            newObstacle.setVelocity(-300, 0);
+                        }
+                    }
                     attachChild(newObstacle);
                     sortChildren();
                 }
@@ -450,18 +457,22 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
     }
 
     /**
-     * used when bird hits ground
+     * used when bird dies
      */
     private void killTargets() {
         for(int i = mTargets.size() - 1; i >= 0; i--) {
             Target target = mTargets.get(i);
-            float xVelocity = target.getXVelocity();
-            target.setVelocity(xVelocity + 150, 0);
+            if(!target.getHitValue()) {
+                float xVelocity = target.getXVelocity();
+                target.setVelocity(xVelocity + 150, 0);
+            } else {
+                target.setVelocity(0,0);
+            }
         }
     }
 
     /**
-     * used when bird hits ground
+     * used when bird dies
      */
     private void killObstacles() {
 
@@ -477,7 +488,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
     }
 
     /**
-     * used when bird hits ground
+     * used when bird dies
      */
     private void killCollectables() {
 
@@ -493,7 +504,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
     private void checkForTargetCrapContact() {
         for(int i = mCraps.size() - 1; i >= 0; i--) {
             Crap crap = mCraps.get(i);
-            if(!crap.getFalling()) {
+            if(!crap.getFalling() || mGameOver) {
                 break;
             } else {
                 for(int j = mTargets.size() - 1; j >= 0; j--) {
@@ -549,13 +560,11 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         }
     }
 
-    private void checkForCrapGroundContact(IShape shape) {
-        if(shape.getClass().getName().equals("org.andengine.entity.primitive.Rectangle")) { //if shape is ground
-                for (int i = mCraps.size() - 1; i >= 0; i--) {
-                    if (mCraps.get(i).getY() + mCraps.get(i).getHeight() > shape.getY()) {
-                        mCraps.get(i).hitsGround(mGameOver);
-                    }
-                }
+    private void checkForCrapGroundContact(IShape ground) {
+        for (int i = mCraps.size() - 1; i >= 0; i--) {
+            if (mCraps.get(i).getY() + mCraps.get(i).getHeight() > ground.getY()) {
+                mCraps.get(i).hitsGround(mGameOver);
+            }
         }
     }
 
@@ -658,6 +667,18 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
     }
 
+    private void displayScore() {
+
+        scoreText.setText(String.valueOf(score)); //update values
+        mostText.setText(String.valueOf(most));
+
+        scoreText.setX(scoreText.getX() - (scoreText.getWidth() / 2)); //adjust margins
+        mostText.setX(mostText.getX() - (mostText.getWidth() / 2));
+
+        setChildScene(mGameOverScene, false, true, true);
+
+    }
+
     private ContactListener createContactListener() {
         ContactListener contactListener = new ContactListener() {
             @Override
@@ -681,15 +702,13 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                         most = score;
                         mActivity.setMaxScore(most);
                     }
+
                     //hide score and crapMeter
                     mHudText.setVisible(false);
                     mCrapMeter.setVisible(false);
 
                     //display game over with score
-                    scoreText.setText(String.valueOf(score));
-                    mostText.setText(String.valueOf(most));
-                    medalSprite.setCurrentTileIndex(score>100 ? 3 : (score>50 ? 2 : (score>10 ? 1 : 0)));
-                    setChildScene(mGameOverScene, false, true, true);
+                    displayScore();
                 }
             }
 
@@ -712,8 +731,13 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
     public void onBackKeyPressed() {
         mHudText.setVisible(false);
         mCrapMeter.setVisible(false);
-        mSceneManager.setScene(SceneManager.SceneType.SCENE_MENU
-        );
+
+        /*if (!mResourceManager.mMusic.isPlaying()) {
+            mResourceManager.mMusic.play();
+        }*/
+
+        mSceneManager.setScene(SceneManager.SceneType.SCENE_MENU);
+
     }
 
     @Override

@@ -9,7 +9,6 @@ import org.andengine.audio.sound.Sound;
 import org.andengine.audio.sound.SoundFactory;
 import org.andengine.opengl.font.Font;
 import org.andengine.opengl.font.FontFactory;
-import org.andengine.opengl.texture.ITexture;
 import org.andengine.opengl.texture.TextureOptions;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
@@ -40,15 +39,7 @@ public class ResourceManager {
     public TiledTextureRegion mBirdTextureRegion;
     public TiledTextureRegion mPipeTextureRegion;
 
-    private BitmapTextureAtlas mBitmapTextureAtlas2;
     public TiledTextureRegion mCrapTextureRegion;
-
-    private BitmapTextureAtlas mBitmapTextureAtlas3;
-    private BitmapTextureAtlas mBitmapTextureAtlas4;
-    private BitmapTextureAtlas mBitmapTextureAtlas5;
-    private BitmapTextureAtlas mBitmapTextureAtlas6;
-    private BitmapTextureAtlas mBitmapTextureAtlas7;
-
     public TiledTextureRegion mObstacleHouseTextureRegion;
     public TiledTextureRegion mObstacleTreesTextureRegion;
     public TiledTextureRegion mObstaclePlanesTextureRegion;
@@ -59,11 +50,11 @@ public class ResourceManager {
 
     private BitmapTextureAtlas mSubBitmapTextureAtlas;
     public TiledTextureRegion mStateTextureRegion;
-    public ITextureRegion mPausedTextureRegion;
+    public ITextureRegion mBoardTextureRegion;
     public ITextureRegion mMeterTextureRegion;
-    public ITextureRegion mResumedTextureRegion;
+    public ITextureRegion mHelpTextureRegion;
     public TiledTextureRegion mButtonTextureRegion;
-    public TiledTextureRegion mMedalTextureRegion;
+    public ITextureRegion mTitleTextureRegion;
 
     public Font mFont1;
     public Font mFont2;
@@ -111,44 +102,33 @@ public class ResourceManager {
         mParallaxLayerBack = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mAutoParallaxBackgroundTexture, mActivity, "background.png", 0, 175);
         mAutoParallaxBackgroundTexture.load();
 
-        mBitmapTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 200, 200, TextureOptions.BILINEAR);
+        mBitmapTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 400, 500, TextureOptions.BILINEAR);
+
         mBirdTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "birds.png", 0, 0, 3, 1);
+
         mTargetPerson1TextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "person1.png", 0, 30, 8, 4);
+
+        mCrapTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "Flappy_Crappies2.png", 0, 230, 1, 3);
+        mMeterTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mBitmapTextureAtlas, mActivity, "Crap_Supply_Meter.png", 0, 270);
+
+        mObstacleHouseTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "house.png", 0, 300, 1, 1);
+        mObstacleTreesTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "two-trees.png", 100, 300, 2, 1);
+        mObstaclePlanesTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "planes.png", 0, 400, 4, 1);
+
+        mCollectablePizzaTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "pizza.png", 0, 450, 1, 1);
+
         mBitmapTextureAtlas.load();
 
-        mBitmapTextureAtlas2 = new BitmapTextureAtlas(mActivity.getTextureManager(), 128, 512, TextureOptions.BILINEAR);
-        mCrapTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas2, mActivity, "Flappy_Crappies2.png", 0, 0, 1, 3);
-        mBitmapTextureAtlas2.load();
+        mSubBitmapTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 512, 520, TextureOptions.BILINEAR);
+        mStateTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mSubBitmapTextureAtlas, mActivity, "ready_over2.png", 0, 0, 2, 1);
+        mBoardTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mSubBitmapTextureAtlas, mActivity, "board2.png", 0, 60);
+        mHelpTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mSubBitmapTextureAtlas, mActivity, "help2.png", 0, 200);
+        mButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mSubBitmapTextureAtlas, mActivity, "play_button.png", 0, 350, 2, 1);
+        mTitleTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mSubBitmapTextureAtlas, mActivity, "title2.png", 0, 450);
 
-        mBitmapTextureAtlas3 = new BitmapTextureAtlas(mActivity.getTextureManager(), 320, 20, TextureOptions.BILINEAR);
-        mMeterTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mBitmapTextureAtlas3, mActivity, "Crap_Supply_Meter.png", 0, 0);
-        mBitmapTextureAtlas3.load();
-
-        mBitmapTextureAtlas4 = new BitmapTextureAtlas(mActivity.getTextureManager(), 97, 97, TextureOptions.BILINEAR);
-        mObstacleHouseTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas4, mActivity, "house.png", 0, 0, 1, 1);
-        mBitmapTextureAtlas4.load();
-
-        mBitmapTextureAtlas5 = new BitmapTextureAtlas(mActivity.getTextureManager(), 97, 97, TextureOptions.BILINEAR);
-        mObstacleTreesTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas5, mActivity, "two-trees.png", 0, 0, 2, 1);
-        mBitmapTextureAtlas5.load();
-
-        mBitmapTextureAtlas6 = new BitmapTextureAtlas(mActivity.getTextureManager(), 383, 49, TextureOptions.BILINEAR);
-        mObstaclePlanesTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas6, mActivity, "planes.png", 0, 0, 4, 1);
-        mBitmapTextureAtlas6.load();
-
-        mBitmapTextureAtlas7 = new BitmapTextureAtlas(mActivity.getTextureManager(), 30, 29, TextureOptions.BILINEAR);
-        mCollectablePizzaTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas7, mActivity, "pizza.png", 0, 0, 1, 1);
-        mBitmapTextureAtlas7.load();
-
-        mSubBitmapTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 512, 512, TextureOptions.BILINEAR);
-        mStateTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mSubBitmapTextureAtlas, mActivity, "ready_over.png", 0, 0, 2, 1);
-        mPausedTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mSubBitmapTextureAtlas, mActivity, "board.png", 0, 60);
-        mResumedTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mSubBitmapTextureAtlas, mActivity, "help2.png", 0, 200);
-        mButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mSubBitmapTextureAtlas, mActivity, "play_pos.png", 0, 350, 2, 1);
-        mMedalTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mSubBitmapTextureAtlas, mActivity, "medal.png", 0, 450, 4, 1);
         mSubBitmapTextureAtlas.load();
             //load fonts
-        mFont4 = FontFactory.create(mActivity.getFontManager(), mActivity.getTextureManager(), 256, 256, Typeface.create(Typeface.DEFAULT, Typeface.NORMAL), 16, Color.BLACK);
+        mFont4 = FontFactory.create(mActivity.getFontManager(), mActivity.getTextureManager(), 256, 256, Typeface.create(Typeface.DEFAULT, Typeface.NORMAL), 45, Color.BLACK);
         mFont4.load();
 
         FontFactory.setAssetBasePath("font/");
@@ -187,12 +167,6 @@ public class ResourceManager {
             //unload gfx
         mAutoParallaxBackgroundTexture.unload();
         mBitmapTextureAtlas.unload();
-        mBitmapTextureAtlas2.unload();
-        mBitmapTextureAtlas3.unload();
-        mBitmapTextureAtlas4.unload();
-        mBitmapTextureAtlas5.unload();
-        mBitmapTextureAtlas6.unload();
-        mBitmapTextureAtlas7.unload();
         mSubBitmapTextureAtlas.unload();
 
         mAutoParallaxBackgroundTexture = null;
@@ -211,13 +185,12 @@ public class ResourceManager {
 
         mTargetPerson1TextureRegion = null;
 
-        mSubBitmapTextureAtlas = null;
         mStateTextureRegion = null;
         mMeterTextureRegion = null;
-        mPausedTextureRegion = null;
-        mResumedTextureRegion = null;
+        mBoardTextureRegion = null;
+        mHelpTextureRegion = null;
         mButtonTextureRegion = null;
-        mMedalTextureRegion = null;
+        mTitleTextureRegion = null;
             //unload fonts
         mFont4.unload();
         mFont4 = null;

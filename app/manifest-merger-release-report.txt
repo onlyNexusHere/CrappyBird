@@ -54,13 +54,10 @@ application
 ADDED from AndroidManifest.xml:17:1
 MERGED from com.android.support:appcompat-v7:21.0.3:16:5
 MERGED from com.android.support:support-v4:21.0.3:16:5
-MERGED from CrappyBird:andengine:unspecified:11:5
 MERGED from com.android.support:appcompat-v7:21.0.3:16:5
 MERGED from com.android.support:support-v4:21.0.3:16:5
 	android:label
 		ADDED from AndroidManifest.xml:20:5
-	android:debuggable
-		ADDED from CrappyBird:andengine:unspecified:11:18
 	android:allowBackup
 		ADDED from AndroidManifest.xml:18:5
 	android:icon
