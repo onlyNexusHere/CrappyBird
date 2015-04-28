@@ -56,6 +56,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
     private final int MAX_OBSTACLES = 5;
     private final float MAX_MACHINE_CRAPPING_TIME = 10;
     private final float MACHINE_CRAPPING_TIME_BETWEEN_CRAPS = 0.1f;
+    private final float MAX_DOUBLE_POINTS_TIME = 10;
+    private final float DOUBLE_POINTS_TIME_TO_SHOW_PLUS_TWO = 0.4f;
     private final int NUM_OBSTACLES = 20; //number of obstacles to allocate to pool
     private final int NUM_TARGETS = 5; //number of targets (people) to allocate
     private final int NUM_CRAPS = 15; //number of craps to allocate
@@ -84,9 +86,9 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
     private CrapPool mCrapPool;
     private List<Crap> mCraps = new ArrayList<Crap>();
 
-    private boolean mGameOver, mOutOfCrap, mMachineCrapActivated = false, mMachineCrapping = false, mMachineCrapMeterBlinking = false;
+    private boolean mGameOver, mOutOfCrap, mMachineCrapActivated = false, mMachineCrapping = false, mMachineCrapMeterBlinking = false, mDoublePointsActivated = false;
 
-    private float machineCrappingTime = 0, machineCrappingLastCrapTime;
+    private float machineCrappingTime = 0, machineCrappingLastCrapTime, doublePointsTime = 0, doublePointsLastPointTime;
 
     private PhysicsWorld mPhysicsWorld;
 
@@ -95,7 +97,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
     private CameraScene mGameOverScene;
     private Text scoreText;
     private Text mostText;
-    private TiledSprite medalSprite;
+    private TiledSprite mPlusTwo;
 
     private float MAX_CRAP_METER_SIZE;
 
@@ -219,6 +221,20 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
                 }
 
+                if(mDoublePointsActivated) {
+                    if(mPlusTwo.isVisible()) { //flash "+2" next to score for every point scored while double points is activated
+                        if(doublePointsTime > doublePointsLastPointTime + DOUBLE_POINTS_TIME_TO_SHOW_PLUS_TWO) {
+                            mPlusTwo.setVisible(false);
+                        }
+                    }
+
+                    doublePointsTime += pSecondsElapsed;
+                    if(doublePointsTime > MAX_DOUBLE_POINTS_TIME) {
+                        setDoublePoints(false);
+                    }
+
+                }
+
                 int obstaclesOnScreen = mObstacles.size();
                 if(obstaclesOnScreen <= MAX_OBSTACLES) { //max obstacles on the screen (that haven't been passed) can't be more than x
                     if (mObstaclePool.getObstacleIndex() < 40) {
@@ -295,7 +311,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         final float overX = (SCREEN_WIDTH - mResourceManager.mBoardTextureRegion.getWidth()) / 2;
         final float overY = labelY + mResourceManager.mStateTextureRegion.getHeight();
 
-        final float playX = (SCREEN_WIDTH - mResourceManager.mButtonTextureRegion.getWidth()) / 2;
+        final float playX = (SCREEN_WIDTH - mResourceManager.mPlayButtonTextureRegion.getWidth()) / 2;
         final float playY = overY + mResourceManager.mBoardTextureRegion.getHeight();
 
         final float posX = SCREEN_WIDTH/2;
@@ -327,7 +343,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         mostText.setText(String.valueOf(most));
         mGameOverScene.attachChild(mostText);
 
-        final TiledSprite playSprite = new TiledSprite(playX, playY, mResourceManager.mButtonTextureRegion, mVertexBufferObjectManager) {
+        final TiledSprite playSprite = new TiledSprite(playX, playY, mResourceManager.mPlayButtonTextureRegion, mVertexBufferObjectManager) {
 
             @Override
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
@@ -359,6 +375,10 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         mHudText.setVisible(false);
         gameHUD.attachChild(mHudText);
 
+        //"+2" popup for double points
+        mPlusTwo = new TiledSprite((SCREEN_WIDTH/2 + mHudText.getWidth() * 2), 50, mResourceManager.mPlusTwoTextureRegion, mVertexBufferObjectManager);
+        mPlusTwo.setVisible(false);
+        gameHUD.attachChild(mPlusTwo);
 
         mCrapMeter = new Sprite((SCREEN_WIDTH - mResourceManager.mMeterTextureRegion.getWidth()) / 2, mResourceManager.mMeterTextureRegion.getHeight(), mResourceManager.mMeterTextureRegion, mVertexBufferObjectManager);
         mCrapMeter.setScale(0.75f);
@@ -367,6 +387,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         mCrapMeter.setVisible(false);
         gameHUD.attachChild(mCrapMeter);
 
+        //for machine crap power up (thunder taco)
         mMachineCrapMeter = new AnimatedSprite((SCREEN_WIDTH - mResourceManager.mMeter2TextureRegion.getWidth()) / 2, mResourceManager.mMeter2TextureRegion.getHeight(), mResourceManager.mMeter2TextureRegion, mVertexBufferObjectManager);
         mMachineCrapMeter.setScale(0.75f);
         mMachineCrapMeter.setX((SCREEN_WIDTH - mMachineCrapMeter.getWidth()) / 2);
@@ -389,11 +410,18 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                 mObstacles.remove(i);
             } else if (!mGameOver && !obstacle.getScoreAdded() && mBird.getX() > (obstacle.getX() + obstacle.getWidth())) {
                 obstacle.setScoreAdded();
-                score++;
+
+                if(mDoublePointsActivated) {
+                    addDoublePoints();
+                } else {
+                    score++;
+                }
+
                 mHudText.setText(String.valueOf(score));
             }
         }
     }
+
 
     private void checkForTargetLeavingScreen() {
         for(int i = mTargets.size() - 1; i >= 0; i--) {
@@ -503,7 +531,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                 float xVelocity = target.getXVelocity();
                 target.setVelocity(xVelocity + 150, 0);
             } else {
-                target.setVelocity(0,0);
+                target.setVelocity(0, 0);
             }
         }
     }
@@ -552,8 +580,12 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                         detachChild(mCraps.get(i));
                         mCrapPool.recyclePoolItem(mCraps.get(i));
                         mCraps.remove(i);
+                        if(mDoublePointsActivated) {
+                            addDoublePoints();
+                        } else {
+                            score++;
+                        }
 
-                        score++;
                         mHudText.setText(String.valueOf(score));
                     }
                 }
@@ -565,21 +597,19 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
     private void checkForObstacleBirdContact() {
         for(int i = mObstacles.size() - 1; i >= 0; i--) {
             Obstacle obstacle = mObstacles.get(i);
-            if (!mGameOver && obstacle.collidesWith(mBird)) {
+            if (!mGameOver && obstacle.collidesWith(mBird) && !obstacle.getCollidedWith()) {
                 if(mMachineCrapActivated) {
-                    if(!obstacle.getCollidedWith()) {
-                        final Body faceBody = (Body) mBird.getUserData();
+                    final Body faceBody = (Body) mBird.getUserData();
 
-                        Vector2 birdVelocity = faceBody.getLinearVelocity();
-                        float birdYVelocity = birdVelocity.y;
-                        birdYVelocity = birdYVelocity * 30; //convert from m/s to px/sec
-                        float velocityY = birdYVelocity * 2;
-                        if (Math.abs(velocityY) < 500) {
-                            velocityY = (velocityY / Math.abs(velocityY)) * 500;
-                        }
-                        obstacle.blastOff(velocityY);
-                        obstacle.setCollidedWith();
+                    Vector2 birdVelocity = faceBody.getLinearVelocity();
+                    float birdYVelocity = birdVelocity.y;
+                    birdYVelocity = birdYVelocity * 30; //convert from m/s to px/sec
+                    float velocityY = birdYVelocity * 2;
+                    if (Math.abs(velocityY) < 500) {
+                        velocityY = (velocityY / Math.abs(velocityY)) * 500;
                     }
+                    obstacle.blastOff(velocityY);
+                    obstacle.setCollidedWith();
                 } else {
                     mGameOver = true;
                     mResourceManager.mSound.play();
@@ -607,6 +637,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                 collectable.collect();
                 if(collectable.getClass().getName().equals("com.application.nick.crappybird.entity.CollectableTaco")) {
                     setMachineCrap(true);
+                } else if(collectable.getClass().getName().equals("com.application.nick.crappybird.entity.CollectableHam")) {
+                    setDoublePoints(true);
                 }
                 growCrapMeter(MAX_CRAP_METER_SIZE); //fill crap meter
             }
@@ -693,6 +725,29 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
             mCrapMeter.setVisible(true);
             growCrapMeter(MAX_CRAP_METER_SIZE);
         }
+    }
+
+    /**
+     * for turning on and off the double points power up
+     * @param bool
+     */
+    private void setDoublePoints(boolean bool) {
+        if(bool) {
+            mDoublePointsActivated = true;
+            doublePointsTime = 0;
+            doublePointsLastPointTime = 0;
+        } else {
+            mDoublePointsActivated = false;
+        }
+    }
+
+    /**
+     * for adding points to the score when double points is activated
+     */
+    private void addDoublePoints() {
+        mPlusTwo.setVisible(true);
+        score += 2;
+        doublePointsLastPointTime = doublePointsTime;
     }
 
     private void dropCrap(float currentXPosition, float currentYPosition) {
@@ -791,6 +846,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                     mHudText.setVisible(false);
                     mCrapMeter.setVisible(false);
                     mMachineCrapMeter.setVisible(false);
+                    mPlusTwo.setVisible(false);
 
                     //display game over with score
                     displayScore();
