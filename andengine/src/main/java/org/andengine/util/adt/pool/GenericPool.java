@@ -100,6 +100,10 @@ public abstract class GenericPool<T> {
 		return this.onAllocatePoolItem();
 	}
 
+	protected void addAdditionalPoolItem(T pItem) {
+		this.mAvailableItems.add(pItem);
+	}
+
 	/**
 	 * @param pItem every item that was just obtained from the pool, passes this method.
 	 */
