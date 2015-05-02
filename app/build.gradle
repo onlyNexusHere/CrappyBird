@@ -8,8 +8,8 @@ android {
         applicationId "com.application.nick.crappybird"
         minSdkVersion 16
         targetSdkVersion 21
-        versionCode 3
-        versionName "1.2"
+        versionCode 6
+        versionName "2.0"
     }
     buildTypes {
         release {
@@ -25,4 +25,5 @@ dependencies {
     compile project(':andengine')
     compile files('libs/org_andengine_extension_physics_box2d.jar')
     compile files('libs/physicsbox2d_so_files.jar')
+    compile 'com.google.android.gms:play-services:7.3.0'
 }

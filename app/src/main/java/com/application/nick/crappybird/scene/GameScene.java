@@ -1,6 +1,7 @@
 package com.application.nick.crappybird.scene;
 
 import android.hardware.SensorManager;
+import android.util.Log;
 
 import com.application.nick.crappybird.SceneManager;
 import com.application.nick.crappybird.entity.Collectable;
@@ -8,9 +9,11 @@ import com.application.nick.crappybird.entity.CollectablePool;
 import com.application.nick.crappybird.entity.Crap;
 import com.application.nick.crappybird.entity.CrapPool;
 import com.application.nick.crappybird.entity.Obstacle;
+import com.application.nick.crappybird.entity.ObstacleBalloon;
 import com.application.nick.crappybird.entity.ObstaclePlane;
 import com.application.nick.crappybird.entity.ObstaclePool;
 import com.application.nick.crappybird.entity.Target;
+import com.application.nick.crappybird.entity.TargetPerson1;
 import com.application.nick.crappybird.entity.TargetPool;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
@@ -57,9 +60,10 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
     private final float MAX_MACHINE_CRAPPING_TIME = 10;
     private final float MACHINE_CRAPPING_TIME_BETWEEN_CRAPS = 0.1f;
     private final float MAX_DOUBLE_POINTS_TIME = 10;
+    private final float MAX_TARGETS_ON_SCREEN = 10;
     private final float DOUBLE_POINTS_TIME_TO_SHOW_PLUS_TWO = 0.4f;
     private final int NUM_OBSTACLES = 20; //number of obstacles to allocate to pool
-    private final int NUM_TARGETS = 5; //number of targets (people) to allocate
+    private final int NUM_TARGETS = 10; //number of targets (people) to allocate
     private final int NUM_CRAPS = 15; //number of craps to allocate
     private final int NUM_COLLECTABLES = 9; //number of generic collectables (pizza) to allocate to pool
 
@@ -72,7 +76,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
     private AnimatedSprite mBird, mMachineCrapMeter;
 
-    private Sprite mCrapMeter;
+    private TiledSprite mCrapMeter;
 
     private List<Obstacle> mObstacles;
     private ObstaclePool mObstaclePool;
@@ -98,6 +102,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
     private Text scoreText;
     private Text mostText;
     private TiledSprite mPlusTwo;
+
+    private Rectangle mGround;
 
     private float MAX_CRAP_METER_SIZE;
 
@@ -126,25 +132,25 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
 
         //create entities
-        final Rectangle ground = new Rectangle(0, SCREEN_HEIGHT - mResourceManager.mParallaxLayerFront.getHeight(), SCREEN_WIDTH, mResourceManager.mParallaxLayerFront.getHeight(), mVertexBufferObjectManager);
-        ground.setColor(Color.TRANSPARENT);
+        mGround = new Rectangle(0, SCREEN_HEIGHT - mResourceManager.mParallaxLayerFront.getHeight(), SCREEN_WIDTH, mResourceManager.mParallaxLayerFront.getHeight(), mVertexBufferObjectManager);
+        mGround.setColor(Color.TRANSPARENT);
         final Rectangle roof = new Rectangle(0, 0, SCREEN_WIDTH, 1, mVertexBufferObjectManager);
         roof.setColor(Color.TRANSPARENT);
 
-        mObstaclePool = new ObstaclePool(mResourceManager, mVertexBufferObjectManager, ground.getY());
+        mObstaclePool = new ObstaclePool(mResourceManager, mVertexBufferObjectManager, mGround.getY());
         mObstaclePool.batchAllocatePoolItems(NUM_OBSTACLES);
 
         mObstacles = new ArrayList<Obstacle>();
         mObstacles.add(mObstaclePool.obtainPoolItem());
 
-        mCollectablePool = new CollectablePool(mResourceManager, mVertexBufferObjectManager, ground.getY());
+        mCollectablePool = new CollectablePool(mResourceManager, mVertexBufferObjectManager, mGround.getY());
         mCollectablePool.batchAllocatePoolItems(NUM_COLLECTABLES);
         mCollectablePool.shufflePoolItems();
 
         mCollectables = new ArrayList<Collectable>();
         mCollectables.add(mCollectablePool.obtainPoolItem());
 
-        mTargetPool = new TargetPool(mResourceManager, mVertexBufferObjectManager, ground.getY());
+        mTargetPool = new TargetPool(mResourceManager, mVertexBufferObjectManager, mGround.getY());
         mTargetPool.batchAllocatePoolItems(NUM_TARGETS);
 
         mTargets = new ArrayList<Target>();
@@ -154,7 +160,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         mCrapPool.batchAllocatePoolItems(NUM_CRAPS);
         mOutOfCrap = false;
 
-        attachChild(ground);
+        attachChild(mGround);
         attachChild(roof);
         attachChild(mObstacles.get(mObstacles.size() - 1));
         attachChild(mCollectables.get(mCollectables.size() - 1));
@@ -165,7 +171,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
         //create body and fixture
         final FixtureDef wallFixtureDef = PhysicsFactory.createFixtureDef(0, 0, 0);
-        final Body groundBody = PhysicsFactory.createBoxBody(mPhysicsWorld, ground, BodyDef.BodyType.StaticBody, wallFixtureDef);
+        final Body groundBody = PhysicsFactory.createBoxBody(mPhysicsWorld, mGround, BodyDef.BodyType.StaticBody, wallFixtureDef);
         groundBody.setUserData("ground");
 
         final FixtureDef birdFixtureDef = PhysicsFactory.createFixtureDef(1, 0, 0);
@@ -185,6 +191,14 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
             @Override
             public void onUpdate(float pSecondsElapsed) {
 
+
+                for(Target target : mTargets) {
+                    if(target.getCurrentTileIndex() == 7 && target.getX() > SCREEN_WIDTH/2 && target.getX() < SCREEN_WIDTH && target.isVisible()) {
+                        Log.i("target", target.getCurrentTileIndex() + "");
+                    }
+                }
+
+
                 checkForObstacleBirdContact();
 
                 checkObstaclePosition(); //handle obstacles leaving screen and update score if bird passes them
@@ -195,7 +209,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
                 checkForTargetCrapContact();
 
-                checkForTargetLeavingScreen();
+                checkTargetPosition(); //check targets leaving screen and also handle falling people from balloons
 
                 addNewTarget(SCREEN_WIDTH / 2); //add a new target if the earlist added on the screen passes x
 
@@ -236,7 +250,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                 }
 
                 int obstaclesOnScreen = mObstacles.size();
-                if(obstaclesOnScreen <= MAX_OBSTACLES) { //max obstacles on the screen (that haven't been passed) can't be more than x
+                if(obstaclesOnScreen <= MAX_OBSTACLES) { //max obstacles on the screen can't be more than x
                     if (mObstaclePool.getObstacleIndex() < 40) {
                         addNewObstacle(mObstaclePool.getObstacleIndex() * 5); //add a new obstacle if the earliest added obstacle on the screen passes x
                     } else {
@@ -255,12 +269,12 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                 }
 
                 if(mCraps.size() > 0) {
-                    checkForCrapGroundContact(ground);
+                    checkForCrapGroundContact(mGround);
                     checkForCrapLeavingScreen();
 
                 }
                     //rotate bird with changing velocity
-                if(mBird.getY() + mBird.getHeight() < ground.getY()) {
+                if(mBird.getY() + mBird.getHeight() < mGround.getY()) {
                     Body birdBody = (Body) mBird.getUserData();
                     mBird.setRotation(birdBody.getLinearVelocity().y * 2 - 10);
                 }
@@ -380,7 +394,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         mPlusTwo.setVisible(false);
         gameHUD.attachChild(mPlusTwo);
 
-        mCrapMeter = new Sprite((SCREEN_WIDTH - mResourceManager.mMeterTextureRegion.getWidth()) / 2, mResourceManager.mMeterTextureRegion.getHeight(), mResourceManager.mMeterTextureRegion, mVertexBufferObjectManager);
+        mCrapMeter = new TiledSprite((SCREEN_WIDTH - mResourceManager.mMeter2TextureRegion.getWidth()) / 2, mResourceManager.mMeter2TextureRegion.getHeight(), mResourceManager.mMeter2TextureRegion, mVertexBufferObjectManager);
+        mCrapMeter.setCurrentTileIndex(6);
         mCrapMeter.setScale(0.75f);
         mCrapMeter.setX((SCREEN_WIDTH - mCrapMeter.getWidth()) / 2);
         MAX_CRAP_METER_SIZE = mCrapMeter.getWidth();
@@ -422,8 +437,11 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         }
     }
 
-
-    private void checkForTargetLeavingScreen() {
+    /**
+     * This method checks for targets leaving the screen... recycles if so
+     * Also checks if a person who was falling has hit the ground
+     */
+    private void checkTargetPosition() {
         for(int i = mTargets.size() - 1; i >= 0; i--) {
             Target target = mTargets.get(i);
             if (target.getX() <  -target.getWidth() || (target.getX() > SCREEN_WIDTH && mGameOver)) {
@@ -431,6 +449,10 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                 mTargetPool.recyclePoolItem(target);
                 mTargetPool.shufflePoolItems();
                 mTargets.remove(i);
+            } else if (target.getClass().getName().equals("com.application.nick.crappybird.entity.TargetPerson1")) {
+                if(((TargetPerson1)target).getFalling() && (target.getY() + target.getHeight()) >= mGround.getY()) {
+                    ((TargetPerson1)target).hitsGround(mGameOver);
+                }
             }
         }
     }
@@ -471,6 +493,10 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                         if(mObstaclePool.getObstacleIndex() > 50) {
                             ((ObstaclePlane) newObstacle).randomizeYVelocity();
                         }
+                    } else if (newObstacle.getClass().getName().equals("com.application.nick.crappybird.entity.ObstacleBalloon")) {
+                        if(mObstaclePool.getObstacleIndex() > 0) {
+                            ((ObstacleBalloon) newObstacle).randomizeYVelocity();
+                        }
                     }
                     attachChild(newObstacle);
                     sortChildren();
@@ -491,9 +517,6 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                     if (collectable.getX() < x && !collectable.getPassedAddXValue()) {
                         collectable.passedAddXValue();
                         mCollectables.add(mCollectablePool.obtainPoolItem());
-
-
-
                         attachChild(mCollectables.get(mCollectables.size() - 1));
                         sortChildren();
                     }
@@ -508,13 +531,20 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
      */
     private void addNewTarget(float x) {
         if(!mGameOver) {
+            int numTargets = mTargets.size();
             for(int i = mTargets.size() - 1; i >= 0; i--) {
                 Target target = mTargets.get(i);
                 if (target.getX() < x && !target.getPassedAddXValue()) {
                     target.passedAddXValue();
-                    mTargets.add(mTargetPool.obtainPoolItem());
-                    attachChild(mTargets.get(mTargets.size() - 1));
-                    sortChildren();
+                    if(numTargets <= MAX_TARGETS_ON_SCREEN) {
+                        mTargets.add(mTargetPool.obtainPoolItem());
+                        Target newTarget = mTargets.get(mTargets.size() - 1);
+                        if(newTarget.getHitValue()) {
+                            newTarget.reset();
+                        }
+                        attachChild(newTarget);
+                        sortChildren();
+                    }
                 }
 
             }
@@ -543,10 +573,16 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
         for(int i = mObstacles.size() - 1; i >= 0; i--) {
             Obstacle obstacle = mObstacles.get(i);
-            if(!obstacle.getClass().getName().equals("com.application.nick.crappybird.entity.ObstaclePlane")) {
+            if(obstacle.getClass().getName().equals("com.application.nick.crappybird.entity.ObstaclePlane")) {
+                if(obstacle.getVelocityX() < -210) {
+                    obstacle.setVelocityX(obstacle.getVelocityX() + 150f); //keep vertical velocity //plane keeps flying just at a lower velocity because scrolling stops
+                } else {
+                    obstacle.setVelocityX(-60f);
+                }
+            } else if (obstacle.getClass().getName().equals("com.application.nick.crappybird.entity.ObstacleBalloon")) {
+                obstacle.setVelocityX(0);
+            } else {
                 obstacle.die();
-            } else { //plane keeps flying just at a lower velocity because scrolling stops
-                obstacle.setVelocityX(-150f); //keep vertical velocity
             }
 
         }
@@ -572,14 +608,14 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
             if(!crap.getFalling() || mGameOver) {
                 break;
             } else {
+                boolean crapContact = false;
                 for(int j = mTargets.size() - 1; j >= 0; j--) {
                     Target target = mTargets.get(j);
-                    if(target.collidesWith(crap)) {
-                        target.hitByCrap();
 
-                        detachChild(mCraps.get(i));
-                        mCrapPool.recyclePoolItem(mCraps.get(i));
-                        mCraps.remove(i);
+                    //if target hits crap and the target isn't a person FALLING from a balloon...
+                    if(target.collidesWith(crap) && !(target.getClass().getName().equals("com.application.nick.crappybird.entity.TargetPerson1") && ((TargetPerson1)target).getFalling())) {
+                        target.hitByCrap();
+                        crapContact = true;
                         if(mDoublePointsActivated) {
                             addDoublePoints();
                         } else {
@@ -588,6 +624,11 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
                         mHudText.setText(String.valueOf(score));
                     }
+                }
+                if(crapContact) {
+                    detachChild(mCraps.get(i));
+                    mCrapPool.recyclePoolItem(mCraps.get(i));
+                    mCraps.remove(i);
                 }
             }
         }
@@ -611,6 +652,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                     obstacle.blastOff(velocityY);
                     obstacle.setCollidedWith();
                 } else {
+
                     mGameOver = true;
                     mResourceManager.mSound.play();
                     mBird.stopAnimation(0);
@@ -623,6 +665,24 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                     mAutoParallaxBackground.setParallaxChangePerSecond(0);
                 }
                 return;
+            } else if //if this is a hot air balloon and the bird hits the basket... knock the person out
+                    (!mGameOver &&  obstacle.getClass().getName().equals("com.application.nick.crappybird.entity.ObstacleBalloon") &&
+                            ((ObstacleBalloon)obstacle).collidesWithBasket(mBird) && !((ObstacleBalloon)obstacle).getBasketHit())
+            {
+                ((ObstacleBalloon) obstacle).birdHitsBasket();
+                mTargets.add(mTargetPool.obtainPoolItem());
+                ((TargetPerson1)(mTargets.get(mTargets.size() - 1))).setFalling(obstacle.getVelocityX(), obstacle.getX() + 28, obstacle.getY() + 110);
+                attachChild(mTargets.get(mTargets.size() - 1));
+                sortChildren();
+
+                if(mDoublePointsActivated) {
+                    addDoublePoints();
+                } else {
+                    score++;
+                }
+
+                mHudText.setText(String.valueOf(score));
+
             }
 
 
@@ -881,6 +941,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         mSceneManager.setScene(SceneManager.SceneType.SCENE_MENU);
 
     }
+
 
     @Override
     public SceneManager.SceneType getSceneType() {
