@@ -1,3 +1,4 @@
+
 apply plugin: 'com.android.application'
 
 android {
@@ -8,8 +9,8 @@ android {
         applicationId "com.application.nick.crappybird"
         minSdkVersion 16
         targetSdkVersion 21
-        versionCode 6
-        versionName "2.0"
+        versionCode 10
+        versionName "2.22"
     }
     buildTypes {
         release {

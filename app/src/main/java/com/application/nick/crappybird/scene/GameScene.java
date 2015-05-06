@@ -8,6 +8,7 @@ import com.application.nick.crappybird.entity.Collectable;
 import com.application.nick.crappybird.entity.CollectablePool;
 import com.application.nick.crappybird.entity.Crap;
 import com.application.nick.crappybird.entity.CrapPool;
+import com.application.nick.crappybird.entity.MotherShip;
 import com.application.nick.crappybird.entity.Obstacle;
 import com.application.nick.crappybird.entity.ObstacleBalloon;
 import com.application.nick.crappybird.entity.ObstaclePlane;
@@ -66,6 +67,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
     private final int NUM_TARGETS = 10; //number of targets (people) to allocate
     private final int NUM_CRAPS = 15; //number of craps to allocate
     private final int NUM_COLLECTABLES = 9; //number of generic collectables (pizza) to allocate to pool
+    private final int MOTHERSHIP_OBSTACLE_INDEX = 1; //the obstacle index to have the mothership fly across the screen
 
 
     private AutoParallaxBackground mAutoParallaxBackground;
@@ -76,7 +78,9 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
     private AnimatedSprite mBird, mMachineCrapMeter;
 
-    private TiledSprite mCrapMeter;
+    private TiledSprite mCrapMeter, mAlertSign;
+
+    private MotherShip mMotherShip;
 
     private List<Obstacle> mObstacles;
     private ObstaclePool mObstaclePool;
@@ -90,7 +94,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
     private CrapPool mCrapPool;
     private List<Crap> mCraps = new ArrayList<Crap>();
 
-    private boolean mGameOver, mOutOfCrap, mMachineCrapActivated = false, mMachineCrapping = false, mMachineCrapMeterBlinking = false, mDoublePointsActivated = false;
+    private boolean mGameOver, mOutOfCrap, mMachineCrapActivated = false, mMachineCrapping = false, mMachineCrapMeterBlinking = false,
+            mDoublePointsActivated = false, mMotherShipIncoming = false, mMotherShipOnScreen = false, mMotherShipPassed = false;
 
     private float machineCrappingTime = 0, machineCrappingLastCrapTime, doublePointsTime = 0, doublePointsLastPointTime;
 
@@ -132,7 +137,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
 
         //create entities
-        mGround = new Rectangle(0, SCREEN_HEIGHT - mResourceManager.mParallaxLayerFront.getHeight(), SCREEN_WIDTH, mResourceManager.mParallaxLayerFront.getHeight(), mVertexBufferObjectManager);
+        mGround = new Rectangle(0, SCREEN_HEIGHT - mResourceManager.mParallaxLayerFront.getHeight() + 10, SCREEN_WIDTH, mResourceManager.mParallaxLayerFront.getHeight(), mVertexBufferObjectManager);
         mGround.setColor(Color.TRANSPARENT);
         final Rectangle roof = new Rectangle(0, 0, SCREEN_WIDTH, 1, mVertexBufferObjectManager);
         roof.setColor(Color.TRANSPARENT);
@@ -146,6 +151,14 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         mCollectablePool = new CollectablePool(mResourceManager, mVertexBufferObjectManager, mGround.getY());
         mCollectablePool.batchAllocatePoolItems(NUM_COLLECTABLES);
         mCollectablePool.shufflePoolItems();
+
+        mMotherShip = new MotherShip(mResourceManager.mObstacleMotherShipTextureRegion, mVertexBufferObjectManager);
+        float alertX = (SCREEN_WIDTH - mResourceManager.mAlertTextureRegion.getWidth()) / 2;
+        float alertY = (mMotherShip.getHeight() / 2) + 20;
+
+        mAlertSign = new TiledSprite(alertX, alertY, mResourceManager.mAlertTextureRegion, mVertexBufferObjectManager);
+        mAlertSign.setScale(2);
+        mAlertSign.setVisible(false);
 
         mCollectables = new ArrayList<Collectable>();
         mCollectables.add(mCollectablePool.obtainPoolItem());
@@ -165,6 +178,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         attachChild(mObstacles.get(mObstacles.size() - 1));
         attachChild(mCollectables.get(mCollectables.size() - 1));
         attachChild(mTargets.get(mTargets.size() - 1));
+        attachChild(mAlertSign);
 
         mPhysicsWorld = new PhysicsWorld(new Vector2(0, SensorManager.GRAVITY_EARTH * 1.5f), false);
         mPhysicsWorld.setContactListener(createContactListener());
@@ -192,13 +206,6 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
             public void onUpdate(float pSecondsElapsed) {
 
 
-                for(Target target : mTargets) {
-                    if(target.getCurrentTileIndex() == 7 && target.getX() > SCREEN_WIDTH/2 && target.getX() < SCREEN_WIDTH && target.isVisible()) {
-                        Log.i("target", target.getCurrentTileIndex() + "");
-                    }
-                }
-
-
                 checkForObstacleBirdContact();
 
                 checkObstaclePosition(); //handle obstacles leaving screen and update score if bird passes them
@@ -215,6 +222,21 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
                 addNewCollectable(0); //add a new collectable if the earliest added on the screen passes x
 
+
+
+                //Handle mother ship////////////////////////////////
+                if(mObstaclePool.getObstacleIndex() >= MOTHERSHIP_OBSTACLE_INDEX && !mMotherShipIncoming && !mMotherShipOnScreen && !mMotherShipPassed) {
+                    setMotherShipIncoming(true);
+                }
+                if(mMotherShipIncoming && mObstacles.size() == 0) {
+                    setMotherShipOnScreen(true);
+                }
+                if(mMotherShipOnScreen) {
+                    checkMotherShipPosition();
+                    checkForMotherShipContact();
+                }
+
+                //Handle machine crap powerup/////////////////////////////////
                 if(mMachineCrapActivated) {
                     if(mMachineCrapping) {
                         if(machineCrappingTime > machineCrappingLastCrapTime + MACHINE_CRAPPING_TIME_BETWEEN_CRAPS) {
@@ -235,6 +257,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
                 }
 
+                //Handle double points powerup//////////////////////////////////
                 if(mDoublePointsActivated) {
                     if(mPlusTwo.isVisible()) { //flash "+2" next to score for every point scored while double points is activated
                         if(doublePointsTime > doublePointsLastPointTime + DOUBLE_POINTS_TIME_TO_SHOW_PLUS_TWO) {
@@ -249,8 +272,9 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
                 }
 
+                //Add new obstacles///////////////////////////////////
                 int obstaclesOnScreen = mObstacles.size();
-                if(obstaclesOnScreen <= MAX_OBSTACLES) { //max obstacles on the screen can't be more than x
+                if(obstaclesOnScreen <= MAX_OBSTACLES && !mMotherShipIncoming && !mMotherShipOnScreen) { //max obstacles on the screen can't be more than x. Don't add new obstacles if mother ship is coming or on screen
                     if (mObstaclePool.getObstacleIndex() < 40) {
                         addNewObstacle(mObstaclePool.getObstacleIndex() * 5); //add a new obstacle if the earliest added obstacle on the screen passes x
                     } else {
@@ -328,6 +352,9 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         final float playX = (SCREEN_WIDTH - mResourceManager.mPlayButtonTextureRegion.getWidth()) / 2;
         final float playY = overY + mResourceManager.mBoardTextureRegion.getHeight();
 
+        final float tweetX = playX;
+        final float tweetY = playY + mResourceManager.mBackButtonTextureRegion.getHeight() *1.1f;
+
         final float posX = SCREEN_WIDTH/2;
         final float posY = playY;
 
@@ -375,6 +402,26 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         playSprite.setScale(0.75f);
         mGameOverScene.registerTouchArea(playSprite);
         mGameOverScene.attachChild(playSprite);
+
+        /*
+        final TiledSprite tweetSprite = new TiledSprite(tweetX, tweetY, mResourceManager.mTweetButtonTextureRegion, mVertexBufferObjectManager) {
+
+            @Override
+            public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+                if (pSceneTouchEvent.isActionDown()) {
+                    setCurrentTileIndex(1);
+                }
+                if (pSceneTouchEvent.isActionUp()) {
+                    setCurrentTileIndex(0);
+                }
+                return true;
+            }
+        };
+        tweetSprite.setCurrentTileIndex(0);
+        tweetSprite.setScale(0.75f);
+        mGameOverScene.registerTouchArea(tweetSprite);
+        mGameOverScene.attachChild(tweetSprite);
+        */
 
         mGameOverScene.setBackgroundEnabled(false);
 
@@ -467,7 +514,112 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                 mCollectables.remove(i);
             }
         }
-}
+    }
+
+    /**
+     * used to check if the mothership has left the screen wMotherShipOnScreen = true
+     * Also adds score if leaves screen and not game over
+     */
+    private void checkMotherShipPosition() {
+            if(mMotherShip.getX() < -mMotherShip.getWidth()) {
+                setMotherShipOnScreen(false);
+                if(!mGameOver) {
+                    if (mDoublePointsActivated) {
+                        addDoublePoints();
+                    } else {
+                        score++;
+                    }
+
+                    mHudText.setText(String.valueOf(score));
+                }
+
+            }
+
+    }
+
+    /**
+     * this method checks for mothership contact with the bird and targets.
+     * if contact with targets it adds to score
+     * if contact with bird, gameover (unless machine crapping)
+     */
+    private void checkForMotherShipContact() {
+        if (!mGameOver && mMotherShip.collidesWith(mBird) && !mMotherShip.getCollidedWith()) {
+            if (mMachineCrapActivated) {
+                final Body faceBody = (Body) mBird.getUserData();
+
+                Vector2 birdVelocity = faceBody.getLinearVelocity();
+                float birdYVelocity = birdVelocity.y;
+                birdYVelocity = birdYVelocity * 30; //convert from m/s to px/sec
+                float velocityY = birdYVelocity * 2;
+                if (Math.abs(velocityY) < 500) {
+                    velocityY = (velocityY / Math.abs(velocityY)) * 500;
+                }
+                mMotherShip.blastOff(velocityY);
+                mMotherShip.setCollidedWith();
+            } else {
+
+                mGameOver = true;
+                mResourceManager.mSound.play();
+                mBird.stopAnimation(0);
+                stopCrap();
+
+                killObstacles();
+                killCollectables();
+                killTargets();
+
+                mAutoParallaxBackground.setParallaxChangePerSecond(0);
+            }
+        }
+
+        for(int i = 0; i < mTargets.size(); i++) {
+            Target target = mTargets.get(i);
+            if(mMotherShip.collidesWith(target) && !target.getHitValue() ) {
+                target.hitByCrap(mGameOver);
+                if(!mGameOver) {
+                    if (mDoublePointsActivated) {
+                        addDoublePoints();
+                    } else {
+                        score++;
+                    }
+
+                    mHudText.setText(String.valueOf(score));
+                }
+            }
+        }
+    }
+
+
+    /**
+     * used to set mother ship incoming. makes alert sign pop up
+     * @param bool
+     */
+    private void setMotherShipIncoming(boolean bool) {
+        if(bool) {
+            mMotherShipIncoming = true;
+            mAlertSign.setVisible(true);
+        } else {
+            mMotherShipIncoming = false;
+            mAlertSign.setVisible(false);
+        }
+    }
+
+    /**
+     * This method is used to make the mother ship fly across the screen
+     * @param bool if true: starts flight. if false: ends flight
+     */
+    private void setMotherShipOnScreen(boolean bool) {
+        if (bool) {
+            setMotherShipIncoming(false);
+            mMotherShipOnScreen = true;
+            mMotherShip.flyingPastScreen(true);
+            attachChild(mMotherShip);
+        } else {
+            mMotherShipOnScreen = false;
+            mMotherShipPassed = true;
+            mMotherShip.flyingPastScreen(false);
+            detachChild(mMotherShip);
+        }
+    }
 
     /**
      * adds a new obstacle when the earliest added obstacle still on the screen reaches a certain x value
@@ -475,31 +627,55 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
      */
     private void addNewObstacle(float x) {
         if(!mGameOver) {
-            for (int i = mObstacles.size() - 1; i >= 0; i--) {
-                Obstacle obstacle = mObstacles.get(i);
-                if (obstacle.getX() < x && !obstacle.getPassedAddXValue()) {
-                    obstacle.passedAddXValue();
-                    mObstacles.add(mObstaclePool.obtainPoolItem());
-                    Obstacle newObstacle = mObstacles.get(mObstacles.size() - 1);
-                    newObstacle.setX(SCREEN_WIDTH);
-                    //scale plane velocity according to number of passed obstacles
-                    if(newObstacle.getClass().getName().equals("com.application.nick.crappybird.entity.ObstaclePlane")) {
-                        if(mObstaclePool.getObstacleIndex() < 100) {
-                            newObstacle.setVelocity(-200f - mObstaclePool.getObstacleIndex(), 0);
-                        } else {
-                            newObstacle.setVelocity(-300, 0);
-                        }
-                        //if passed obstacle number x, have plane fly at random angles across the screen
-                        if(mObstaclePool.getObstacleIndex() > 50) {
-                            ((ObstaclePlane) newObstacle).randomizeYVelocity();
-                        }
-                    } else if (newObstacle.getClass().getName().equals("com.application.nick.crappybird.entity.ObstacleBalloon")) {
-                        if(mObstaclePool.getObstacleIndex() > 0) {
-                            ((ObstacleBalloon) newObstacle).randomizeYVelocity();
-                        }
+            if(mObstacles.size() == 0) {
+                mObstacles.add(mObstaclePool.obtainPoolItem());
+                Obstacle newObstacle = mObstacles.get(mObstacles.size() - 1);
+                newObstacle.setX(SCREEN_WIDTH);
+                //scale plane velocity according to number of passed obstacles
+                if (newObstacle.getClass().getName().equals("com.application.nick.crappybird.entity.ObstaclePlane")) {
+                    if (mObstaclePool.getObstacleIndex() < 100) {
+                        newObstacle.setVelocity(-200f - mObstaclePool.getObstacleIndex(), 0);
+                    } else {
+                        newObstacle.setVelocity(-300, 0);
                     }
-                    attachChild(newObstacle);
-                    sortChildren();
+                    //if passed obstacle number x, have plane fly at random angles across the screen
+                    if (mObstaclePool.getObstacleIndex() > 50) {
+                        ((ObstaclePlane) newObstacle).randomizeYVelocity();
+                    }
+                } else if (newObstacle.getClass().getName().equals("com.application.nick.crappybird.entity.ObstacleBalloon")) {
+                    if (mObstaclePool.getObstacleIndex() > 0) {
+                        ((ObstacleBalloon) newObstacle).randomizeYVelocity();
+                    }
+                }
+                attachChild(newObstacle);
+                sortChildren();
+            } else {
+                for (int i = mObstacles.size() - 1; i >= 0; i--) {
+                    Obstacle obstacle = mObstacles.get(i);
+                    if (obstacle.getX() < x && !obstacle.getPassedAddXValue()) {
+                        obstacle.passedAddXValue();
+                        mObstacles.add(mObstaclePool.obtainPoolItem());
+                        Obstacle newObstacle = mObstacles.get(mObstacles.size() - 1);
+                        newObstacle.setX(SCREEN_WIDTH);
+                        //scale plane velocity according to number of passed obstacles
+                        if (newObstacle.getClass().getName().equals("com.application.nick.crappybird.entity.ObstaclePlane")) {
+                            if (mObstaclePool.getObstacleIndex() < 100) {
+                                newObstacle.setVelocity(-200f - mObstaclePool.getObstacleIndex(), 0);
+                            } else {
+                                newObstacle.setVelocity(-300, 0);
+                            }
+                            //if passed obstacle number x, have plane fly at random angles across the screen
+                            if (mObstaclePool.getObstacleIndex() > 50) {
+                                ((ObstaclePlane) newObstacle).randomizeYVelocity();
+                            }
+                        } else if (newObstacle.getClass().getName().equals("com.application.nick.crappybird.entity.ObstacleBalloon")) {
+                            if (mObstaclePool.getObstacleIndex() > 0) {
+                                ((ObstacleBalloon) newObstacle).randomizeYVelocity();
+                            }
+                        }
+                        attachChild(newObstacle);
+                        sortChildren();
+                    }
                 }
             }
 
@@ -907,6 +1083,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                     mCrapMeter.setVisible(false);
                     mMachineCrapMeter.setVisible(false);
                     mPlusTwo.setVisible(false);
+                    mAlertSign.setVisible(false);
 
                     //display game over with score
                     displayScore();
@@ -933,6 +1110,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         mHudText.setVisible(false);
         mMachineCrapMeter.setVisible(false);
         mCrapMeter.setVisible(false);
+        mPlusTwo.setVisible(false);
+        mAlertSign.setVisible(false);
 
         /*if (!mResourceManager.mMusic.isPlaying()) {
             mResourceManager.mMusic.play();
@@ -952,5 +1131,6 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
     public void disposeScene() {
         //TODO
     }
+
 
 }

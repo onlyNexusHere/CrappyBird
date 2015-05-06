@@ -60,6 +60,7 @@ public class GameActivity extends LayoutGameActivity {
         mSceneManager = SceneManager.getInstance();
 
         pOnCreateResourcesCallback.onCreateResourcesFinished();
+
     }
 
     @Override
@@ -75,7 +76,6 @@ public class GameActivity extends LayoutGameActivity {
             }
         }));
         pOnCreateSceneCallback.onCreateSceneFinished(mSceneManager.createSplashScene());
-        //createBannerAd();
     }
 
     @Override

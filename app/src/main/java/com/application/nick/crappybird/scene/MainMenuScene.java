@@ -117,7 +117,7 @@ public class MainMenuScene extends BaseScene {
         attachChild(playButton);
 
         final float helpX = playX;
-        final float helpY = SCREEN_HEIGHT / 2 + playButton.getHeight() * 1.1f;
+        final float helpY = playY + playButton.getHeight() * 1.1f;
 
         helpButton = new TiledSprite(helpX, helpY, mResourceManager.mHelpButtonTextureRegion, mVertexBufferObjectManager) {
 
