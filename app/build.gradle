@@ -1,5 +1,20 @@
+buildscript {
+    repositories {
+        maven { url 'https://maven.fabric.io/public' }
+    }
+
+    dependencies {
+        classpath 'io.fabric.tools:gradle:1.+'
+    }
+}
 
 apply plugin: 'com.android.application'
+apply plugin: 'io.fabric'
+
+repositories {
+    maven { url 'https://maven.fabric.io/public' }
+}
+
 
 android {
     compileSdkVersion 21
@@ -9,8 +24,8 @@ android {
         applicationId "com.application.nick.crappybird"
         minSdkVersion 16
         targetSdkVersion 21
-        versionCode 10
-        versionName "2.22"
+        versionCode 11
+        versionName "2.3"
     }
     buildTypes {
         release {
@@ -27,4 +42,13 @@ dependencies {
     compile files('libs/org_andengine_extension_physics_box2d.jar')
     compile files('libs/physicsbox2d_so_files.jar')
     compile 'com.google.android.gms:play-services:7.3.0'
+    dependencies {
+        compile('com.twitter.sdk.android:tweet-composer:0.7.3@aar')
+                {
+                    transitive = true;
+                }
+    }
+    compile('com.twitter.sdk.android:twitter:1.4.0@aar') {
+        transitive = true;
+    }
 }

@@ -1,6 +1,7 @@
 package com.application.nick.crappybird;
 
 import android.content.Context;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.LinearLayout;
@@ -9,6 +10,11 @@ import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 
+import com.twitter.sdk.android.Twitter;
+import com.twitter.sdk.android.core.TwitterAuthConfig;
+import com.twitter.sdk.android.tweetcomposer.TweetComposer;
+
+import io.fabric.sdk.android.Fabric;
 import org.andengine.engine.camera.Camera;
 import org.andengine.engine.handler.timer.ITimerCallback;
 import org.andengine.engine.handler.timer.TimerHandler;
@@ -20,8 +26,15 @@ import org.andengine.entity.scene.Scene;
 import org.andengine.ui.activity.LayoutGameActivity;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
 
+import java.io.File;
+
 
 public class GameActivity extends LayoutGameActivity {
+
+    // Note: Your consumer key and secret should be obfuscated in your source code before shipping.
+    private static final String TWITTER_KEY = "Tph6xDindFcHhG1ppVMNoSbMj";
+    private static final String TWITTER_SECRET = "3TSVql418kxQkN9vTzhfo9y0baprccJgCgYjBipu7pwGPX7Kqj";
+
 
     public static final int CAMERA_WIDTH = 320;
     public static final int CAMERA_HEIGHT = 533;
@@ -36,8 +49,10 @@ public class GameActivity extends LayoutGameActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        TwitterAuthConfig authConfig = new TwitterAuthConfig(TWITTER_KEY, TWITTER_SECRET);
+        Fabric.with(this, new Twitter(authConfig));
+        Fabric.with(this, new TweetComposer());
         //setContentView(R.layout.activity_main);
-
         createBannerAd();
     }
 
@@ -103,22 +118,14 @@ public class GameActivity extends LayoutGameActivity {
                 .build();
         mAdView.loadAd(adRequest);
 
-        /*mAdView = new AdView(this);
-        mAdView.setAdSize(AdSize.BANNER);
-        mAdView.setAdUnitId(Integer.toString(R.string.banner_ad_unit_id));
-        AdRequest adRequest = new AdRequest.Builder()
-                .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
-                .build();
-        if(mAdView.getAdSize() != null || mAdView.getAdUnitId() != null) {
-            mAdView.loadAd(adRequest);
-        } else {
-            Log.i("Ad size", mAdView.getAdSize() + "");
-            Log.i("Ad unit Id", mAdView.getAdUnitId() + "");
-        }
-        ((LinearLayout)findViewById(R.id.adViewId)).addView(mAdView);
-        */
     }
 
+    public void openTwitter(int score) {
+        TweetComposer.Builder builder = new TweetComposer.Builder(this)
+                .text("I just scored " + score + " points in Crappy Bird! This game is awesome! #crappybird #addicting #craptastic https://goo.gl/eDWvTO");
+        builder.show();
+
+    }
 
     public int getMaxScore() {
         return getPreferences(Context.MODE_PRIVATE).getInt("maxScore", 0);

@@ -1,8 +1,10 @@
 package com.application.nick.crappybird.scene;
 
+import android.content.Context;
 import android.hardware.SensorManager;
 import android.util.Log;
 
+import com.application.nick.crappybird.GameActivity;
 import com.application.nick.crappybird.SceneManager;
 import com.application.nick.crappybird.entity.Collectable;
 import com.application.nick.crappybird.entity.CollectablePool;
@@ -25,6 +27,7 @@ import com.badlogic.gdx.physics.box2d.ContactListener;
 import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.Manifold;
+import com.twitter.sdk.android.tweetcomposer.TweetComposer;
 
 import org.andengine.engine.camera.hud.HUD;
 import org.andengine.engine.handler.IUpdateHandler;
@@ -67,7 +70,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
     private final int NUM_TARGETS = 10; //number of targets (people) to allocate
     private final int NUM_CRAPS = 15; //number of craps to allocate
     private final int NUM_COLLECTABLES = 9; //number of generic collectables (pizza) to allocate to pool
-    private final int MOTHERSHIP_OBSTACLE_INDEX = 1; //the obstacle index to have the mothership fly across the screen
+    private final int MOTHERSHIP_OBSTACLE_INDEX = 35; //the obstacle index to have the mothership fly across the screen
 
 
     private AutoParallaxBackground mAutoParallaxBackground;
@@ -403,7 +406,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         mGameOverScene.registerTouchArea(playSprite);
         mGameOverScene.attachChild(playSprite);
 
-        /*
+
         final TiledSprite tweetSprite = new TiledSprite(tweetX, tweetY, mResourceManager.mTweetButtonTextureRegion, mVertexBufferObjectManager) {
 
             @Override
@@ -413,6 +416,9 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                 }
                 if (pSceneTouchEvent.isActionUp()) {
                     setCurrentTileIndex(0);
+
+                    mActivity.openTwitter(score);
+
                 }
                 return true;
             }
@@ -421,7 +427,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         tweetSprite.setScale(0.75f);
         mGameOverScene.registerTouchArea(tweetSprite);
         mGameOverScene.attachChild(tweetSprite);
-        */
+
 
         mGameOverScene.setBackgroundEnabled(false);
 
