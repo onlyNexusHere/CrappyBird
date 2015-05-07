@@ -12,7 +12,10 @@ apply plugin: 'com.android.application'
 apply plugin: 'io.fabric'
 
 repositories {
-    maven { url 'https://maven.fabric.io/public' }
+    maven {
+        mavenCentral()
+        url 'https://maven.fabric.io/public'
+    }
 }
 
 
@@ -24,8 +27,8 @@ android {
         applicationId "com.application.nick.crappybird"
         minSdkVersion 16
         targetSdkVersion 21
-        versionCode 11
-        versionName "2.3"
+        versionCode 12
+        versionName "2.4"
     }
     buildTypes {
         release {
@@ -51,4 +54,5 @@ dependencies {
     compile('com.twitter.sdk.android:twitter:1.4.0@aar') {
         transitive = true;
     }
+    compile 'com.facebook.android:facebook-android-sdk:4.0.0'
 }

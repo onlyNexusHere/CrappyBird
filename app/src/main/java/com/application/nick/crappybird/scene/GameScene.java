@@ -352,11 +352,14 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         final float overX = (SCREEN_WIDTH - mResourceManager.mBoardTextureRegion.getWidth()) / 2;
         final float overY = labelY + mResourceManager.mStateTextureRegion.getHeight();
 
-        final float playX = (SCREEN_WIDTH - mResourceManager.mPlayButtonTextureRegion.getWidth()) / 2;
-        final float playY = overY + mResourceManager.mBoardTextureRegion.getHeight();
+        final float playX = SCREEN_WIDTH / 2 - mResourceManager.mPlayButtonTextureRegion.getWidth();
+        final float playY = overY + mResourceManager.mBoardTextureRegion.getHeight() + mResourceManager.mPlayButtonTextureRegion.getHeight() / 2;
 
-        final float tweetX = playX;
-        final float tweetY = playY + mResourceManager.mBackButtonTextureRegion.getHeight() *1.1f;
+        final float tweetX = SCREEN_WIDTH / 2;
+        final float tweetY = overY + mResourceManager.mBoardTextureRegion.getHeight();
+
+        final float facebookX = tweetX;
+        final float facebookY = tweetY + mResourceManager.mBackButtonTextureRegion.getHeight();
 
         final float posX = SCREEN_WIDTH/2;
         final float posY = playY;
@@ -372,9 +375,10 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
         mGameOverScene = new CameraScene(mCamera);
 
-        final TiledSprite labelSprite = new TiledSprite(readyX, readyY + mResourceManager.mStateTextureRegion.getHeight(), mResourceManager.mStateTextureRegion, mVertexBufferObjectManager);
-        labelSprite.setCurrentTileIndex(1);
-        mGameOverScene.attachChild(labelSprite);
+        final TiledSprite gameOverTitle = new TiledSprite(readyX, readyY + mResourceManager.mStateTextureRegion.getHeight() / 2, mResourceManager.mStateTextureRegion, mVertexBufferObjectManager);
+        gameOverTitle.setCurrentTileIndex(1);
+        gameOverTitle.setScale(1.3f);
+        mGameOverScene.attachChild(gameOverTitle);
 
         final Sprite boardSprite = new Sprite(overX, overY, mResourceManager.mBoardTextureRegion, mVertexBufferObjectManager);
         mGameOverScene.attachChild(boardSprite);
@@ -427,6 +431,28 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         tweetSprite.setScale(0.75f);
         mGameOverScene.registerTouchArea(tweetSprite);
         mGameOverScene.attachChild(tweetSprite);
+
+
+        final TiledSprite facebookSprite = new TiledSprite(facebookX, facebookY, mResourceManager.mFacebookButtonTextureRegion, mVertexBufferObjectManager) {
+
+            @Override
+            public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+                if (pSceneTouchEvent.isActionDown()) {
+                    setCurrentTileIndex(1);
+                }
+                if (pSceneTouchEvent.isActionUp()) {
+                    setCurrentTileIndex(0);
+
+                    mActivity.openFacebook(score);
+
+                }
+                return true;
+            }
+        };
+        facebookSprite.setCurrentTileIndex(0);
+        facebookSprite.setScale(0.75f);
+        mGameOverScene.registerTouchArea(facebookSprite);
+        mGameOverScene.attachChild(facebookSprite);
 
 
         mGameOverScene.setBackgroundEnabled(false);

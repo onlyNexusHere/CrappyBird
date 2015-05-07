@@ -6,4 +6,6 @@
 
     <string name="banner_ad_unit_id">ca-app-pub-5853705328985816/5080518683</string>
     <string name="test_banner_ad_unit_id">ca-app-pub-3940256099942544/6300978111</string>
+
+    <string name="facebook_app_id">367224960139464</string>
 </resources>

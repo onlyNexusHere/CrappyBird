@@ -6,6 +6,11 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.LinearLayout;
 
+import com.facebook.CallbackManager;
+import com.facebook.FacebookSdk;
+import com.facebook.appevents.AppEventsLogger;
+import com.facebook.share.model.ShareLinkContent;
+import com.facebook.share.widget.ShareDialog;
 import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
@@ -45,14 +50,22 @@ public class GameActivity extends LayoutGameActivity {
 
    private AdView mAdView;
 
+    CallbackManager callbackManager;
+    ShareDialog shareDialog;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //twitter stuff
         TwitterAuthConfig authConfig = new TwitterAuthConfig(TWITTER_KEY, TWITTER_SECRET);
         Fabric.with(this, new Twitter(authConfig));
         Fabric.with(this, new TweetComposer());
-        //setContentView(R.layout.activity_main);
+        //facebook stuff
+        FacebookSdk.sdkInitialize(getApplicationContext());
+        callbackManager = CallbackManager.Factory.create();
+        shareDialog = new ShareDialog(this);
+        //create banner ad from admob
         createBannerAd();
     }
 
@@ -127,6 +140,18 @@ public class GameActivity extends LayoutGameActivity {
 
     }
 
+    public void openFacebook(int score) {
+        if (ShareDialog.canShow(ShareLinkContent.class)) {
+            ShareLinkContent linkContent = new ShareLinkContent.Builder()
+                    .setContentTitle("I just scored " + score + " points in Crappy Bird!")
+                    .setContentDescription(
+                            "I can't stop playing Crappy Bird. Get it on the Play Store and try to beat my score!")
+                    .setContentUrl(Uri.parse("https://goo.gl/eDWvTO"))
+                    .build();
+            shareDialog.show(linkContent);
+        }
+    }
+
     public int getMaxScore() {
         return getPreferences(Context.MODE_PRIVATE).getInt("maxScore", 0);
     }
@@ -151,10 +176,21 @@ public class GameActivity extends LayoutGameActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+
+        // Logs 'install' and 'app activate' App Events.
+        AppEventsLogger.activateApp(this);
+    }
+
+    @Override
     protected void onPause() {
         if (mResourceManager.mMusic!=null && mResourceManager.mMusic.isPlaying()) {
             mResourceManager.mMusic.pause();
         }
         super.onPause();
+
+        // Logs 'app deactivate' App Event.
+        AppEventsLogger.deactivateApp(this);
     }
 }

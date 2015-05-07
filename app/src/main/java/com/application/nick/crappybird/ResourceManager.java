@@ -72,6 +72,7 @@ public class ResourceManager {
     public TiledTextureRegion mHelpButtonTextureRegion;
     public TiledTextureRegion mBackButtonTextureRegion;
     public TiledTextureRegion mTweetButtonTextureRegion;
+    public TiledTextureRegion mFacebookButtonTextureRegion;
 
     public ITextureRegion mTitleTextureRegion;
 
@@ -152,7 +153,7 @@ public class ResourceManager {
 
         mBitmapTextureAtlas2.load();
 
-        mSubBitmapTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 512, 600, TextureOptions.BILINEAR);
+        mSubBitmapTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 512, 700, TextureOptions.BILINEAR);
         mStateTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mSubBitmapTextureAtlas, mActivity, "ready_over.png", 0, 0, 2, 1);
         mBoardTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mSubBitmapTextureAtlas, mActivity, "board.png", 0, 60);
         mHelpTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mSubBitmapTextureAtlas, mActivity, "help.png", 0, 200);
@@ -160,7 +161,8 @@ public class ResourceManager {
         mHelpButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mSubBitmapTextureAtlas, mActivity, "help_button.png", 250, 350, 2, 1);
         mBackButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mSubBitmapTextureAtlas, mActivity, "back_button.png", 0, 425, 2, 1);
         mTweetButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mSubBitmapTextureAtlas, mActivity, "tweet_button.png", 250, 425, 2, 1);
-        mTitleTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mSubBitmapTextureAtlas, mActivity, "title.png", 0, 500);
+        mFacebookButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mSubBitmapTextureAtlas, mActivity, "facebook_button.png", 0, 500, 2, 1);
+        mTitleTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mSubBitmapTextureAtlas, mActivity, "title.png", 0, 600);
 
         mSubBitmapTextureAtlas.load();
             //load fonts
@@ -242,6 +244,7 @@ public class ResourceManager {
         mHelpButtonTextureRegion = null;
         mBackButtonTextureRegion = null;
         mTweetButtonTextureRegion = null;
+        mFacebookButtonTextureRegion = null;
 
         mTitleTextureRegion = null;
             //unload fonts
