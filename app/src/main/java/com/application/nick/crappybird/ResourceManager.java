@@ -73,6 +73,9 @@ public class ResourceManager {
     public TiledTextureRegion mBackButtonTextureRegion;
     public TiledTextureRegion mTweetButtonTextureRegion;
     public TiledTextureRegion mFacebookButtonTextureRegion;
+    public TiledTextureRegion mOtherButtonTextureRegion;
+    public TiledTextureRegion mRateButtonTextureRegion;
+    public TiledTextureRegion mShareButtonTextureRegion;
 
     public ITextureRegion mTitleTextureRegion;
 
@@ -153,7 +156,7 @@ public class ResourceManager {
 
         mBitmapTextureAtlas2.load();
 
-        mSubBitmapTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 512, 700, TextureOptions.BILINEAR);
+        mSubBitmapTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 512, 750, TextureOptions.BILINEAR);
         mStateTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mSubBitmapTextureAtlas, mActivity, "ready_over.png", 0, 0, 2, 1);
         mBoardTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mSubBitmapTextureAtlas, mActivity, "board.png", 0, 60);
         mHelpTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mSubBitmapTextureAtlas, mActivity, "help.png", 0, 200);
@@ -162,7 +165,10 @@ public class ResourceManager {
         mBackButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mSubBitmapTextureAtlas, mActivity, "back_button.png", 0, 425, 2, 1);
         mTweetButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mSubBitmapTextureAtlas, mActivity, "tweet_button.png", 250, 425, 2, 1);
         mFacebookButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mSubBitmapTextureAtlas, mActivity, "facebook_button.png", 0, 500, 2, 1);
-        mTitleTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mSubBitmapTextureAtlas, mActivity, "title.png", 0, 600);
+        mRateButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mSubBitmapTextureAtlas, mActivity, "rate_button.png", 250, 500, 2, 1);
+        mOtherButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mSubBitmapTextureAtlas, mActivity, "other_button.png", 0, 575, 2, 1);
+        mShareButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mSubBitmapTextureAtlas, mActivity, "share_button.png", 250, 575, 2, 1);
+        mTitleTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mSubBitmapTextureAtlas, mActivity, "title.png", 0, 650);
 
         mSubBitmapTextureAtlas.load();
             //load fonts
@@ -245,6 +251,9 @@ public class ResourceManager {
         mBackButtonTextureRegion = null;
         mTweetButtonTextureRegion = null;
         mFacebookButtonTextureRegion = null;
+        mOtherButtonTextureRegion = null;
+        mShareButtonTextureRegion = null;
+        mRateButtonTextureRegion = null;
 
         mTitleTextureRegion = null;
             //unload fonts

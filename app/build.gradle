@@ -27,12 +27,11 @@ android {
         applicationId "com.application.nick.crappybird"
         minSdkVersion 16
         targetSdkVersion 21
-        versionCode 12
-        versionName "2.4"
+        versionCode 14
+        versionName "2.5"
     }
     buildTypes {
         release {
-            minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
@@ -54,5 +53,4 @@ dependencies {
     compile('com.twitter.sdk.android:twitter:1.4.0@aar') {
         transitive = true;
     }
-    compile 'com.facebook.android:facebook-android-sdk:4.0.0'
 }

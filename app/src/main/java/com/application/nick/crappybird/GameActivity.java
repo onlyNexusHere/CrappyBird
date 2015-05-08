@@ -1,16 +1,14 @@
 package com.application.nick.crappybird;
 
+import android.content.ActivityNotFoundException;
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
-import com.facebook.CallbackManager;
-import com.facebook.FacebookSdk;
-import com.facebook.appevents.AppEventsLogger;
-import com.facebook.share.model.ShareLinkContent;
-import com.facebook.share.widget.ShareDialog;
 import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
@@ -50,9 +48,6 @@ public class GameActivity extends LayoutGameActivity {
 
    private AdView mAdView;
 
-    CallbackManager callbackManager;
-    ShareDialog shareDialog;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,10 +56,7 @@ public class GameActivity extends LayoutGameActivity {
         TwitterAuthConfig authConfig = new TwitterAuthConfig(TWITTER_KEY, TWITTER_SECRET);
         Fabric.with(this, new Twitter(authConfig));
         Fabric.with(this, new TweetComposer());
-        //facebook stuff
-        FacebookSdk.sdkInitialize(getApplicationContext());
-        callbackManager = CallbackManager.Factory.create();
-        shareDialog = new ShareDialog(this);
+
         //create banner ad from admob
         createBannerAd();
     }
@@ -133,24 +125,64 @@ public class GameActivity extends LayoutGameActivity {
 
     }
 
-    public void openTwitter(int score) {
+    public void openTwitterShare(int score) {
         TweetComposer.Builder builder = new TweetComposer.Builder(this)
                 .text("I just scored " + score + " points in Crappy Bird! This game is awesome! #crappybird #addicting #craptastic https://goo.gl/eDWvTO");
         builder.show();
 
     }
 
-    public void openFacebook(int score) {
-        if (ShareDialog.canShow(ShareLinkContent.class)) {
-            ShareLinkContent linkContent = new ShareLinkContent.Builder()
-                    .setContentTitle("I just scored " + score + " points in Crappy Bird!")
-                    .setContentDescription(
-                            "I can't stop playing Crappy Bird. Get it on the Play Store and try to beat my score!")
-                    .setContentUrl(Uri.parse("https://goo.gl/eDWvTO"))
-                    .build();
-            shareDialog.show(linkContent);
+    public void openFacebookShare(int score) {
+
+        String application = "com.facebook.katana";
+
+        String url = "https://goo.gl/eDWvTO";
+
+
+        Intent intent = this.getPackageManager().getLaunchIntentForPackage(application);
+        if (intent != null) {
+            // The application exists
+            Intent shareIntent = new Intent();
+            shareIntent.setAction(Intent.ACTION_SEND);
+            shareIntent.setPackage(application);
+            shareIntent.setType("text/plain");
+            shareIntent.putExtra(Intent.EXTRA_TEXT, url);
+            // Start the specific social application
+            startActivity(shareIntent);
+        } else {
+            // The application does not exist
+
+            String sharerUrl = "https://www.facebook.com/sharer/sharer.php?u=" + url;
+            Intent shareIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(sharerUrl));
+            startActivity(shareIntent);
+
+        }
+
+    }
+
+    public void openOtherShare(int score) {
+        String message = "I just scored " + score + " points in Crappy Bird! This game is awesome. Get it on the Play Store and try to beat my score. https://goo.gl/eDWvTO";
+        Intent share = new Intent(Intent.ACTION_SEND);
+        share.setType("text/plain");
+        share.putExtra(Intent.EXTRA_TEXT, message);
+
+        startActivity(Intent.createChooser(share, "Share"));
+    }
+
+    public void openRate() {
+        Uri uri = Uri.parse("market://details?id=" + getPackageName());
+        Intent goToMarket = new Intent(Intent.ACTION_VIEW, uri);
+        try {
+            startActivity(goToMarket);
+        } catch (ActivityNotFoundException e) {
+            CharSequence text = "Could not launch Play Store";
+            int duration = Toast.LENGTH_LONG;
+
+            Toast toast = Toast.makeText(this, text, duration);
+            toast.show();
         }
     }
+
 
     public int getMaxScore() {
         return getPreferences(Context.MODE_PRIVATE).getInt("maxScore", 0);
@@ -179,8 +211,7 @@ public class GameActivity extends LayoutGameActivity {
     protected void onResume() {
         super.onResume();
 
-        // Logs 'install' and 'app activate' App Events.
-        AppEventsLogger.activateApp(this);
+
     }
 
     @Override
@@ -190,7 +221,5 @@ public class GameActivity extends LayoutGameActivity {
         }
         super.onPause();
 
-        // Logs 'app deactivate' App Event.
-        AppEventsLogger.deactivateApp(this);
     }
 }

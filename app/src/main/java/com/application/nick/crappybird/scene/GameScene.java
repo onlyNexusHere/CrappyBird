@@ -1,10 +1,7 @@
 package com.application.nick.crappybird.scene;
 
-import android.content.Context;
 import android.hardware.SensorManager;
-import android.util.Log;
 
-import com.application.nick.crappybird.GameActivity;
 import com.application.nick.crappybird.SceneManager;
 import com.application.nick.crappybird.entity.Collectable;
 import com.application.nick.crappybird.entity.CollectablePool;
@@ -27,7 +24,6 @@ import com.badlogic.gdx.physics.box2d.ContactListener;
 import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.Manifold;
-import com.twitter.sdk.android.tweetcomposer.TweetComposer;
 
 import org.andengine.engine.camera.hud.HUD;
 import org.andengine.engine.handler.IUpdateHandler;
@@ -98,7 +94,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
     private List<Crap> mCraps = new ArrayList<Crap>();
 
     private boolean mGameOver, mOutOfCrap, mMachineCrapActivated = false, mMachineCrapping = false, mMachineCrapMeterBlinking = false,
-            mDoublePointsActivated = false, mMotherShipIncoming = false, mMotherShipOnScreen = false, mMotherShipPassed = false;
+            mDoublePointsActivated = false, mMotherShipIncoming = false, mMotherShipOnScreen = false, mMotherShipPassed = false, mSharingVisible = false;
 
     private float machineCrappingTime = 0, machineCrappingLastCrapTime, doublePointsTime = 0, doublePointsLastPointTime;
 
@@ -109,7 +105,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
     private CameraScene mGameOverScene;
     private Text scoreText;
     private Text mostText;
-    private TiledSprite mPlusTwo;
+    private TiledSprite mPlusTwo, playButton, backButton, rateButton, shareButton, facebookButton, twitterButton, otherButton;
 
     private Rectangle mGround;
 
@@ -271,6 +267,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                     doublePointsTime += pSecondsElapsed;
                     if(doublePointsTime > MAX_DOUBLE_POINTS_TIME) {
                         setDoublePoints(false);
+                        mPlusTwo.setVisible(false);
                     }
 
                 }
@@ -355,11 +352,17 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         final float playX = SCREEN_WIDTH / 2 - mResourceManager.mPlayButtonTextureRegion.getWidth();
         final float playY = overY + mResourceManager.mBoardTextureRegion.getHeight() + mResourceManager.mPlayButtonTextureRegion.getHeight() / 2;
 
-        final float tweetX = SCREEN_WIDTH / 2;
-        final float tweetY = overY + mResourceManager.mBoardTextureRegion.getHeight();
+        final float rateX = SCREEN_WIDTH / 2;
+        final float rateY = overY + mResourceManager.mBoardTextureRegion.getHeight();
 
-        final float facebookX = tweetX;
-        final float facebookY = tweetY + mResourceManager.mBackButtonTextureRegion.getHeight();
+        final float shareX = rateX;
+        final float shareY = rateY + mResourceManager.mBackButtonTextureRegion.getHeight();
+
+        final float facebookX = playX;
+        final float facebookY = shareY;
+
+        final float twitterX = playX;
+        final float twitterY = rateY;
 
         final float posX = SCREEN_WIDTH/2;
         final float posY = playY;
@@ -391,68 +394,156 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         mostText.setText(String.valueOf(most));
         mGameOverScene.attachChild(mostText);
 
-        final TiledSprite playSprite = new TiledSprite(playX, playY, mResourceManager.mPlayButtonTextureRegion, mVertexBufferObjectManager) {
+        playButton = new TiledSprite(playX, playY, mResourceManager.mPlayButtonTextureRegion, mVertexBufferObjectManager) {
 
             @Override
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
                 if (pSceneTouchEvent.isActionDown()) {
-                    setCurrentTileIndex(1);
+                    if(!mSharingVisible) {
+                        setCurrentTileIndex(1);
+                    } /*else { //if the twitter button is visible on top of the play button
+                        twitterButton.setCurrentTileIndex(1);
+                    }*/
                 }
                 if (pSceneTouchEvent.isActionUp()) {
-                    clearChildScene();
-                    mSceneManager.setScene(SceneManager.SceneType.SCENE_GAME);
+                    if(!mSharingVisible) {
+                        clearChildScene(); //start new game
+                        mSceneManager.setScene(SceneManager.SceneType.SCENE_GAME);
+                    } /*else { //if the twitter button is visible on top of the play button
+                        twitterButton.setCurrentTileIndex(0);
+                        mActivity.openTwitterShare(score);
+                    }*/
                 }
                 return true;
             }
         };
-        playSprite.setCurrentTileIndex(0);
-        playSprite.setScale(0.75f);
-        mGameOverScene.registerTouchArea(playSprite);
-        mGameOverScene.attachChild(playSprite);
+        playButton.setCurrentTileIndex(0);
+        playButton.setScale(0.75f);
+        mGameOverScene.registerTouchArea(playButton);
+        mGameOverScene.attachChild(playButton);
 
 
-        final TiledSprite tweetSprite = new TiledSprite(tweetX, tweetY, mResourceManager.mTweetButtonTextureRegion, mVertexBufferObjectManager) {
+        twitterButton = new TiledSprite(twitterX, twitterY, mResourceManager.mTweetButtonTextureRegion, mVertexBufferObjectManager) {
 
             @Override
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
                 if (pSceneTouchEvent.isActionDown()) {
-                    setCurrentTileIndex(1);
+                    if(mSharingVisible) { //if the twitter button is visible on top of the play button
+                        twitterButton.setCurrentTileIndex(1);
+                    }
                 }
                 if (pSceneTouchEvent.isActionUp()) {
-                    setCurrentTileIndex(0);
-
-                    mActivity.openTwitter(score);
-
+                    if(mSharingVisible) { //if the twitter button is visible on top of the play button
+                        twitterButton.setCurrentTileIndex(0);
+                        mActivity.openTwitterShare(score);
+                    }
                 }
                 return true;
             }
         };
-        tweetSprite.setCurrentTileIndex(0);
-        tweetSprite.setScale(0.75f);
-        mGameOverScene.registerTouchArea(tweetSprite);
-        mGameOverScene.attachChild(tweetSprite);
 
+        twitterButton.setCurrentTileIndex(0);
+        twitterButton.setScale(0.75f);
+        twitterButton.setVisible(false);
+        mGameOverScene.registerTouchArea(twitterButton);
+        mGameOverScene.attachChild(twitterButton);
 
-        final TiledSprite facebookSprite = new TiledSprite(facebookX, facebookY, mResourceManager.mFacebookButtonTextureRegion, mVertexBufferObjectManager) {
+        facebookButton = new TiledSprite(facebookX, facebookY, mResourceManager.mFacebookButtonTextureRegion, mVertexBufferObjectManager) {
 
             @Override
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
                 if (pSceneTouchEvent.isActionDown()) {
-                    setCurrentTileIndex(1);
+                    if(mSharingVisible) {
+                        setCurrentTileIndex(1);
+                    }
                 }
                 if (pSceneTouchEvent.isActionUp()) {
-                    setCurrentTileIndex(0);
+                    if(mSharingVisible) {
+                        setCurrentTileIndex(0);
+                        mActivity.openFacebookShare(score);
+                    }
+                }
+                return true;
+            }
+        };
+        facebookButton.setCurrentTileIndex(0);
+        facebookButton.setScale(0.75f);
+        mGameOverScene.registerTouchArea(facebookButton);
+        mGameOverScene.attachChild(facebookButton);
+        facebookButton.setVisible(false);
 
-                    mActivity.openFacebook(score);
+
+        rateButton = new TiledSprite(rateX, rateY, mResourceManager.mRateButtonTextureRegion, mVertexBufferObjectManager) {
+
+            @Override
+            public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+                if (pSceneTouchEvent.isActionDown()) {
+                    if(!mSharingVisible) {
+                        setCurrentTileIndex(1);
+                    } else { //if the other button is visible on top of the rate button
+                        otherButton.setCurrentTileIndex(1);
+                    }
+                }
+                if (pSceneTouchEvent.isActionUp()) {
+                    if(!mSharingVisible) {
+                        setCurrentTileIndex(0);
+                        mActivity.openRate();
+                    } else { //if the other button is visible on top of the rate button
+                        otherButton.setCurrentTileIndex(0);
+                        mActivity.openOtherShare(score);
+                    }
 
                 }
                 return true;
             }
         };
-        facebookSprite.setCurrentTileIndex(0);
-        facebookSprite.setScale(0.75f);
-        mGameOverScene.registerTouchArea(facebookSprite);
-        mGameOverScene.attachChild(facebookSprite);
+        rateButton.setCurrentTileIndex(0);
+        rateButton.setScale(0.75f);
+        mGameOverScene.registerTouchArea(rateButton);
+        mGameOverScene.attachChild(rateButton);
+
+        otherButton = new TiledSprite(rateX, rateY, mResourceManager.mOtherButtonTextureRegion, mVertexBufferObjectManager);
+        otherButton.setCurrentTileIndex(0);
+        otherButton.setScale(0.75f);
+        otherButton.setVisible(false);
+        mGameOverScene.attachChild(otherButton);
+
+
+        shareButton = new TiledSprite(shareX, shareY, mResourceManager.mShareButtonTextureRegion, mVertexBufferObjectManager) {
+
+            @Override
+            public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+                if (pSceneTouchEvent.isActionDown()) {
+                    if(!mSharingVisible) {
+                        setCurrentTileIndex(1);
+                    } else { //if the back button is visible on top of the share button
+                        backButton.setCurrentTileIndex(1);
+                    }
+
+                }
+                if (pSceneTouchEvent.isActionUp()) {
+                    if(!mSharingVisible) {
+                        setCurrentTileIndex(0);
+                        setSharingVisible(true);
+                    } else { //if the back button is visible on top of the share button
+                        backButton.setCurrentTileIndex(0);
+                        setSharingVisible(false);
+
+                    }
+                }
+                return true;
+            }
+        };
+        shareButton.setCurrentTileIndex(0);
+        shareButton.setScale(0.75f);
+        mGameOverScene.registerTouchArea(shareButton);
+        mGameOverScene.attachChild(shareButton);
+
+        backButton = new TiledSprite(shareX, shareY, mResourceManager.mBackButtonTextureRegion, mVertexBufferObjectManager);
+        backButton.setCurrentTileIndex(0);
+        backButton.setScale(0.75f);
+        backButton.setVisible(false);
+        mGameOverScene.attachChild(backButton);
 
 
         mGameOverScene.setBackgroundEnabled(false);
@@ -491,6 +582,33 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         mCamera.setHUD(gameHUD);
     }
 
+
+    private void setSharingVisible(boolean bool) {
+        if (bool) {
+            mSharingVisible = true;
+
+            playButton.setVisible(false);
+            shareButton.setVisible(false);
+            rateButton.setVisible(false);
+
+            facebookButton.setVisible(true);
+            twitterButton.setVisible(true);
+            otherButton.setVisible(true);
+            backButton.setVisible(true);
+        } else {
+            mSharingVisible = false;
+
+            facebookButton.setVisible(false);
+            twitterButton.setVisible(false);
+            otherButton.setVisible(false);
+            backButton.setVisible(false);
+
+            playButton.setVisible(true);
+            shareButton.setVisible(true);
+            rateButton.setVisible(true);
+
+        }
+    }
     /**
      * Checks if obstacles have left screen and recycles if they have. Also updates score if bird has passed them.
      */
@@ -1139,18 +1257,19 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
     @Override
     public void onBackKeyPressed() {
-        mHudText.setVisible(false);
-        mMachineCrapMeter.setVisible(false);
-        mCrapMeter.setVisible(false);
-        mPlusTwo.setVisible(false);
-        mAlertSign.setVisible(false);
+        if(mSharingVisible) {
+            setSharingVisible(false);
+        } else {
 
-        /*if (!mResourceManager.mMusic.isPlaying()) {
-            mResourceManager.mMusic.play();
-        }*/
+            mHudText.setVisible(false);
+            mMachineCrapMeter.setVisible(false);
+            mCrapMeter.setVisible(false);
+            mPlusTwo.setVisible(false);
+            mAlertSign.setVisible(false);
 
-        mSceneManager.setScene(SceneManager.SceneType.SCENE_MENU);
+            mSceneManager.setScene(SceneManager.SceneType.SCENE_MENU);
 
+        }
     }
 
 
