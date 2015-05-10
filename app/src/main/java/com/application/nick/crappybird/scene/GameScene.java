@@ -62,10 +62,11 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
     private final float MAX_DOUBLE_POINTS_TIME = 10;
     private final float MAX_TARGETS_ON_SCREEN = 10;
     private final float DOUBLE_POINTS_TIME_TO_SHOW_PLUS_TWO = 0.4f;
+    private final float MAX_COLLECTABLES_ON_SCREEN = 3;
     private final int NUM_OBSTACLES = 20; //number of obstacles to allocate to pool
     private final int NUM_TARGETS = 10; //number of targets (people) to allocate
     private final int NUM_CRAPS = 15; //number of craps to allocate
-    private final int NUM_COLLECTABLES = 9; //number of generic collectables (pizza) to allocate to pool
+    private final int NUM_COLLECTABLES = 20; //number of generic collectables (pizza) to allocate to pool
     private final int MOTHERSHIP_OBSTACLE_INDEX = 35; //the obstacle index to have the mothership fly across the screen
 
 
@@ -219,8 +220,9 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
                 addNewTarget(SCREEN_WIDTH / 2); //add a new target if the earlist added on the screen passes x
 
-                addNewCollectable(0); //add a new collectable if the earliest added on the screen passes x
-
+                if(mCollectables.size() <= MAX_COLLECTABLES_ON_SCREEN) {
+                    addNewCollectable(SCREEN_WIDTH * 3 / 4); //add a new collectable if the earliest added on the screen passes x
+                }
 
 
                 //Handle mother ship////////////////////////////////
