@@ -8,6 +8,7 @@ import com.application.nick.crappybird.entity.Tutorial;
 
 import org.andengine.engine.handler.IUpdateHandler;
 import org.andengine.entity.primitive.Rectangle;
+import org.andengine.entity.scene.CameraScene;
 import org.andengine.entity.scene.background.AutoParallaxBackground;
 import org.andengine.entity.scene.background.ParallaxBackground;
 import org.andengine.entity.shape.IShape;
@@ -25,6 +26,8 @@ import java.util.List;
  */
 public class MainMenuScene extends BaseScene {
 
+    private final int MAX_TUTORIAL_TILE_INDEX = 3;
+
     private BasicBird mBird;
     private CrapPool mCrapPool;
     private List<Crap> mCraps = new ArrayList<Crap>();
@@ -41,6 +44,8 @@ public class MainMenuScene extends BaseScene {
     private ParallaxBackground.ParallaxEntity parallaxLayerBack;
     private ParallaxBackground.ParallaxEntity parallaxLayerMiddle;
     private ParallaxBackground.ParallaxEntity parallaxLayerFront;
+
+    private CameraScene mTutorialScene;
 
 
     @Override
@@ -75,15 +80,10 @@ public class MainMenuScene extends BaseScene {
 
         if (!mResourceManager.mMusic.isPlaying()) {
             mResourceManager.mMusic.play();
+            mResourceManager.mMusic.setVolume(0.6f);
             mResourceManager.mMusic.setLooping(true);
         }
 
-
-        final float tutorialX = -mResourceManager.mTutorialTextureRegion.getWidth();
-        final float tutorialY = 0;
-
-        mTutorial = new Tutorial(tutorialX, tutorialY, mResourceManager.mTutorialTextureRegion, mVertexBufferObjectManager);
-        attachChild(mTutorial);
 
         final float playX = (SCREEN_WIDTH - mResourceManager.mPlayButtonTextureRegion.getWidth()) / 2;
         final float playY = SCREEN_HEIGHT / 2;
@@ -97,9 +97,9 @@ public class MainMenuScene extends BaseScene {
                         setCurrentTileIndex(1);
                     }
                     if (pSceneTouchEvent.isActionUp()) {
-                        if (mResourceManager.mMusic.isPlaying()) {
-                            mResourceManager.mMusic.stop();
-                        }
+                        //if (mResourceManager.mMusic.isPlaying()) {
+                        //    mResourceManager.mMusic.stop();
+                        //}
                         setCurrentTileIndex(0);
                         playTransition = true;
                         mBird.setXVelocity(90);
@@ -123,29 +123,17 @@ public class MainMenuScene extends BaseScene {
 
             @Override
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
-                if(helpButton.isVisible()) {
                     if (pSceneTouchEvent.isActionDown()) {
                         setCurrentTileIndex(1);
                     }
 
                     if (pSceneTouchEvent.isActionUp()) {
                         setCurrentTileIndex(0);
-
-                        transitionHelpOn(true);
-
-                    }
-                } else if(backButton.isVisible()) { //because back button shows up on top of help button when tutorial is visible
-                    if (pSceneTouchEvent.isActionDown()) {
-                        backButton.setCurrentTileIndex(1);
-                    }
-
-                    if (pSceneTouchEvent.isActionUp()) {
-                        backButton.setCurrentTileIndex(0);
-
-                        transitionHelpOff(true);
+                        showingTutorial = true;
+                        setChildScene(mTutorialScene, false, true, true); //open tutorial scene
 
                     }
-                }
+
                 return true;
             }
         };
@@ -155,14 +143,6 @@ public class MainMenuScene extends BaseScene {
         helpButton.setScale(0.75f);
         registerTouchArea(helpButton);
         attachChild(helpButton);
-
-        backButton = new TiledSprite(helpX, helpY, mResourceManager.mBackButtonTextureRegion, mVertexBufferObjectManager);
-
-        backButton.setCurrentTileIndex(0);
-        backButton.setScale(0.75f);
-        attachChild(backButton);
-        backButton.setVisible(false);
-
         final Rectangle ground = new Rectangle(0, SCREEN_HEIGHT - mResourceManager.mParallaxLayerFront.getHeight(), SCREEN_WIDTH, mResourceManager.mParallaxLayerFront.getHeight(), mVertexBufferObjectManager);
         ground.setColor(Color.TRANSPARENT);
 
@@ -192,21 +172,78 @@ public class MainMenuScene extends BaseScene {
                     mSceneManager.setScene(SceneManager.SceneType.SCENE_GAME);
                 }
 
-                if(helpTransitionOn) {
-                    if(mTutorial.getX() > 0) {
-                        transitionHelpOn(false);
-                    }
-                }
-
-                if(helpTransitionOff) {
-                    if(mTutorial.getX() > SCREEN_WIDTH) {
-                        transitionHelpOff(false);
-                    }
-                }
-
 
             }
         });
+
+
+        mTutorialScene = new CameraScene(mCamera);
+        mTutorialScene.setBackgroundEnabled(false);
+
+        final float boardX = (SCREEN_WIDTH - mResourceManager.mTutorialBoardTextureRegion.getWidth()) / 2;
+        final float boardY = boardX;
+
+        final float tutorialX = boardX;
+        final float tutorialY = boardY;
+
+        final float nextX = boardX + mResourceManager.mTutorialBoardTextureRegion.getWidth() - mResourceManager.mNextButtonTextureRegion.getWidth();
+        final float nextY = boardY + mResourceManager.mTutorialBoardTextureRegion.getHeight() - mResourceManager.mNextButtonTextureRegion.getHeight();
+
+        final float closeX = boardX;
+        final float closeY = nextY;
+
+        final Sprite tutorialBoard = new Sprite(boardX, boardY, mResourceManager.mTutorialBoardTextureRegion, mVertexBufferObjectManager);
+        mTutorialScene.attachChild(tutorialBoard);
+
+        final TiledSprite tutorial = new TiledSprite(tutorialX, tutorialY, mResourceManager.mTutorialTextureRegion, mVertexBufferObjectManager);
+        mTutorialScene.attachChild(tutorial);
+
+        final TiledSprite nextButton = new TiledSprite(nextX, nextY, mResourceManager.mNextButtonTextureRegion, mVertexBufferObjectManager) {
+
+            @Override
+            public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+                if (pSceneTouchEvent.isActionDown()) {
+                    setCurrentTileIndex(1);
+
+                }
+                if (pSceneTouchEvent.isActionUp()) {
+                    setCurrentTileIndex(0);
+                    int tutorialTileIndex = tutorial.getCurrentTileIndex();
+                    if(tutorialTileIndex == MAX_TUTORIAL_TILE_INDEX) {
+                        tutorial.setCurrentTileIndex(0);
+                    } else {
+                        tutorial.setCurrentTileIndex(tutorialTileIndex + 1);
+                    }
+                }
+                return true;
+            }
+        };
+        nextButton.setCurrentTileIndex(0);
+        nextButton.setScale(0.75f);
+        mTutorialScene.registerTouchArea(nextButton);
+        mTutorialScene.attachChild(nextButton);
+
+
+        final TiledSprite closeButton = new TiledSprite(closeX, closeY, mResourceManager.mCloseButtonTextureRegion, mVertexBufferObjectManager) {
+
+            @Override
+            public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+                if (pSceneTouchEvent.isActionDown()) {
+                    setCurrentTileIndex(1);
+                }
+                if (pSceneTouchEvent.isActionUp()) {
+                    setCurrentTileIndex(0);
+                    showingTutorial = false;
+                    tutorial.setCurrentTileIndex(0);
+                    clearChildScene();
+                }
+                return true;
+            }
+        };
+        closeButton.setCurrentTileIndex(0);
+        closeButton.setScale(0.75f);
+        mTutorialScene.registerTouchArea(closeButton);
+        mTutorialScene.attachChild(closeButton);
 
     }
 
@@ -230,58 +267,7 @@ public class MainMenuScene extends BaseScene {
 
     }
 
-    /**
-     * for transitioning the tutorial onto the screen
-     * @param starting true if the transition is starting. false if ending
-     */
-    private void transitionHelpOn(boolean starting) {
-        if(starting) {
-            helpTransitionOn = true;
 
-            title.setVisible(false);
-            helpButton.setVisible(false);
-            playButton.setVisible(false);
-
-            mBird.setXVelocity(150);
-            mTutorial.setXVelocity(150);
-        } else {
-            helpTransitionOn = false;
-
-            mBird.setXVelocity(0);
-            mBird.setX(-SCREEN_WIDTH + (SCREEN_WIDTH - mResourceManager.mBirdTextureRegion.getWidth()) / 2);
-            mTutorial.setXVelocity(0);
-
-            backButton.setVisible(true);
-            showingTutorial = true;
-        }
-    }
-
-    /**
-     * for transitioning the tutorial off the screen
-     * @param starting true if the transition is starting. false if ending
-     */
-    private void transitionHelpOff(boolean starting) {
-        if(starting) {
-            helpTransitionOff = true;
-
-            mBird.setXVelocity(150);
-            mTutorial.setXVelocity(150);
-
-            backButton.setVisible(false);
-            showingTutorial = false;
-
-        } else {
-            helpTransitionOff = false;
-
-            mBird.setXVelocity(0);
-            mTutorial.setXVelocity(0);
-            mTutorial.setX(-SCREEN_WIDTH);
-
-            title.setVisible(true);
-            helpButton.setVisible(true);
-            playButton.setVisible(true);
-        }
-    }
 
     private void dropCrap(float currentXPosition, float currentYPosition) {
         if(mCraps.size() == MAX_CRAPS) {
@@ -321,7 +307,7 @@ public class MainMenuScene extends BaseScene {
     @Override
     public void onBackKeyPressed() {
         if(showingTutorial) {
-            transitionHelpOff(true);
+            clearChildScene();
         } else {
             mResourceManager.unloadGameResources();
             mActivity.finish();

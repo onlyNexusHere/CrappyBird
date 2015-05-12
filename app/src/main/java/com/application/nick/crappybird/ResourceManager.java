@@ -54,11 +54,15 @@ public class ResourceManager {
     public TiledTextureRegion mAlertTextureRegion;
     public TiledTextureRegion mPlusTwoTextureRegion;
 
-    public TiledTextureRegion mTutorialTextureRegion;
-
 
     private BitmapTextureAtlas mBitmapTextureAtlas2;
     public TiledTextureRegion mObstacleMotherShipTextureRegion;
+
+    private BitmapTextureAtlas mTutorialBitmapTextureAtlas;
+    public TiledTextureRegion mTutorialTextureRegion;
+    public ITextureRegion mTutorialBoardTextureRegion;
+    public TiledTextureRegion mNextButtonTextureRegion;
+    public TiledTextureRegion mCloseButtonTextureRegion;
 
 
     private BitmapTextureAtlas mSubBitmapTextureAtlas;
@@ -147,7 +151,7 @@ public class ResourceManager {
         mAlertTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "alert_sign.png", 0, 700, 1, 1);
         mPlusTwoTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "plus_two.png", 50, 700, 1, 1);
 
-        mTutorialTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "tutorial.png", 0, 750, 1, 1);
+        //mTutorialTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "tutorial.png", 0, 750, 1, 1);
 
         mBitmapTextureAtlas.load();
 
@@ -155,6 +159,15 @@ public class ResourceManager {
         mObstacleMotherShipTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas2, mActivity, "mothership.png", 0, 0, 1, 1);
 
         mBitmapTextureAtlas2.load();
+
+        mTutorialBitmapTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 300, 1800, TextureOptions.BILINEAR);
+        mTutorialTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mTutorialBitmapTextureAtlas, mActivity, "tutorial.png", 0, 0, 1, 4);
+        mTutorialBoardTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mTutorialBitmapTextureAtlas, mActivity, "tutorial_board.png", 0, 1210);
+        mNextButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mTutorialBitmapTextureAtlas, mActivity, "next_button.png", 0, 1600, 2, 1);
+        mCloseButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mTutorialBitmapTextureAtlas, mActivity, "close_button.png", 0, 1700, 2, 1);
+
+        mTutorialBitmapTextureAtlas.load();
+
 
         mSubBitmapTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 512, 750, TextureOptions.BILINEAR);
         mStateTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mSubBitmapTextureAtlas, mActivity, "ready_over.png", 0, 0, 2, 1);
@@ -194,13 +207,14 @@ public class ResourceManager {
         SoundFactory.setAssetBasePath("mfx/");
         try {
             mSound = SoundFactory.createSoundFromAsset(mActivity.getEngine().getSoundManager(), mActivity, "metal_hit.ogg");
+            mSound.setVolume(0.75f);
         } catch (final IOException e) {
             Debug.e(e);
         }
 
         MusicFactory.setAssetBasePath("mfx/");
         try {
-            mMusic = MusicFactory.createMusicFromAsset(mActivity.getEngine().getMusicManager(), mActivity, "bird_sound.ogg");
+            mMusic = MusicFactory.createMusicFromAsset(mActivity.getEngine().getMusicManager(), mActivity, "music.ogg");
             mMusic.setLooping(true);
         } catch (final IOException e) {
             Debug.e(e);
@@ -212,6 +226,7 @@ public class ResourceManager {
         mAutoParallaxBackgroundTexture.unload();
         mBitmapTextureAtlas.unload();
         mSubBitmapTextureAtlas.unload();
+        mTutorialBitmapTextureAtlas.unload();
 
         mAutoParallaxBackgroundTexture = null;
         mParallaxLayerFront = null;
@@ -239,6 +254,8 @@ public class ResourceManager {
         mPlusTwoTextureRegion = null;
 
         mTutorialTextureRegion = null;
+        mTutorialBoardTextureRegion = null;
+
 
         mStateTextureRegion = null;
         mMeterTextureRegion = null;
@@ -254,6 +271,9 @@ public class ResourceManager {
         mOtherButtonTextureRegion = null;
         mShareButtonTextureRegion = null;
         mRateButtonTextureRegion = null;
+        mCloseButtonTextureRegion = null;
+        mNextButtonTextureRegion = null;
+
 
         mTitleTextureRegion = null;
             //unload fonts

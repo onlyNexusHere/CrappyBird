@@ -1220,6 +1220,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
                 if (("bird".equals(userDataA) && "ground".equals(userDataB)) || ("ground".equals(userDataA) && "bird".equals(userDataB))) {
                     mGameOver = true;
+                    mResourceManager.mSound.play();
                     mBird.stopAnimation(0);
                     killObstacles();
                     killCollectables();
