@@ -3,6 +3,8 @@ package com.application.nick.crappybird;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -13,6 +15,8 @@ import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 
+import com.parse.Parse;
+import com.parse.ParseUser;
 import com.twitter.sdk.android.Twitter;
 import com.twitter.sdk.android.core.TwitterAuthConfig;
 import com.twitter.sdk.android.tweetcomposer.TweetComposer;
@@ -59,6 +63,9 @@ public class GameActivity extends LayoutGameActivity {
 
         //create banner ad from admob
         createBannerAd();
+
+        //Parse
+        Parse.initialize(this, "YpJ9WQuoN4XQYw2y0YOQRLvzSBEsskGpWebUgWzf", "4VswpUtUtyVdWSWrtugliH1zdkTOY91uoXm6kjMF");
     }
 
     @Override
@@ -183,6 +190,51 @@ public class GameActivity extends LayoutGameActivity {
         }
     }
 
+    public void openLoginActivity() {
+        Intent intent = new Intent(this, LoginActivity.class);
+        startActivityForResult(intent, 100);
+    }
+
+    public void openSignUpActivity() {
+        Intent intent = new Intent(this, SignUpActivity.class);
+        startActivityForResult(intent, 100);
+    }
+
+
+    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        if (requestCode == 100) {
+            if(resultCode == 200){ //result code is only 200 if a user logged in or signed up
+                syncScores();
+                mSceneManager.setScene(SceneManager.SceneType.SCENE_LEADERBOARD);
+            }
+        }
+    }
+
+    /**
+     * this method syncs the local max score with the saved score on the user's account
+     */
+    public void syncScores() {
+        ParseUser currentUser = ParseUser.getCurrentUser();
+        if (currentUser != null) {
+            int savedScore = currentUser.getInt("highScore");
+            if(savedScore > getMaxScore()) {
+                setMaxScore(savedScore);
+            } else {
+                currentUser.put("highScore", getMaxScore());
+                currentUser.saveInBackground();
+            }
+        }
+    }
+
+    public void displayConnectionError() {
+        final CharSequence text = "Please check your connection and try again";
+
+        runOnUiThread(new Runnable() {
+            public void run() {
+                Toast.makeText(getApplicationContext(), text, Toast.LENGTH_LONG).show();
+            }
+        });
+    }
 
     public int getMaxScore() {
         return getPreferences(Context.MODE_PRIVATE).getInt("maxScore", 0);
@@ -190,6 +242,14 @@ public class GameActivity extends LayoutGameActivity {
 
     public void setMaxScore(int maxScore) {
         getPreferences(Context.MODE_PRIVATE).edit().putInt("maxScore", maxScore).commit();
+    }
+
+
+    public boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 
     @Override

@@ -64,6 +64,15 @@ public class ResourceManager {
     public TiledTextureRegion mNextButtonTextureRegion;
     public TiledTextureRegion mCloseButtonTextureRegion;
 
+    public BitmapTextureAtlas mLeaderboardBitmapTextureAtlas;
+    public TiledTextureRegion mLoginButtonTextureRegion;
+    public TiledTextureRegion mLaterButtonTextureRegion;
+    public TiledTextureRegion mSignUpButtonTextureRegion;
+    public TiledTextureRegion mLeaderboardButtonTextureRegion;
+    public ITextureRegion mLoginTextTextureRegion;
+    public ITextureRegion mLeaderboardTextureRegion;
+    public TiledTextureRegion mLogoutButtonTextureRegion;
+
 
     private BitmapTextureAtlas mSubBitmapTextureAtlas;
     public TiledTextureRegion mStateTextureRegion;
@@ -168,6 +177,18 @@ public class ResourceManager {
 
         mTutorialBitmapTextureAtlas.load();
 
+        mLeaderboardBitmapTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 320, 1175, TextureOptions.BILINEAR);
+        mLoginTextTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mLeaderboardBitmapTextureAtlas, mActivity, "leaderboard_login_text.png", 0, 0);
+        mLoginButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mLeaderboardBitmapTextureAtlas, mActivity, "login_button.png", 0, 200, 2, 1);
+        mSignUpButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mLeaderboardBitmapTextureAtlas, mActivity, "sign_up_button.png", 0, 275, 2, 1);
+        mLaterButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mLeaderboardBitmapTextureAtlas, mActivity, "later_button.png", 0, 350, 2, 1);
+        mLeaderboardButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mLeaderboardBitmapTextureAtlas, mActivity, "leaderboard_button.png", 0, 425, 2, 1);
+        mLeaderboardTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mLeaderboardBitmapTextureAtlas, mActivity, "leaderboard.png", 0, 500);
+        mLogoutButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mLeaderboardBitmapTextureAtlas, mActivity, "logout_button.png", 0, 1100, 2, 1);
+
+
+        mLeaderboardBitmapTextureAtlas.load();
+
 
         mSubBitmapTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 512, 750, TextureOptions.BILINEAR);
         mStateTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mSubBitmapTextureAtlas, mActivity, "ready_over.png", 0, 0, 2, 1);
@@ -196,7 +217,7 @@ public class ResourceManager {
 
         //ITexture fontTexture3 = new BitmapTextureAtlas(mActivity.getTextureManager(), 256, 256, TextureOptions.BILINEAR);
         //mFont3 = FontFactory.createFromAsset(mActivity.getFontManager(), fontTexture3, mActivity.getAssets(), "Archistico_Bold.ttf", 24, true, Color.WHITE);
-        mFont3 = FontFactory.create(mActivity.getFontManager(), mActivity.getTextureManager(), 256, 256, Typeface.create(Typeface.DEFAULT, Typeface.NORMAL), 25, Color.BLACK);
+        mFont3 = FontFactory.create(mActivity.getFontManager(), mActivity.getTextureManager(), 256, 256, Typeface.create(Typeface.DEFAULT, Typeface.NORMAL), 15, Color.BLACK);
         mFont3.load();
 
         //ITexture fontTexture5 = new BitmapTextureAtlas(mActivity.getTextureManager(), 256, 256, TextureOptions.BILINEAR);
@@ -227,6 +248,7 @@ public class ResourceManager {
         mBitmapTextureAtlas.unload();
         mSubBitmapTextureAtlas.unload();
         mTutorialBitmapTextureAtlas.unload();
+        mLeaderboardBitmapTextureAtlas.unload();
 
         mAutoParallaxBackgroundTexture = null;
         mParallaxLayerFront = null;
@@ -256,6 +278,8 @@ public class ResourceManager {
         mTutorialTextureRegion = null;
         mTutorialBoardTextureRegion = null;
 
+        mLoginTextTextureRegion = null;
+        mLeaderboardTextureRegion = null;
 
         mStateTextureRegion = null;
         mMeterTextureRegion = null;
@@ -273,7 +297,11 @@ public class ResourceManager {
         mRateButtonTextureRegion = null;
         mCloseButtonTextureRegion = null;
         mNextButtonTextureRegion = null;
-
+        mLoginButtonTextureRegion = null;
+        mSignUpButtonTextureRegion = null;
+        mLaterButtonTextureRegion = null;
+        mLeaderboardButtonTextureRegion = null;
+        mLogoutButtonTextureRegion = null;
 
         mTitleTextureRegion = null;
             //unload fonts

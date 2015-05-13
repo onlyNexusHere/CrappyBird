@@ -2,6 +2,7 @@ package com.application.nick.crappybird;
 
 import com.application.nick.crappybird.scene.BaseScene;
 import com.application.nick.crappybird.scene.GameScene;
+import com.application.nick.crappybird.scene.LeaderboardScene;
 import com.application.nick.crappybird.scene.MainMenuScene;
 import com.application.nick.crappybird.scene.SplashScene;
 
@@ -12,11 +13,12 @@ public class SceneManager {
 
     private static final SceneManager INSTANCE = new SceneManager();
 
-    public enum SceneType {SCENE_SPLASH, SCENE_MENU, SCENE_GAME}
+    public enum SceneType {SCENE_SPLASH, SCENE_MENU, SCENE_GAME, SCENE_LEADERBOARD }
 
     private BaseScene mSplashScene;
     private BaseScene mMenuScene;
     private BaseScene mGameScene;
+    private BaseScene mLeaderboardScene;
 
     private SceneType mCurrentSceneType;
     private BaseScene mCurrentScene;
@@ -37,6 +39,9 @@ public class SceneManager {
                 break;
             case SCENE_SPLASH:
                 setScene(createSplashScene());
+                break;
+            case SCENE_LEADERBOARD:
+                setScene(createLeaderboardScene());
                 break;
         }
     }
@@ -68,6 +73,11 @@ public class SceneManager {
     private BaseScene createGameScene() {
         mGameScene = new GameScene();
         return mGameScene;
+    }
+
+    private BaseScene createLeaderboardScene() {
+        mLeaderboardScene = new LeaderboardScene();
+        return mLeaderboardScene;
     }
 
 }

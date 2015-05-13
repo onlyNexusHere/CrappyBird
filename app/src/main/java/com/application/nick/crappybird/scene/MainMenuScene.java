@@ -33,7 +33,7 @@ public class MainMenuScene extends BaseScene {
     private List<Crap> mCraps = new ArrayList<Crap>();
     private Tutorial mTutorial;
 
-    private TiledSprite playButton, helpButton, backButton;
+    private TiledSprite playButton, helpButton, backButton, leaderboardButton;
     private Sprite title;
 
     private boolean playTransition = false, helpTransitionOn = false, helpTransitionOff = false, showingTutorial = false;
@@ -86,7 +86,7 @@ public class MainMenuScene extends BaseScene {
 
 
         final float playX = (SCREEN_WIDTH - mResourceManager.mPlayButtonTextureRegion.getWidth()) / 2;
-        final float playY = SCREEN_HEIGHT / 2;
+        final float playY = SCREEN_HEIGHT / 2 - mResourceManager.mPlayButtonTextureRegion.getHeight() / 4;
 
         playButton = new TiledSprite(playX, playY, mResourceManager.mPlayButtonTextureRegion, mVertexBufferObjectManager) {
 
@@ -116,23 +116,53 @@ public class MainMenuScene extends BaseScene {
         registerTouchArea(playButton);
         attachChild(playButton);
 
-        final float helpX = playX;
-        final float helpY = playY + playButton.getHeight() * 1.1f;
+        final float leaderboardX = playX;
+        final float leaderboardY = playY + playButton.getHeight() * 0.7f;
+
+
+        leaderboardButton = new TiledSprite(leaderboardX, leaderboardY, mResourceManager.mLeaderboardButtonTextureRegion, mVertexBufferObjectManager) {
+
+            @Override
+            public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+                if (pSceneTouchEvent.isActionDown()) {
+                    setCurrentTileIndex(1);
+
+                }
+                if (pSceneTouchEvent.isActionUp()) {
+                    setCurrentTileIndex(0);
+                    if(mActivity.isNetworkAvailable()) {
+                        mSceneManager.setScene(SceneManager.SceneType.SCENE_LEADERBOARD);
+                    } else {
+                        mActivity.displayConnectionError();
+                    }
+                }
+                return true;
+            }
+        };
+        leaderboardButton.setCurrentTileIndex(0);
+        leaderboardButton.setScale(0.75f);
+        registerTouchArea(leaderboardButton);
+        attachChild(leaderboardButton);
+
+
+
+        final float helpX = leaderboardX;
+        final float helpY = leaderboardY + playButton.getHeight() * 0.7f;
 
         helpButton = new TiledSprite(helpX, helpY, mResourceManager.mHelpButtonTextureRegion, mVertexBufferObjectManager) {
 
             @Override
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
-                    if (pSceneTouchEvent.isActionDown()) {
-                        setCurrentTileIndex(1);
-                    }
+                if (pSceneTouchEvent.isActionDown()) {
+                    setCurrentTileIndex(1);
+                }
 
-                    if (pSceneTouchEvent.isActionUp()) {
-                        setCurrentTileIndex(0);
-                        showingTutorial = true;
-                        setChildScene(mTutorialScene, false, true, true); //open tutorial scene
+                if (pSceneTouchEvent.isActionUp()) {
+                    setCurrentTileIndex(0);
+                    showingTutorial = true;
+                    setChildScene(mTutorialScene, false, true, true); //open tutorial scene
 
-                    }
+                }
 
                 return true;
             }
@@ -143,6 +173,8 @@ public class MainMenuScene extends BaseScene {
         helpButton.setScale(0.75f);
         registerTouchArea(helpButton);
         attachChild(helpButton);
+
+
         final Rectangle ground = new Rectangle(0, SCREEN_HEIGHT - mResourceManager.mParallaxLayerFront.getHeight(), SCREEN_WIDTH, mResourceManager.mParallaxLayerFront.getHeight(), mVertexBufferObjectManager);
         ground.setColor(Color.TRANSPARENT);
 
