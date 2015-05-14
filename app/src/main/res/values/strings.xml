@@ -12,4 +12,6 @@
     <string name="edit_email">Email</string>
     <string name="edit_password2">Password again</string>
     <string name="button_sign_up">Sign Up</string>
+    <string name="button_recover">Recover Password</string>
+    <string name="button_forgot">Forgot Password</string>
 </resources>

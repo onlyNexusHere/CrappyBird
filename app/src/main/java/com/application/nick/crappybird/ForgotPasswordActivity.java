@@ -12,13 +12,13 @@ import android.widget.Toast;
 import com.parse.LogInCallback;
 import com.parse.ParseException;
 import com.parse.ParseUser;
+import com.parse.RequestPasswordResetCallback;
 
 
-public class LoginActivity extends Activity {
-    private Intent signUpIntent;
+public class ForgotPasswordActivity extends Activity {
     private TextView textView;
 
-    private String username, password;
+    private String email;
 
 
 
@@ -27,7 +27,7 @@ public class LoginActivity extends Activity {
         super.onCreate(savedInstanceState);
 
 
-        setContentView(R.layout.activity_login);
+        setContentView(R.layout.activity_forgot_password);
         textView = new TextView(this);
 
 
@@ -35,22 +35,25 @@ public class LoginActivity extends Activity {
 
 
     /** Called when the user clicks the Send button */
-    public void login(View view) {
+    public void recover(View view) {
         // Do something in response to button
-        EditText editUsername = (EditText) findViewById(R.id.edit_username);
-        EditText editPassword = (EditText) findViewById(R.id.edit_password);
-        username = editUsername.getText().toString();
-        password = editPassword.getText().toString();
+        EditText editEmail = (EditText) findViewById(R.id.edit_email);
+        email = editEmail.getText().toString();
 
-        ParseUser.logInInBackground(username, password, new LogInCallback() {
-            public void done(ParseUser user, ParseException e) {
-                if (user != null) {
-                    // Hooray! The user is logged in.
-                    Intent returnIntent = new Intent();
-                    setResult(200, returnIntent);
+        ParseUser.requestPasswordResetInBackground(email, new RequestPasswordResetCallback() {
+            public void done(ParseException e) {
+                if (e == null) {
+                    // An email was successfully sent with reset instructions.
+                    Context context = getApplicationContext();
+                    CharSequence text = "Please check your email for password reset instructions";
+                    int duration = Toast.LENGTH_LONG;
+
+                    Toast toast = Toast.makeText(context, text, duration);
+                    toast.show();
+
                     finish();
                 } else {
-                    // Signup failed. Look at the ParseException to see what happened.
+                    // Something went wrong. Look at the ParseException to see what's up.
                     e.printStackTrace();
 
                     String eString = e.toString();
@@ -66,10 +69,7 @@ public class LoginActivity extends Activity {
             }
         });
 
-    }
 
-    public void recover(View view) {
-        Intent intent = new Intent(this, ForgotPasswordActivity.class);
-        startActivity(intent);
+
     }
 }
