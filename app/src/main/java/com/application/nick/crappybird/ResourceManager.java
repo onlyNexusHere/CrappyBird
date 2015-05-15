@@ -61,18 +61,11 @@ public class ResourceManager {
     private BitmapTextureAtlas mTutorialBitmapTextureAtlas;
     public TiledTextureRegion mTutorialTextureRegion;
     public ITextureRegion mTutorialBoardTextureRegion;
-    public TiledTextureRegion mNextButtonTextureRegion;
-    public TiledTextureRegion mCloseButtonTextureRegion;
 
     public BitmapTextureAtlas mLeaderboardBitmapTextureAtlas;
-    public TiledTextureRegion mLoginButtonTextureRegion;
-    public TiledTextureRegion mLaterButtonTextureRegion;
-    public TiledTextureRegion mSignUpButtonTextureRegion;
     public TiledTextureRegion mLeaderboardButtonTextureRegion;
     public ITextureRegion mLoginTextTextureRegion;
     public ITextureRegion mLeaderboardTextureRegion;
-    public TiledTextureRegion mLogoutButtonTextureRegion;
-
 
     private BitmapTextureAtlas mSubBitmapTextureAtlas;
     public TiledTextureRegion mStateTextureRegion;
@@ -89,6 +82,15 @@ public class ResourceManager {
     public TiledTextureRegion mOtherButtonTextureRegion;
     public TiledTextureRegion mRateButtonTextureRegion;
     public TiledTextureRegion mShareButtonTextureRegion;
+    public TiledTextureRegion mPauseButtonTextureRegion;
+    public TiledTextureRegion mLoginButtonTextureRegion;
+    public TiledTextureRegion mLaterButtonTextureRegion;
+    public TiledTextureRegion mSignUpButtonTextureRegion;
+    public TiledTextureRegion mLogoutButtonTextureRegion;
+    public TiledTextureRegion mNextButtonTextureRegion;
+    public TiledTextureRegion mCloseButtonTextureRegion;
+    public TiledTextureRegion mRestartButtonTextureRegion;
+
 
     public ITextureRegion mTitleTextureRegion;
 
@@ -160,7 +162,8 @@ public class ResourceManager {
         mAlertTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "alert_sign.png", 0, 700, 1, 1);
         mPlusTwoTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "plus_two.png", 50, 700, 1, 1);
 
-        //mTutorialTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "tutorial.png", 0, 750, 1, 1);
+        mPauseButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "pause_button.png", 0, 750, 2, 1);
+        mRestartButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "restart_button.png", 0, 825, 2, 1);
 
         mBitmapTextureAtlas.load();
 
@@ -302,6 +305,8 @@ public class ResourceManager {
         mLaterButtonTextureRegion = null;
         mLeaderboardButtonTextureRegion = null;
         mLogoutButtonTextureRegion = null;
+        mPauseButtonTextureRegion = null;
+        mRestartButtonTextureRegion = null;
 
         mTitleTextureRegion = null;
             //unload fonts

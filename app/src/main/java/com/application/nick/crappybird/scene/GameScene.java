@@ -104,12 +104,10 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
     private PhysicsWorld mPhysicsWorld;
 
-    private CameraScene mGameReadyScene;
-
-    private CameraScene mGameOverScene;
+    private CameraScene mGameReadyScene, mGameOverScene, mPauseScene;
     private Text scoreText;
     private Text mostText;
-    private TiledSprite mPlusTwo, playButton, backButton, rateButton, shareButton, facebookButton, twitterButton, otherButton, leaderboardButton;
+    private TiledSprite mPlusTwo, playButton, backButton, rateButton, shareButton, facebookButton, twitterButton, otherButton, leaderboardButton, pauseButton;
 
     private Rectangle mGround;
 
@@ -121,6 +119,10 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         mEngine.registerUpdateHandler(new FPSLogger());
 
         setOnSceneTouchListener(this);
+
+        if (mResourceManager.mMusic != null && !mResourceManager.mMusic.isPlaying()) {
+            mResourceManager.mMusic.play();
+        }
 
         mAutoParallaxBackground = new AutoParallaxBackground(0, 0, 0, 10);
         mAutoParallaxBackground.attachParallaxEntity(new ParallaxBackground.ParallaxEntity(-5.0f, new Sprite(0, SCREEN_HEIGHT - mResourceManager.mParallaxLayerBack.getHeight(), mResourceManager.mParallaxLayerBack, mVertexBufferObjectManager)));
@@ -341,6 +343,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                     clearChildScene();
                     mHudText.setVisible(true);
                     mCrapMeter.setVisible(true);
+                    pauseButton.setVisible(true);
                 }
                 return true;
             }
@@ -575,6 +578,84 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         gameHUD.attachChild(mMachineCrapMeter);
 
         mCamera.setHUD(gameHUD);
+
+
+        mPauseScene = new CameraScene(mCamera);
+
+        final float playOnPauseX = (SCREEN_WIDTH - mResourceManager.mPlayButtonTextureRegion.getWidth()) / 2;
+        final float playOnPauseY = SCREEN_HEIGHT / 2 - mResourceManager.mPlayButtonTextureRegion.getHeight();
+
+        final float restartOnPauseX = playOnPauseX;
+        final float restartOnPauseY = SCREEN_HEIGHT / 2;
+
+        final TiledSprite playButtonOnPause = new TiledSprite(playOnPauseX, playOnPauseY, mResourceManager.mPlayButtonTextureRegion, mVertexBufferObjectManager) {
+
+            @Override
+            public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+                if (pSceneTouchEvent.isActionDown()) {
+                    setCurrentTileIndex(1);
+                }
+                if (pSceneTouchEvent.isActionUp()) {
+                    setCurrentTileIndex(0);
+                    setPause(false);
+                }
+                return true;
+            }
+        };
+        playButtonOnPause.setCurrentTileIndex(0);
+        playButtonOnPause.setScale(0.75f);
+        mPauseScene.registerTouchArea(playButtonOnPause);
+        mPauseScene.attachChild(playButtonOnPause);
+
+        final TiledSprite restartButtonOnPause = new TiledSprite(restartOnPauseX, restartOnPauseY, mResourceManager.mRestartButtonTextureRegion, mVertexBufferObjectManager) {
+
+            @Override
+            public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+                if (pSceneTouchEvent.isActionDown()) {
+                    setCurrentTileIndex(1);
+                }
+                if (pSceneTouchEvent.isActionUp()) {
+                    setCurrentTileIndex(0);
+                    mSceneManager.setScene(SceneManager.SceneType.SCENE_GAME);
+
+                }
+                return true;
+            }
+        };
+        restartButtonOnPause.setCurrentTileIndex(0);
+        restartButtonOnPause.setScale(0.75f);
+        mPauseScene.registerTouchArea(restartButtonOnPause);
+        mPauseScene.attachChild(restartButtonOnPause);
+
+        mPauseScene.setBackgroundEnabled(false);
+
+
+        pauseButton = new TiledSprite(0, 0, mResourceManager.mPauseButtonTextureRegion, mVertexBufferObjectManager) {
+
+            @Override
+            public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+                if (pSceneTouchEvent.isActionDown()) {
+                    if(isVisible()) {
+                        setCurrentTileIndex(1);
+                    }
+                }
+                if (pSceneTouchEvent.isActionUp()) {
+                    if(isVisible()) {
+                        setCurrentTileIndex(0);
+                        setPause(true);
+                    }
+                }
+                return true;
+            }
+        };
+        pauseButton.setCurrentTileIndex(0);
+        pauseButton.setScale(0.25f);
+        pauseButton.setX(mCrapMeter.getX() + (mCrapMeter.getWidth() - mCrapMeter.getWidthScaled()) / 2 + mCrapMeter.getWidthScaled() - (pauseButton.getWidth() - pauseButton.getWidthScaled()) / 2);
+        pauseButton.setY(mCrapMeter.getY() + (mCrapMeter.getHeight() - mCrapMeter.getHeightScaled()) / 2  - (pauseButton.getHeight() - pauseButton.getHeightScaled()) / 2 - (pauseButton.getHeightScaled() - mCrapMeter.getHeightScaled()) / 2);
+        registerTouchArea(pauseButton);
+        attachChild(pauseButton);
+        pauseButton.setVisible(false);
+
     }
 
 
@@ -625,6 +706,28 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                 }
 
                 mHudText.setText(String.valueOf(score));
+            }
+        }
+    }
+
+    public void setPause(boolean bool) {
+        if (bool) {
+            if(pauseButton.isVisible()) {
+                pauseButton.setVisible(false);
+                setIgnoreUpdate(true);
+                setChildScene(mPauseScene, false, true, true);
+
+                if (mResourceManager.mMusic!=null && mResourceManager.mMusic.isPlaying()) {
+                    mResourceManager.mMusic.pause();
+                }
+            }
+        } else {
+            clearChildScene();
+            setIgnoreUpdate(false);
+            pauseButton.setVisible(true);
+
+            if (mResourceManager.mMusic != null && !mResourceManager.mMusic.isPlaying()) {
+                mResourceManager.mMusic.play();
             }
         }
     }
@@ -1212,8 +1315,12 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                 final String userDataB = (String) bodyB.getUserData();
 
                 if (("bird".equals(userDataA) && "ground".equals(userDataB)) || ("ground".equals(userDataA) && "bird".equals(userDataB))) {
-                    mGameOver = true;
-                    mResourceManager.mSound.play();
+
+                    if(!mGameOver) { //if the bird hasn't already hit an obstacle
+                        mResourceManager.mSound.play();
+                        mGameOver = true;
+                    }
+
                     mBird.stopAnimation(0);
                     killObstacles();
                     killCollectables();
@@ -1239,6 +1346,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                     mMachineCrapMeter.setVisible(false);
                     mPlusTwo.setVisible(false);
                     mAlertSign.setVisible(false);
+                    pauseButton.setVisible(false);
 
                     //display game over with score
                     displayScore();
@@ -1287,6 +1395,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
     public void disposeScene() {
         //TODO
     }
+
 
 
 }

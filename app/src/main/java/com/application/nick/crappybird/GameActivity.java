@@ -11,6 +11,7 @@ import android.util.Log;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.application.nick.crappybird.scene.GameScene;
 import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
@@ -271,7 +272,6 @@ public class GameActivity extends LayoutGameActivity {
     protected void onResume() {
         super.onResume();
 
-
     }
 
     @Override
@@ -279,7 +279,13 @@ public class GameActivity extends LayoutGameActivity {
         if (mResourceManager.mMusic!=null && mResourceManager.mMusic.isPlaying()) {
             mResourceManager.mMusic.pause();
         }
+
+        if(mSceneManager.getCurrentSceneType() == SceneManager.SceneType.SCENE_GAME) {
+            ((GameScene)mSceneManager.getCurrentScene()).setPause(true);
+        }
+
         super.onPause();
 
     }
+
 }
