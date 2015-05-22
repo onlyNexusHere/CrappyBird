@@ -149,7 +149,11 @@ public class Obstacle extends AnimatedSprite {
      * @param velocityY the y velocity to set to the obstacle (in px/sec)
      */
     public void blastOff(float velocityY) {
-        setVelocityY(velocityY);
+        if(velocityY == 0) {
+            setVelocityY(100);
+        } else {
+            setVelocityY(velocityY);
+        }
         setAngularVelocity(100);
     }
 

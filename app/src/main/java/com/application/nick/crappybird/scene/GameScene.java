@@ -1,8 +1,6 @@
 package com.application.nick.crappybird.scene;
 
-import android.content.Context;
 import android.hardware.SensorManager;
-import android.widget.Toast;
 
 import com.application.nick.crappybird.SceneManager;
 import com.application.nick.crappybird.entity.Collectable;
@@ -71,15 +69,19 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
     private final int NUM_CRAPS = 15; //number of craps to allocate
     private final int NUM_COLLECTABLES = 20; //number of generic collectables (pizza) to allocate to pool
     private final int MOTHERSHIP_OBSTACLE_INDEX = 35; //the obstacle index to have the mothership fly across the screen
+    private final int RESPAWN_PRICE = 500;
 
 
     private AutoParallaxBackground mAutoParallaxBackground;
 
-    private Text mHudText;
+    private Text mHudTextScore, mHudTextPizza, totalPizzaTextOnCountdownScene;
     private int score;
     private int most;
+    private int pizzaCollected = 0;
 
-    private AnimatedSprite mBird, mMachineCrapMeter;
+    private Sprite pizzaCollectedSpriteOnGameOver, pizzaCollectedSprite;
+
+    private AnimatedSprite mBird, mMachineCrapMeter, mCountdownSprite;
 
     private TiledSprite mCrapMeter, mAlertSign;
 
@@ -98,20 +100,23 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
     private List<Crap> mCraps = new ArrayList<Crap>();
 
     private boolean mGameOver, mOutOfCrap, mMachineCrapActivated = false, mMachineCrapping = false, mMachineCrapMeterBlinking = false,
-            mDoublePointsActivated = false, mMotherShipIncoming = false, mMotherShipOnScreen = false, mMotherShipPassed = false, mSharingVisible = false;
+            mDoublePointsActivated = false, mMotherShipIncoming = false, mMotherShipOnScreen = false, mMotherShipPassed = false, mSharingVisible = false,
+            mRespawnUsed = false, mCountdownOnScreen = false, mRespawnButtonPressed = false;
 
     private float machineCrappingTime = 0, machineCrappingLastCrapTime, doublePointsTime = 0, doublePointsLastPointTime;
 
     private PhysicsWorld mPhysicsWorld;
 
-    private CameraScene mGameReadyScene, mGameOverScene, mPauseScene;
-    private Text scoreText;
-    private Text mostText;
-    private TiledSprite mPlusTwo, playButton, backButton, rateButton, shareButton, facebookButton, twitterButton, otherButton, leaderboardButton, pauseButton;
+    private CameraScene mGameReadyScene, mGameOverScene, mPauseScene, mCountdownScene;
+    private Text scoreText, mostText, pizzaTextOnGameOver;
+    private TiledSprite mPlusTwo, playButton, backButton, rateButton, shareButton, facebookButton,
+            twitterButton, otherButton, leaderboardButton, pauseButton;
 
     private Rectangle mGround;
 
     private float MAX_CRAP_METER_SIZE;
+
+    private int selectedBird;
 
 
     @Override
@@ -134,10 +139,14 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         final float birdX = (SCREEN_WIDTH - mResourceManager.mBirdTextureRegion.getWidth()) / 2 - 50;
         final float birdY = (SCREEN_HEIGHT - mResourceManager.mBirdTextureRegion.getHeight()) / 2 - 30;
 
-        mBird = new AnimatedSprite(birdX, birdY, mResourceManager.mBirdTextureRegion, mVertexBufferObjectManager);
-        mBird.setZIndex(10);
-        mBird.animate(200);
 
+        selectedBird = mActivity.getSelectedBird();
+
+        mBird = new AnimatedSprite(birdX, birdY, mResourceManager.mBirdsTextureRegion, mVertexBufferObjectManager);
+        mBird.setZIndex(10);
+        long fDur = 200;
+        mBird.animate(new long[]{fDur, fDur, fDur}, selectedBird * 3, selectedBird * 3 + 2, true);
+        mBird.setCurrentTileIndex(selectedBird * 3);
         attachChild(mBird);
 
 
@@ -289,6 +298,14 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                     }
                 }
 
+                //Handle Countdown Scene////////////////////////
+                if(mCountdownOnScreen) {
+                    if(mCountdownSprite.getCurrentTileIndex() == 5) {
+                        setCountDown(false);
+                        displayScore();
+                    }
+                }
+
 
                     //don't let bird leave top of screen
                 if (mBird.getY() < 0) {
@@ -341,9 +358,12 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
             public boolean onSceneTouchEvent(Scene pScene, TouchEvent pSceneTouchEvent) {
                 if (pSceneTouchEvent.isActionUp()) {
                     clearChildScene();
-                    mHudText.setVisible(true);
+                    mHudTextScore.setVisible(true);
+                    mHudTextPizza.setVisible(true);
+                    pizzaCollectedSprite.setVisible(true);
                     mCrapMeter.setVisible(true);
                     pauseButton.setVisible(true);
+
                 }
                 return true;
             }
@@ -354,14 +374,14 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
 
         //create CameraScene for game over
-        final float overX = (SCREEN_WIDTH - mResourceManager.mBoardTextureRegion.getWidth()) / 2;
+        final float overX = (SCREEN_WIDTH - mResourceManager.mScoreBoardTextureRegion.getWidth()) / 2;
         final float overY = labelY + mResourceManager.mStateTextureRegion.getHeight();
 
         final float playX = SCREEN_WIDTH / 2 - mResourceManager.mPlayButtonTextureRegion.getWidth();
-        final float playY = overY + mResourceManager.mBoardTextureRegion.getHeight();
+        final float playY = overY + mResourceManager.mScoreBoardTextureRegion.getHeight();
 
         final float leaderboardX = SCREEN_WIDTH / 2;
-        final float leaderboardY = overY + mResourceManager.mBoardTextureRegion.getHeight();
+        final float leaderboardY = overY + mResourceManager.mScoreBoardTextureRegion.getHeight();
 
         final float shareX = leaderboardX;
         final float shareY = leaderboardY + mResourceManager.mBackButtonTextureRegion.getHeight();
@@ -385,7 +405,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         gameOverTitle.setScale(1.3f);
         mGameOverScene.attachChild(gameOverTitle);
 
-        final Sprite boardSprite = new Sprite(overX, overY, mResourceManager.mBoardTextureRegion, mVertexBufferObjectManager);
+        final Sprite boardSprite = new Sprite(overX, overY, mResourceManager.mScoreBoardTextureRegion, mVertexBufferObjectManager);
         mGameOverScene.attachChild(boardSprite);
 
         scoreText = new Text(scoreX, scoreY, mResourceManager.mFont4, "0123456789", new TextOptions(HorizontalAlign.LEFT), mVertexBufferObjectManager);
@@ -395,6 +415,21 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         mostText = new Text(mostX, mostY, mResourceManager.mFont4, "0123456789", new TextOptions(HorizontalAlign.LEFT), mVertexBufferObjectManager);
         mostText.setText(String.valueOf(most));
         mGameOverScene.attachChild(mostText);
+
+
+
+        final float bottomOfBoardY = overY + boardSprite.getHeightScaled();
+        final float pizzaY = (mostText.getY() + mostText.getHeight() + bottomOfBoardY) / 2 - mResourceManager.mCollectablePizzaTextureRegion.getHeight() / 2;
+        final float pizzaTextY = (mostText.getY() + mostText.getHeight() + bottomOfBoardY) / 2 - mResourceManager.mFont3.getLineHeight() / 2;
+
+        pizzaCollectedSpriteOnGameOver = new Sprite(0, pizzaY, mResourceManager.mCollectablePizzaTextureRegion, mVertexBufferObjectManager);
+        mGameOverScene.attachChild(pizzaCollectedSpriteOnGameOver);
+        pizzaCollectedSpriteOnGameOver.setScale(.5f);
+
+        pizzaTextOnGameOver = new Text(0, pizzaTextY, mResourceManager.mFont3, "0123456789", new TextOptions(HorizontalAlign.LEFT), mVertexBufferObjectManager);
+        pizzaTextOnGameOver.setText("0");
+        mGameOverScene.attachChild(pizzaTextOnGameOver);
+
 
         playButton = new TiledSprite(playX, playY, mResourceManager.mPlayButtonTextureRegion, mVertexBufferObjectManager) {
 
@@ -551,14 +586,14 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         //create HUD for score
         HUD gameHUD = new HUD();
         // CREATE SCORE TEXT
-        mHudText = new Text(SCREEN_WIDTH/2, 50, mResourceManager.mFont5, "0123456789", new TextOptions(HorizontalAlign.LEFT), mVertexBufferObjectManager);
-        mHudText.setText("0");
-        mHudText.setX((SCREEN_WIDTH - mHudText.getWidth()) / 2);
-        mHudText.setVisible(false);
-        gameHUD.attachChild(mHudText);
+        mHudTextScore = new Text(SCREEN_WIDTH/2, 50, mResourceManager.mFont5, "0123456789", new TextOptions(HorizontalAlign.LEFT), mVertexBufferObjectManager);
+        mHudTextScore.setText("0");
+        mHudTextScore.setX((SCREEN_WIDTH - mHudTextScore.getWidth()) / 2);
+        mHudTextScore.setVisible(false);
+        gameHUD.attachChild(mHudTextScore);
 
         //"+2" popup for double points
-        mPlusTwo = new TiledSprite((SCREEN_WIDTH/2 + mHudText.getWidth() * 2), 50, mResourceManager.mPlusTwoTextureRegion, mVertexBufferObjectManager);
+        mPlusTwo = new TiledSprite((SCREEN_WIDTH/2 + mHudTextScore.getWidth() * 2), 50, mResourceManager.mPlusTwoTextureRegion, mVertexBufferObjectManager);
         mPlusTwo.setVisible(false);
         gameHUD.attachChild(mPlusTwo);
 
@@ -569,6 +604,24 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         MAX_CRAP_METER_SIZE = mCrapMeter.getWidth();
         mCrapMeter.setVisible(false);
         gameHUD.attachChild(mCrapMeter);
+
+        final float crapMeterBottom = mCrapMeter.getX() + (mCrapMeter.getHeight() - mCrapMeter.getHeightScaled()) / 2 + mCrapMeter.getHeightScaled();
+        final float pizzaCollectedSpriteY = (crapMeterBottom + mHudTextScore.getY()) / 2 - mResourceManager.mCollectablePizzaTextureRegion.getHeight() / 2 + 5;
+        final float pizzaCollectedTextY = (crapMeterBottom + mHudTextScore.getY()) / 2 - mResourceManager.mFont6.getLineHeight() / 2 + 5;
+
+        pizzaCollectedSprite = new Sprite(0, pizzaCollectedSpriteY, mResourceManager.mCollectablePizzaTextureRegion, mVertexBufferObjectManager);
+        gameHUD.attachChild(pizzaCollectedSprite);
+        pizzaCollectedSprite.setScale(.5f);
+        pizzaCollectedSprite.setVisible(false);
+
+        mHudTextPizza = new Text(0, pizzaCollectedTextY, mResourceManager.mFont6, "0123456789", new TextOptions(HorizontalAlign.LEFT), mVertexBufferObjectManager);
+        mHudTextPizza.setText("0");
+        mHudTextPizza.setX((SCREEN_WIDTH - mHudTextPizza.getWidth()) / 2);
+        mHudTextPizza.setVisible(false);
+        gameHUD.attachChild(mHudTextPizza);
+
+        pizzaCollectedSprite.setX((SCREEN_WIDTH - pizzaCollectedSprite.getWidth() - mHudTextPizza.getWidth()) / 2);
+        mHudTextPizza.setX(pizzaCollectedSprite.getX() + pizzaCollectedSprite.getWidth());
 
         //for machine crap power up (thunder taco)
         mMachineCrapMeter = new AnimatedSprite((SCREEN_WIDTH - mResourceManager.mMeter2TextureRegion.getWidth()) / 2, mResourceManager.mMeter2TextureRegion.getHeight(), mResourceManager.mMeter2TextureRegion, mVertexBufferObjectManager);
@@ -651,10 +704,88 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         pauseButton.setCurrentTileIndex(0);
         pauseButton.setScale(0.25f);
         pauseButton.setX(mCrapMeter.getX() + (mCrapMeter.getWidth() - mCrapMeter.getWidthScaled()) / 2 + mCrapMeter.getWidthScaled() - (pauseButton.getWidth() - pauseButton.getWidthScaled()) / 2);
-        pauseButton.setY(mCrapMeter.getY() + (mCrapMeter.getHeight() - mCrapMeter.getHeightScaled()) / 2  - (pauseButton.getHeight() - pauseButton.getHeightScaled()) / 2 - (pauseButton.getHeightScaled() - mCrapMeter.getHeightScaled()) / 2);
+        pauseButton.setY(mCrapMeter.getY() + (mCrapMeter.getHeight() - mCrapMeter.getHeightScaled()) / 2 - (pauseButton.getHeight() - pauseButton.getHeightScaled()) / 2 - (pauseButton.getHeightScaled() - mCrapMeter.getHeightScaled()) / 2);
         registerTouchArea(pauseButton);
         attachChild(pauseButton);
         pauseButton.setVisible(false);
+
+
+        mCountdownScene = new CameraScene(mCamera);
+        mCountdownScene.setBackgroundEnabled(false);
+
+        final float totalPizzaY = overY;
+        final float totalPizzaX = overX;
+        final float totalPizzaTextX = overX + mResourceManager.mCollectablePizzaTextureRegion.getWidth();
+        final float totalPizzaTextY = (overY * 2 + mResourceManager.mCollectablePizzaTextureRegion.getHeight()) / 2 - mResourceManager.mFont3.getLineHeight() / 2;
+        final float countDownX = (SCREEN_WIDTH - mResourceManager.mCountdownTextureRegion.getWidth()) / 2;
+        final float countDownY = overY - mResourceManager.mCountdownTextureRegion.getHeight();
+        final float purchaseButtonX = (SCREEN_WIDTH - mResourceManager.mPlayButtonTextureRegion.getWidth()) / 2;
+        final float purchaseButtonY = overY + mResourceManager.mBoardTextureRegion.getHeight() - mResourceManager.mPlayButtonTextureRegion.getHeight() * 0.85f;
+
+        mCountdownSprite = new AnimatedSprite(countDownX, countDownY, mResourceManager.mCountdownTextureRegion, mVertexBufferObjectManager);
+        mCountdownSprite.setCurrentTileIndex(0);
+        mCountdownScene.attachChild(mCountdownSprite);
+
+        final Sprite popUpBoard = new Sprite(overX, overY, mResourceManager.mBoardTextureRegion, mVertexBufferObjectManager);
+        mCountdownScene.attachChild(popUpBoard);
+
+        final Sprite totalPizzaSprite = new Sprite(totalPizzaX, totalPizzaY, mResourceManager.mCollectablePizzaTextureRegion, mVertexBufferObjectManager);
+        mCountdownScene.attachChild(totalPizzaSprite);
+        totalPizzaSprite.setScale(.5f);
+
+        totalPizzaTextOnCountdownScene = (new Text(totalPizzaTextX, totalPizzaTextY, mResourceManager.mFont3, "0123456789", new TextOptions(HorizontalAlign.LEFT), mVertexBufferObjectManager));
+        mCountdownScene.attachChild(totalPizzaTextOnCountdownScene);
+
+
+        final TiledSprite purchaseButton = new TiledSprite(purchaseButtonX, purchaseButtonY, mResourceManager.mPurchaseButtonTextureRegion, mVertexBufferObjectManager) {
+
+            @Override
+            public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+
+                    if (pSceneTouchEvent.isActionDown()) {
+                        if (pizzaCollected + mActivity.getPizza() >= RESPAWN_PRICE) {
+                            setCurrentTileIndex(1);
+                        } else if(!mRespawnButtonPressed){
+                            mActivity.displayShortToast("Not enough pizza!");
+                            mRespawnButtonPressed = true;
+                        }
+
+                    }
+                    if (pSceneTouchEvent.isActionUp()) {
+                        if (pizzaCollected + mActivity.getPizza() >= RESPAWN_PRICE) {
+                            respawn();
+                        } else if(mRespawnButtonPressed){
+                            mRespawnButtonPressed = false;
+                        }
+
+                    }
+                return true;
+            }
+        };
+        purchaseButton.setCurrentTileIndex(0);
+        purchaseButton.setScale(0.5f);
+        mCountdownScene.registerTouchArea(purchaseButton);
+        mCountdownScene.attachChild(purchaseButton);
+
+
+
+        final float respawnTextY = overY + mResourceManager.mFont2.getLineHeight();
+        final float respawnPricePizzaSpriteY = respawnTextY + mResourceManager.mFont2.getLineHeight();
+        final float respawnPriceY = respawnPricePizzaSpriteY + mResourceManager.mCollectablePizzaTextureRegion.getHeight() / 2 - mResourceManager.mFont3.getLineHeight() / 2;
+
+        final Text respawnText = (new Text(0, respawnTextY, mResourceManager.mFont2, "Respawn?", new TextOptions(HorizontalAlign.LEFT), mVertexBufferObjectManager));
+        mCountdownScene.attachChild(respawnText);
+
+        final Sprite respawnPricePizzaSprite = new Sprite(0, respawnPricePizzaSpriteY, mResourceManager.mCollectablePizzaTextureRegion, mVertexBufferObjectManager);
+        mCountdownScene.attachChild(respawnPricePizzaSprite);
+        respawnPricePizzaSprite.setScale(.5f);
+
+        final Text respawnPriceText = (new Text(0, respawnPriceY, mResourceManager.mFont3, String.valueOf(RESPAWN_PRICE), new TextOptions(HorizontalAlign.LEFT), mVertexBufferObjectManager));
+        mCountdownScene.attachChild(respawnPriceText);
+
+        respawnText.setX((SCREEN_WIDTH - respawnText.getWidth()) / 2);
+        respawnPricePizzaSprite.setX((SCREEN_WIDTH - respawnPricePizzaSprite.getWidth() - respawnPriceText.getWidth()) / 2); //adjust margins
+        respawnPriceText.setX(respawnPricePizzaSprite.getX() + respawnPricePizzaSprite.getWidth());
 
     }
 
@@ -685,6 +816,79 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
         }
     }
+
+    private void setCountDown(boolean bool) {
+        if(bool) {
+            mCountdownOnScreen = true;
+            //setChildScene(mCountdownScene, false, true, true);
+            setChildScene(mCountdownScene);
+            totalPizzaTextOnCountdownScene.setText(Integer.toString(mActivity.getPizza() + pizzaCollected));
+            mCountdownSprite.animate(1000);
+            pauseButton.setVisible(false);
+
+        } else {
+            mGameOver = false;
+            mCountdownOnScreen = false;
+            clearChildScene();
+            mCountdownSprite.stopAnimation(0);
+            pauseButton.setVisible(true);
+
+        }
+    }
+
+    private void respawn() {
+        mRespawnUsed = true;
+        setCountDown(false);
+        int pizzaToSubtract = RESPAWN_PRICE;
+        if(pizzaCollected <= pizzaToSubtract) {
+            pizzaToSubtract -= pizzaCollected;
+            pizzaCollected = 0;
+            mActivity.subtractPizza(pizzaToSubtract);
+        } else {
+            pizzaCollected -= pizzaToSubtract;
+        }
+        mHudTextPizza.setText(String.valueOf(pizzaCollected));
+        //update margins
+        pizzaCollectedSprite.setX((SCREEN_WIDTH - pizzaCollectedSprite.getWidth() - mHudTextPizza.getWidth()) / 2);
+        mHudTextPizza.setX(pizzaCollectedSprite.getX() + pizzaCollectedSprite.getWidth());
+
+
+        setMachineCrap(true);
+
+        if(mObstacles.size() > 0) {
+            for (int i = mObstacles.size() - 1; i >= 0; i--) {
+                detachChild(mObstacles.get(i));
+                mObstaclePool.recyclePoolItem(mObstacles.get(i));
+                mObstacles.remove(i);
+            }
+        }
+        if(mTargets.size() > 0) {
+            for (int i = mTargets.size() - 1; i >= 0; i--) {
+                detachChild(mTargets.get(i));
+                mTargetPool.recyclePoolItem(mTargets.get(i));
+                mTargets.remove(i);
+            }
+        }
+        if(mCollectables.size() > 0) {
+            for (int i = mCollectables.size() - 1; i >= 0; i--) {
+                detachChild(mCollectables.get(i));
+                mCollectablePool.recyclePoolItem(mCollectables.get(i));
+                mCollectables.remove(i);
+            }
+        }
+
+        setGameOver(false);
+
+
+        //mBird.setY((mGround.getY() - mBird.getHeight()) / 2);
+
+        jumpBird(mBird);
+        jumpBird(mBird);
+        jumpBird(mBird);
+        jumpBird(mBird);
+        jumpBird(mBird);
+
+    }
     /**
      * Checks if obstacles have left screen and recycles if they have. Also updates score if bird has passed them.
      */
@@ -705,7 +909,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                     score++;
                 }
 
-                mHudText.setText(String.valueOf(score));
+                mHudTextScore.setText(String.valueOf(score));
             }
         }
     }
@@ -778,7 +982,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                         score++;
                     }
 
-                    mHudText.setText(String.valueOf(score));
+                    mHudTextScore.setText(String.valueOf(score));
                 }
 
             }
@@ -805,17 +1009,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                 mMotherShip.blastOff(velocityY);
                 mMotherShip.setCollidedWith();
             } else {
-
-                mGameOver = true;
-                mResourceManager.mSound.play();
-                mBird.stopAnimation(0);
-                stopCrap();
-
-                killObstacles();
-                killCollectables();
-                killTargets();
-
-                mAutoParallaxBackground.setParallaxChangePerSecond(0);
+                setGameOver();
             }
         }
 
@@ -830,9 +1024,44 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                         score++;
                     }
 
-                    mHudText.setText(String.valueOf(score));
+                    mHudTextScore.setText(String.valueOf(score));
                 }
             }
+        }
+    }
+
+    private void setGameOver() {
+
+            setGameOver(true);
+
+    }
+
+    private void setGameOver(boolean bool) {
+        if(bool) {
+            mGameOver = true;
+            mResourceManager.mSound.play();
+            mBird.stopAnimation(selectedBird * 3);
+            stopCrap();
+
+            killObstacles();
+            killCollectables();
+            killTargets();
+
+            mAutoParallaxBackground.setParallaxChangePerSecond(0);
+
+        } else {
+            mGameOver = false;
+            long fDur = 200;
+            mBird.animate(new long[]{fDur, fDur, fDur}, selectedBird * 3, selectedBird * 3 + 2, true);
+
+            mAutoParallaxBackground.setParallaxChangePerSecond(10);
+
+            mObstacles.add(mObstaclePool.obtainPoolItem());
+            attachChild(mObstacles.get(0));
+            mTargets.add(mTargetPool.obtainPoolItem());
+            attachChild(mTargets.get(0));
+            mCollectables.add(mCollectablePool.obtainPoolItem());
+            attachChild(mCollectables.get(0));
         }
     }
 
@@ -1006,7 +1235,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
             } else if (obstacle.getClass().getName().equals("com.application.nick.crappybird.entity.ObstacleBalloon")) {
                 obstacle.setVelocityX(0);
             } else {
-                obstacle.die();
+                //obstacle.die();
+                obstacle.setVelocityX(0);
             }
 
         }
@@ -1020,7 +1250,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         for(int i = mCollectables.size() - 1; i >= 0; i--) {
             Collectable collectable = mCollectables.get(i);
                 collectable.setVisible(false);
-                collectable.die();
+                //collectable.die();
 
         }
     }
@@ -1046,7 +1276,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                             score++;
                         }
 
-                        mHudText.setText(String.valueOf(score));
+                        mHudTextScore.setText(String.valueOf(score));
                     }
                 }
                 if(crapContact) {
@@ -1077,16 +1307,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                     obstacle.setCollidedWith();
                 } else {
 
-                    mGameOver = true;
-                    mResourceManager.mSound.play();
-                    mBird.stopAnimation(0);
-                    stopCrap();
-
-                    killObstacles();
-                    killCollectables();
-                    killTargets();
-
-                    mAutoParallaxBackground.setParallaxChangePerSecond(0);
+                    setGameOver();
                 }
                 return;
             } else if //if this is a hot air balloon and the bird hits the basket... knock the person out
@@ -1105,7 +1326,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                     score++;
                 }
 
-                mHudText.setText(String.valueOf(score));
+                mHudTextScore.setText(String.valueOf(score));
 
             }
 
@@ -1123,6 +1344,12 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                     setMachineCrap(true);
                 } else if(collectable.getClass().getName().equals("com.application.nick.crappybird.entity.CollectableHam")) {
                     setDoublePoints(true);
+                } else if(collectable.getClass().getName().equals("com.application.nick.crappybird.entity.CollectablePizza")) {
+                    pizzaCollected++;
+                    mHudTextPizza.setText(String.valueOf(pizzaCollected));
+                    //update margins
+                    pizzaCollectedSprite.setX((SCREEN_WIDTH - pizzaCollectedSprite.getWidth() - mHudTextPizza.getWidth()) / 2);
+                    mHudTextPizza.setX(pizzaCollectedSprite.getX() + pizzaCollectedSprite.getWidth());
                 }
                 growCrapMeter(MAX_CRAP_METER_SIZE); //fill crap meter
             }
@@ -1292,11 +1519,48 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
     private void displayScore() {
 
+
+        if (score > most) {
+            most = score;
+            mActivity.setMaxScore(most);
+        }
+
+        mActivity.addPizza(pizzaCollected);
+
+        //update user's account highscore if logged in
+        ParseUser currentUser = ParseUser.getCurrentUser();
+        if (currentUser != null) {
+            currentUser.put("pizzaCollected", mActivity.getPizza());
+            if(currentUser.getInt("highScore") < most) {
+                currentUser.put("highScore", most);
+            }
+            currentUser.saveEventually(); //saves if connected, otherwise waits until there is a connection
+        }
+
+
+
+        //hide score and crapMeter
+        mHudTextScore.setVisible(false);
+        mHudTextPizza.setVisible(false);
+        pizzaCollectedSprite.setVisible(false);
+        mCrapMeter.setVisible(false);
+        mMachineCrapMeter.setVisible(false);
+        mPlusTwo.setVisible(false);
+        mAlertSign.setVisible(false);
+        pauseButton.setVisible(false);
+
+
         scoreText.setText(String.valueOf(score)); //update values
         mostText.setText(String.valueOf(most));
 
         scoreText.setX(scoreText.getX() - (scoreText.getWidth() / 2)); //adjust margins
         mostText.setX(mostText.getX() - (mostText.getWidth() / 2));
+
+        //Display pizza collected
+        pizzaTextOnGameOver.setText(String.valueOf(mActivity.getPizza()));
+
+        pizzaCollectedSpriteOnGameOver.setX((SCREEN_WIDTH - pizzaCollectedSpriteOnGameOver.getWidth() - pizzaTextOnGameOver.getWidth()) / 2); //adjust margins
+        pizzaTextOnGameOver.setX(pizzaCollectedSpriteOnGameOver.getX() + pizzaCollectedSpriteOnGameOver.getWidth());
 
         setChildScene(mGameOverScene, false, true, true);
 
@@ -1317,39 +1581,18 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                 if (("bird".equals(userDataA) && "ground".equals(userDataB)) || ("ground".equals(userDataA) && "bird".equals(userDataB))) {
 
                     if(!mGameOver) { //if the bird hasn't already hit an obstacle
-                        mResourceManager.mSound.play();
-                        mGameOver = true;
+                        setGameOver();
                     }
 
-                    mBird.stopAnimation(0);
-                    killObstacles();
-                    killCollectables();
-                    mAutoParallaxBackground.setParallaxChangePerSecond(0);
-
-                    if (score > most) {
-                        most = score;
-                        mActivity.setMaxScore(most);
+                    if(!mRespawnUsed) {
+                        //display countdown screen
+                        setCountDown(true);
+                    } else {
+                        //display game over with score
+                        displayScore();
                     }
 
-                    //update user's account highscore if logged in
-                    ParseUser currentUser = ParseUser.getCurrentUser();
-                    if (currentUser != null && mActivity.isNetworkAvailable()) {
-                        if(currentUser.getInt("highScore") < most) {
-                            currentUser.put("highScore", most);
-                            currentUser.saveInBackground();
-                        }
-                    }
 
-                    //hide score and crapMeter
-                    mHudText.setVisible(false);
-                    mCrapMeter.setVisible(false);
-                    mMachineCrapMeter.setVisible(false);
-                    mPlusTwo.setVisible(false);
-                    mAlertSign.setVisible(false);
-                    pauseButton.setVisible(false);
-
-                    //display game over with score
-                    displayScore();
                 }
             }
 
@@ -1374,7 +1617,9 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
             setSharingVisible(false);
         } else {
 
-            mHudText.setVisible(false);
+            mHudTextScore.setVisible(false);
+            mHudTextPizza.setVisible(false);
+            pizzaCollectedSprite.setVisible(false);
             mMachineCrapMeter.setVisible(false);
             mCrapMeter.setVisible(false);
             mPlusTwo.setVisible(false);

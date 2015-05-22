@@ -64,15 +64,25 @@ public class ResourceManager {
 
     public BitmapTextureAtlas mLeaderboardBitmapTextureAtlas;
     public TiledTextureRegion mLeaderboardButtonTextureRegion;
-    public ITextureRegion mLoginTextTextureRegion;
+    public ITextureRegion mLeaderboardLoginTextTextureRegion;
     public ITextureRegion mLeaderboardTextureRegion;
+
+    public BitmapTextureAtlas mMarketBitmapTextureAtlas;
+    public ITextureRegion mMarketLoginTextTextureRegion;
+
+    public BitmapTextureAtlas mBirdsBitmapTextureAtlas;
+    public TiledTextureRegion mBirdsTextureRegion;
+    public TiledTextureRegion mMarketBirdsTextureRegion;
 
     private BitmapTextureAtlas mSubBitmapTextureAtlas;
     public TiledTextureRegion mStateTextureRegion;
+    public ITextureRegion mScoreBoardTextureRegion;
     public ITextureRegion mBoardTextureRegion;
     public TiledTextureRegion mMeterTextureRegion;
     public TiledTextureRegion mMeter2TextureRegion;
     public ITextureRegion mHelpTextureRegion;
+    public TiledTextureRegion mCountdownTextureRegion;
+
 
     public TiledTextureRegion mPlayButtonTextureRegion;
     public TiledTextureRegion mHelpButtonTextureRegion;
@@ -90,6 +100,14 @@ public class ResourceManager {
     public TiledTextureRegion mNextButtonTextureRegion;
     public TiledTextureRegion mCloseButtonTextureRegion;
     public TiledTextureRegion mRestartButtonTextureRegion;
+    public TiledTextureRegion mArrowLeftButtonTextureRegion;
+    public TiledTextureRegion mArrowRightButtonTextureRegion;
+    public TiledTextureRegion mBirdsMarketButtonTextureRegion;
+    public TiledTextureRegion mPowerUpsMarketButtonTextureRegion;
+    public TiledTextureRegion mPurchaseButtonTextureRegion;
+    public TiledTextureRegion mSelectButtonTextureRegion;
+    public TiledTextureRegion mMarketButtonTextureRegion;
+
 
 
     public ITextureRegion mTitleTextureRegion;
@@ -99,6 +117,7 @@ public class ResourceManager {
     public Font mFont3;
     public Font mFont4;
     public Font mFont5;
+    public Font mFont6;
 
     public Sound mSound;
     public Music mMusic;
@@ -181,7 +200,7 @@ public class ResourceManager {
         mTutorialBitmapTextureAtlas.load();
 
         mLeaderboardBitmapTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 320, 1175, TextureOptions.BILINEAR);
-        mLoginTextTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mLeaderboardBitmapTextureAtlas, mActivity, "leaderboard_login_text.png", 0, 0);
+        mLeaderboardLoginTextTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mLeaderboardBitmapTextureAtlas, mActivity, "leaderboard_login_text.png", 0, 0);
         mLoginButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mLeaderboardBitmapTextureAtlas, mActivity, "login_button.png", 0, 200, 2, 1);
         mSignUpButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mLeaderboardBitmapTextureAtlas, mActivity, "sign_up_button.png", 0, 275, 2, 1);
         mLaterButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mLeaderboardBitmapTextureAtlas, mActivity, "later_button.png", 0, 350, 2, 1);
@@ -189,13 +208,29 @@ public class ResourceManager {
         mLeaderboardTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mLeaderboardBitmapTextureAtlas, mActivity, "leaderboard.png", 0, 500);
         mLogoutButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mLeaderboardBitmapTextureAtlas, mActivity, "logout_button.png", 0, 1100, 2, 1);
 
-
         mLeaderboardBitmapTextureAtlas.load();
 
+        mMarketBitmapTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 320, 900, TextureOptions.BILINEAR);
+        mMarketLoginTextTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mMarketBitmapTextureAtlas, mActivity, "market_login_text.png", 0, 0);
+        mArrowLeftButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mMarketBitmapTextureAtlas, mActivity, "arrow_button_left.png", 0, 200, 2, 1);
+        mArrowRightButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mMarketBitmapTextureAtlas, mActivity, "arrow_button_right.png", 0, 350, 2, 1);
+        mBirdsMarketButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mMarketBitmapTextureAtlas, mActivity, "birds_button.png", 0, 500, 2, 1);
+        mPowerUpsMarketButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mMarketBitmapTextureAtlas, mActivity, "power_ups_button.png", 0, 575, 2, 1);
+        mPurchaseButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mMarketBitmapTextureAtlas, mActivity, "purchase_button.png", 0, 650, 2, 1);
+        mSelectButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mMarketBitmapTextureAtlas, mActivity, "select_button.png", 0, 725, 2, 1);
+        mMarketButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mMarketBitmapTextureAtlas, mActivity, "market_button.png", 0, 825, 2, 1);
 
-        mSubBitmapTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 512, 750, TextureOptions.BILINEAR);
+        mMarketBitmapTextureAtlas.load();
+
+        mBirdsBitmapTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 130, 1400, TextureOptions.BILINEAR);
+        mBirdsTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBirdsBitmapTextureAtlas, mActivity, "birds-master.png", 0, 0, 3, 13);
+        mMarketBirdsTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBirdsBitmapTextureAtlas, mActivity, "market_birds.png", 0, 340, 1, 13);
+
+        mBirdsBitmapTextureAtlas.load();
+
+        mSubBitmapTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 512, 950, TextureOptions.BILINEAR);
         mStateTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mSubBitmapTextureAtlas, mActivity, "ready_over.png", 0, 0, 2, 1);
-        mBoardTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mSubBitmapTextureAtlas, mActivity, "board.png", 0, 60);
+        mScoreBoardTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mSubBitmapTextureAtlas, mActivity, "score_board.png", 0, 60);
         mHelpTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mSubBitmapTextureAtlas, mActivity, "help.png", 0, 200);
         mPlayButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mSubBitmapTextureAtlas, mActivity, "play_button.png", 0, 350, 2, 1);
         mHelpButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mSubBitmapTextureAtlas, mActivity, "help_button.png", 250, 350, 2, 1);
@@ -206,6 +241,8 @@ public class ResourceManager {
         mOtherButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mSubBitmapTextureAtlas, mActivity, "other_button.png", 0, 575, 2, 1);
         mShareButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mSubBitmapTextureAtlas, mActivity, "share_button.png", 250, 575, 2, 1);
         mTitleTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mSubBitmapTextureAtlas, mActivity, "title.png", 0, 650);
+        mCountdownTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mSubBitmapTextureAtlas, mActivity, "countdown.png", 0, 750, 6, 1);
+        mBoardTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mSubBitmapTextureAtlas, mActivity, "board.png", 0, 810);
 
         mSubBitmapTextureAtlas.load();
             //load fonts
@@ -215,7 +252,7 @@ public class ResourceManager {
         FontFactory.setAssetBasePath("font/");
         //ITexture fontTexture2 = new BitmapTextureAtlas(mActivity.getTextureManager(), 256, 256, TextureOptions.BILINEAR);
         //mFont2 = FontFactory.createStrokeFromAsset(mActivity.getFontManager(), fontTexture2, mActivity.getAssets(), "GrutchShaded.ttf", 40, true, Color.YELLOW, 2, Color.DKGRAY);
-        mFont2 = FontFactory.create(mActivity.getFontManager(), mActivity.getTextureManager(), 256, 256, Typeface.create(Typeface.DEFAULT, Typeface.NORMAL), 45, Color.BLACK);
+        mFont2 = FontFactory.create(mActivity.getFontManager(), mActivity.getTextureManager(), 256, 256, Typeface.create(Typeface.DEFAULT, Typeface.NORMAL), 20, Color.WHITE);
         mFont2.load();
 
         //ITexture fontTexture3 = new BitmapTextureAtlas(mActivity.getTextureManager(), 256, 256, TextureOptions.BILINEAR);
@@ -227,6 +264,9 @@ public class ResourceManager {
         //mFont5 = FontFactory.createStrokeFromAsset(mActivity.getFontManager(), fontTexture5, mActivity.getAssets(), "GrutchShaded.ttf", 36, true, Color.WHITE, 2, Color.DKGRAY);
         mFont5 = FontFactory.create(mActivity.getFontManager(), mActivity.getTextureManager(), 256, 256, Typeface.create(Typeface.DEFAULT, Typeface.NORMAL), 30, Color.WHITE);
         mFont5.load();
+
+        mFont6 = FontFactory.create(mActivity.getFontManager(), mActivity.getTextureManager(), 256, 256, Typeface.create(Typeface.DEFAULT, Typeface.NORMAL), 15, Color.WHITE);
+        mFont6.load();
             //load sound/music
         SoundFactory.setAssetBasePath("mfx/");
         try {
@@ -252,6 +292,7 @@ public class ResourceManager {
         mSubBitmapTextureAtlas.unload();
         mTutorialBitmapTextureAtlas.unload();
         mLeaderboardBitmapTextureAtlas.unload();
+        mMarketBitmapTextureAtlas.unload();
 
         mAutoParallaxBackgroundTexture = null;
         mParallaxLayerFront = null;
@@ -281,14 +322,21 @@ public class ResourceManager {
         mTutorialTextureRegion = null;
         mTutorialBoardTextureRegion = null;
 
-        mLoginTextTextureRegion = null;
+        mLeaderboardLoginTextTextureRegion = null;
         mLeaderboardTextureRegion = null;
+
+        mMarketLoginTextTextureRegion = null;
+
+        mBirdsTextureRegion = null;
+        mMarketBirdsTextureRegion = null;
 
         mStateTextureRegion = null;
         mMeterTextureRegion = null;
         mMeter2TextureRegion = null;
+        mScoreBoardTextureRegion = null;
         mBoardTextureRegion = null;
         mHelpTextureRegion = null;
+        mCountdownTextureRegion = null;
 
         mPlayButtonTextureRegion = null;
         mHelpButtonTextureRegion = null;
@@ -307,6 +355,13 @@ public class ResourceManager {
         mLogoutButtonTextureRegion = null;
         mPauseButtonTextureRegion = null;
         mRestartButtonTextureRegion = null;
+        mArrowLeftButtonTextureRegion = null;
+        mArrowRightButtonTextureRegion = null;
+        mBirdsMarketButtonTextureRegion = null;
+        mPowerUpsMarketButtonTextureRegion = null;
+        mPurchaseButtonTextureRegion = null;
+        mSelectButtonTextureRegion = null;
+        mMarketButtonTextureRegion = null;
 
         mTitleTextureRegion = null;
             //unload fonts
@@ -321,6 +376,10 @@ public class ResourceManager {
 
         mFont5.unload();
         mFont5 = null;
+
+        mFont6.unload();
+        mFont6 = null;
+
             //unload sound/music
         mSound.release();
         mSound = null;

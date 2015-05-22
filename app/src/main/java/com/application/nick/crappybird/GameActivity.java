@@ -7,12 +7,9 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.application.nick.crappybird.scene.GameScene;
-import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 
@@ -29,12 +26,8 @@ import org.andengine.engine.handler.timer.TimerHandler;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.CroppedResolutionPolicy;
-import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
 import org.andengine.entity.scene.Scene;
 import org.andengine.ui.activity.LayoutGameActivity;
-import org.andengine.ui.activity.SimpleBaseGameActivity;
-
-import java.io.File;
 
 
 public class GameActivity extends LayoutGameActivity {
@@ -204,9 +197,12 @@ public class GameActivity extends LayoutGameActivity {
 
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         if (requestCode == 100) {
-            if(resultCode == 200){ //result code is only 200 if a user logged in or signed up
-                syncScores();
-                mSceneManager.setScene(SceneManager.SceneType.SCENE_LEADERBOARD);
+            if(resultCode == 200){ //result code is only 200 if a user just logged in or signed up
+                syncUser();
+                mSceneManager.setScene(SceneManager.SceneType.SCENE_MENU);
+
+                displayLongToast("Signed in as " + ParseUser.getCurrentUser().getUsername());
+
             }
         }
     }
@@ -214,7 +210,7 @@ public class GameActivity extends LayoutGameActivity {
     /**
      * this method syncs the local max score with the saved score on the user's account
      */
-    public void syncScores() {
+    public void syncUser() {
         ParseUser currentUser = ParseUser.getCurrentUser();
         if (currentUser != null) {
             int savedScore = currentUser.getInt("highScore");
@@ -222,9 +218,27 @@ public class GameActivity extends LayoutGameActivity {
                 setMaxScore(savedScore);
             } else {
                 currentUser.put("highScore", getMaxScore());
-                currentUser.saveInBackground();
             }
+
+            int pizzaOnAccount = currentUser.getInt("pizzaCollected");
+            pizzaOnAccount += getPizza();
+            setPizza(pizzaOnAccount);
+            currentUser.put("pizzaCollected", pizzaOnAccount);
+            currentUser.saveInBackground();
+
         }
+    }
+
+    public void logout() {
+        //log the user out and set max score = 0. They can get it back by logging in again
+        setMaxScore(0);
+        setPizza(0);
+        String username = ParseUser.getCurrentUser().getUsername();
+        ParseUser.logOut();
+
+        mSceneManager.setScene(SceneManager.SceneType.SCENE_MENU);
+        displayLongToast(username + " signed out.");
+
     }
 
     public void displayConnectionError() {
@@ -237,6 +251,27 @@ public class GameActivity extends LayoutGameActivity {
         });
     }
 
+    public void displayLongToast(String string) {
+        final CharSequence text = string;
+
+        runOnUiThread(new Runnable() {
+            public void run() {
+                Toast.makeText(getApplicationContext(), text, Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    public void displayShortToast(String string) {
+        final CharSequence text = string;
+
+        runOnUiThread(new Runnable() {
+            public void run() {
+                Toast.makeText(getApplicationContext(), text, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+
     public int getMaxScore() {
         return getPreferences(Context.MODE_PRIVATE).getInt("maxScore", 0);
     }
@@ -245,6 +280,37 @@ public class GameActivity extends LayoutGameActivity {
         getPreferences(Context.MODE_PRIVATE).edit().putInt("maxScore", maxScore).commit();
     }
 
+    public int getSelectedBird() {
+        return getPreferences(Context.MODE_PRIVATE).getInt("selectedBird", 0);
+    }
+
+    public void setSelectedBird(int birdNum) {
+        getPreferences(Context.MODE_PRIVATE).edit().putInt("selectedBird", birdNum).commit();
+    }
+
+    public int getPizza() {
+        return getPreferences(Context.MODE_PRIVATE).getInt("pizza", 0);
+    }
+
+    public void setPizza(int pizza) {
+        getPreferences(Context.MODE_PRIVATE).edit().putInt("pizza", pizza).commit();
+    }
+
+    public void addPizza(int pizza) {
+        int currentPizza = getPizza();
+        currentPizza += pizza;
+        setPizza(currentPizza);
+    }
+
+    public void subtractPizza(int pizza) {
+        int currentPizza = getPizza();
+        if(currentPizza > pizza) {
+            currentPizza -= pizza;
+            setPizza(currentPizza);
+        } else {
+            setPizza(0);
+        }
+    }
 
     public boolean isNetworkAvailable() {
         ConnectivityManager connectivityManager

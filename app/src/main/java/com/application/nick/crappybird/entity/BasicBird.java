@@ -32,7 +32,11 @@ public class BasicBird extends AnimatedSprite {
         setAcceleration(0, GRAVITY);
         setVelocity(0, 0);
 
-        animate(200);
+    }
+
+    public void animate(int selectedBird) {
+        long fDur = 200;
+        this.animate(new long[]{fDur, fDur, fDur}, selectedBird * 3, selectedBird * 3 + 2, true);
 
     }
 

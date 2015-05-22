@@ -3,20 +3,12 @@ package com.application.nick.crappybird.scene;
 import android.util.Log;
 
 import com.application.nick.crappybird.SceneManager;
-import com.application.nick.crappybird.entity.BasicBird;
-import com.application.nick.crappybird.entity.Crap;
-import com.application.nick.crappybird.entity.CrapPool;
-import com.application.nick.crappybird.entity.Tutorial;
 import com.parse.FindCallback;
-import com.parse.Parse;
 import com.parse.ParseException;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
 
 import org.andengine.entity.scene.CameraScene;
-import org.andengine.entity.scene.background.AutoParallaxBackground;
-import org.andengine.entity.scene.background.ParallaxBackground;
-import org.andengine.entity.shape.IShape;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.sprite.TiledSprite;
 import org.andengine.entity.text.Text;
@@ -61,11 +53,11 @@ public class LeaderboardScene extends BaseScene {
         final float boardX = (SCREEN_WIDTH - mResourceManager.mTutorialBoardTextureRegion.getWidth()) / 2;
         final float boardY = boardX; //(SCREEN_HEIGHT - mResourceManager.mTutorialBoardTextureRegion.getHeight()) / 2;
 
-        final float loginTextX = (SCREEN_WIDTH - mResourceManager.mLoginTextTextureRegion.getWidth()) / 2;
+        final float loginTextX = (SCREEN_WIDTH - mResourceManager.mLeaderboardLoginTextTextureRegion.getWidth()) / 2;
         final float loginTextY = boardY + 10;
 
         final float signUpButtonX = (SCREEN_WIDTH - mResourceManager.mSignUpButtonTextureRegion.getWidth()) / 2;
-        final float signUpButtonY = loginTextY + mResourceManager.mLoginTextTextureRegion.getHeight();
+        final float signUpButtonY = loginTextY + mResourceManager.mLeaderboardLoginTextTextureRegion.getHeight();
 
         final float loginButtonX = signUpButtonX;
         final float loginButtonY = signUpButtonY + mResourceManager.mLoginButtonTextureRegion.getHeight();
@@ -82,7 +74,7 @@ public class LeaderboardScene extends BaseScene {
         final Sprite popUpBoard = new Sprite(boardX, boardY, mResourceManager.mTutorialBoardTextureRegion, mVertexBufferObjectManager);
         mLoginScene.attachChild(popUpBoard);
 
-        final Sprite loginText = new Sprite(loginTextX, loginTextY, mResourceManager.mLoginTextTextureRegion, mVertexBufferObjectManager);
+        final Sprite loginText = new Sprite(loginTextX, loginTextY, mResourceManager.mLeaderboardLoginTextTextureRegion, mVertexBufferObjectManager);
         mLoginScene.attachChild(loginText);
 
         final TiledSprite signUpButton = new TiledSprite(signUpButtonX, signUpButtonY, mResourceManager.mSignUpButtonTextureRegion, mVertexBufferObjectManager) {
@@ -160,10 +152,7 @@ public class LeaderboardScene extends BaseScene {
                     if (pSceneTouchEvent.isActionUp()) {
                         setCurrentTileIndex(0);
                         //log the user out and set max score = 0. They can get it back by logging in again
-                        mActivity.setMaxScore(0);
-                        ParseUser.logOut();
-
-                        mSceneManager.setScene(SceneManager.SceneType.SCENE_LEADERBOARD);
+                        mActivity.logout();
                     }
                     return true;
                 }

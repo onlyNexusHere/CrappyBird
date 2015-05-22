@@ -5,6 +5,7 @@ import com.application.nick.crappybird.entity.BasicBird;
 import com.application.nick.crappybird.entity.Crap;
 import com.application.nick.crappybird.entity.CrapPool;
 import com.application.nick.crappybird.entity.Tutorial;
+import com.parse.ParseUser;
 
 import org.andengine.engine.handler.IUpdateHandler;
 import org.andengine.entity.primitive.Rectangle;
@@ -31,12 +32,11 @@ public class MainMenuScene extends BaseScene {
     private BasicBird mBird;
     private CrapPool mCrapPool;
     private List<Crap> mCraps = new ArrayList<Crap>();
-    private Tutorial mTutorial;
 
-    private TiledSprite playButton, helpButton, backButton, leaderboardButton;
+    private TiledSprite playButton, helpButton, marketButton, leaderboardButton;
     private Sprite title;
 
-    private boolean playTransition = false, helpTransitionOn = false, helpTransitionOff = false, showingTutorial = false;
+    private boolean playTransition = false, showingTutorial = false;
 
     private final int MAX_CRAPS = 10;
 
@@ -64,14 +64,21 @@ public class MainMenuScene extends BaseScene {
         setBackground(autoParallaxBackground);
 
         title = new Sprite(0,0, mResourceManager.mTitleTextureRegion, mVertexBufferObjectManager);
-        title.setPosition((SCREEN_WIDTH - title.getWidth())/2f, 75);
+        title.setPosition((SCREEN_WIDTH - title.getWidth()) / 2f, 75);
         title.setScale(1.5f);
         attachChild(title);
 
+
+        if(ParseUser.getCurrentUser() == null) {
+            mActivity.setSelectedBird(0); //no fancy birds without account
+        }
+
+
         final float birdX = (SCREEN_WIDTH - mResourceManager.mBirdTextureRegion.getWidth()) / 2;
         final float birdY = title.getY() + title.getHeight() + 25;
-        mBird = new BasicBird(birdX, birdY, mResourceManager.mBirdTextureRegion, mVertexBufferObjectManager);
+        mBird = new BasicBird(birdX, birdY, mResourceManager.mBirdsTextureRegion, mVertexBufferObjectManager);
         mBird.setRotation(-15);
+        mBird.animate(mActivity.getSelectedBird());
         attachChild(mBird);
 
         mCrapPool = new CrapPool(mResourceManager.mCrapTextureRegion, mVertexBufferObjectManager);
@@ -85,7 +92,8 @@ public class MainMenuScene extends BaseScene {
         }
 
 
-        final float playX = (SCREEN_WIDTH - mResourceManager.mPlayButtonTextureRegion.getWidth()) / 2;
+
+        final float playX = SCREEN_WIDTH/2  - mResourceManager.mPlayButtonTextureRegion.getWidth();
         final float playY = SCREEN_HEIGHT / 2 - mResourceManager.mPlayButtonTextureRegion.getHeight() / 4;
 
         playButton = new TiledSprite(playX, playY, mResourceManager.mPlayButtonTextureRegion, mVertexBufferObjectManager) {
@@ -116,9 +124,10 @@ public class MainMenuScene extends BaseScene {
         registerTouchArea(playButton);
         attachChild(playButton);
 
-        final float leaderboardX = playX;
-        final float leaderboardY = playY + playButton.getHeight() * 0.7f;
 
+
+        final float leaderboardX = SCREEN_WIDTH/2;
+        final float leaderboardY = playY;
 
         leaderboardButton = new TiledSprite(leaderboardX, leaderboardY, mResourceManager.mLeaderboardButtonTextureRegion, mVertexBufferObjectManager) {
 
@@ -146,8 +155,35 @@ public class MainMenuScene extends BaseScene {
 
 
 
+        final float marketX = playX;
+        final float marketY = playY + playButton.getHeight();
+
+        marketButton = new TiledSprite(marketX, marketY, mResourceManager.mMarketButtonTextureRegion, mVertexBufferObjectManager) {
+
+            @Override
+            public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+                if (pSceneTouchEvent.isActionDown()) {
+                    setCurrentTileIndex(1);
+
+                }
+                if (pSceneTouchEvent.isActionUp()) {
+                    setCurrentTileIndex(0);
+
+                    mSceneManager.setScene(SceneManager.SceneType.SCENE_MARKET);
+
+                }
+                return true;
+            }
+        };
+        marketButton.setCurrentTileIndex(0);
+        marketButton.setScale(0.75f);
+        registerTouchArea(marketButton);
+        attachChild(marketButton);
+
+
+
         final float helpX = leaderboardX;
-        final float helpY = leaderboardY + playButton.getHeight() * 0.7f;
+        final float helpY = playY + playButton.getHeight();
 
         helpButton = new TiledSprite(helpX, helpY, mResourceManager.mHelpButtonTextureRegion, mVertexBufferObjectManager) {
 
