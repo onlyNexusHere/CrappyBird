@@ -168,8 +168,7 @@ public class MainMenuScene extends BaseScene {
                 }
                 if (pSceneTouchEvent.isActionUp()) {
                     setCurrentTileIndex(0);
-
-                    mSceneManager.setScene(SceneManager.SceneType.SCENE_MARKET);
+                        mSceneManager.setScene(SceneManager.SceneType.SCENE_MARKET);
 
                 }
                 return true;

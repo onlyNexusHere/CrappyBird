@@ -51,13 +51,23 @@ public class MarketScene extends BaseScene {
             5000  //golden bird
     };
 
+    public static final String[] PIZZA_PURCHASES = {
+            "1,000 Pizza",
+            "5,000 Pizza",
+            "10,000 Pizza"
+    };
+
+    private static String[] mPizzaPurchasePrices = new String[3];
+
     private final int MYSTERY_INDEX = 12;
 
-    private CameraScene mLoginScene, mBirdMarketScene, mPowerUpMarketScene;
+    private CameraScene mLoginScene, mBirdMarketScene, mPowerUpMarketScene, mPizzaMarketScene;
 
-    private Text loadingText;
+    private Text loadingText, pizzaPurchasePriceText, pizzaPurchaseText, birdMarketTotalPizzaText, pizzaMarketTotalPizzaText, powerUpMarketTotalPizzaText;
 
-    private int currentBird, numBirds;
+    private Sprite birdMarketTotalPizzaSprite, pizzaMarketTotalPizzaSprite, powerUpMarketTotalPizzaSprite;
+
+    private int currentBird, numBirds, currentPizzaPurchase = 0;
 
     private AutoParallaxBackground autoParallaxBackground;
     private ParallaxBackground.ParallaxEntity parallaxLayerBack;
@@ -65,6 +75,8 @@ public class MarketScene extends BaseScene {
     private ParallaxBackground.ParallaxEntity parallaxLayerFront;
 
     private ParseUser currentUser;
+
+    private boolean birdMarketSceneOpen, powerUpMarketSceneOpen, pizzaMarketSceneOpen = false;
 
 
     @Override
@@ -84,6 +96,10 @@ public class MarketScene extends BaseScene {
 
         currentBird = mActivity.getSelectedBird();
         numBirds = MarketScene.BIRD_NAMES.length;
+
+        MarketScene.mPizzaPurchasePrices[0] = mActivity.getPrice1000Pizza();
+        MarketScene.mPizzaPurchasePrices[1] = mActivity.getPrice5000Pizza();
+        MarketScene.mPizzaPurchasePrices[2] = mActivity.getPrice10000Pizza();
 
         if (!mResourceManager.mMusic.isPlaying()) {
             mResourceManager.mMusic.play();
@@ -106,8 +122,10 @@ public class MarketScene extends BaseScene {
 
             createBirdMarketScene();
             createPowerUpMarketScene();
+            createPizzaMarketScene();
             setChildScene(mBirdMarketScene, false, true, true);
-
+            birdMarketSceneOpen = true;
+            powerUpMarketSceneOpen = false;
 
 
         }
@@ -140,6 +158,25 @@ public class MarketScene extends BaseScene {
 
         final float powerUpsButtonX = SCREEN_WIDTH/2;
         final float powerUpsButtonY = birdsButtonY;
+
+        final float getMoreButtonX = (SCREEN_WIDTH - mResourceManager.mGetMorePizzaButtonTextureRegion.getWidth()) / 2;
+        final float getMoreButtonY = boardY + mResourceManager.mTutorialBoardTextureRegion.getHeight() - mResourceManager.mGetMorePizzaButtonTextureRegion.getHeight();
+
+        final float totalPizzaY = (backButtonY * 2 + mResourceManager.mBackButtonTextureRegion.getHeight()) / 2 - mResourceManager.mCollectablePizzaTextureRegion.getHeight() / 2;
+        final float totalPizzaTextY = (backButtonY * 2 + mResourceManager.mBackButtonTextureRegion.getHeight()) / 2 - mResourceManager.mFont3.getLineHeight() / 2;
+
+        powerUpMarketTotalPizzaSprite = new Sprite(0, totalPizzaY, mResourceManager.mCollectablePizzaTextureRegion, mVertexBufferObjectManager);
+        mPowerUpMarketScene.attachChild(powerUpMarketTotalPizzaSprite);
+        powerUpMarketTotalPizzaSprite.setScale(.5f);
+
+        powerUpMarketTotalPizzaText = (new Text(0, totalPizzaTextY, mResourceManager.mFont3, "0123456789", new TextOptions(HorizontalAlign.LEFT), mVertexBufferObjectManager));
+        powerUpMarketTotalPizzaText.setText(Integer.toString(mActivity.getPizza()));
+        mPowerUpMarketScene.attachChild(powerUpMarketTotalPizzaText);
+
+        powerUpMarketTotalPizzaSprite.setX((SCREEN_WIDTH - powerUpMarketTotalPizzaSprite.getWidth() - powerUpMarketTotalPizzaText.getWidth()) / 2); //adjust margins
+        powerUpMarketTotalPizzaText.setX(powerUpMarketTotalPizzaSprite.getX() + powerUpMarketTotalPizzaSprite.getWidth());
+
+
 
         final Sprite popUpBoard = new Sprite(boardX, boardY, mResourceManager.mTutorialBoardTextureRegion, mVertexBufferObjectManager);
         mPowerUpMarketScene.attachChild(popUpBoard);
@@ -210,6 +247,8 @@ public class MarketScene extends BaseScene {
                     setCurrentTileIndex(0);
 
                     openBirdsMarketScene();
+                    birdMarketSceneOpen = true;
+                    powerUpMarketSceneOpen = false;
                 }
                 return true;
             }
@@ -224,6 +263,29 @@ public class MarketScene extends BaseScene {
         powerUpsButton.setCurrentTileIndex(1);
         powerUpsButton.setScale(0.75f);
         mPowerUpMarketScene.attachChild(powerUpsButton);
+
+
+        final TiledSprite getMoreButton = new TiledSprite(getMoreButtonX, getMoreButtonY, mResourceManager.mGetMorePizzaButtonTextureRegion, mVertexBufferObjectManager) {
+
+            @Override
+            public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+                if (pSceneTouchEvent.isActionDown()) {
+                    setCurrentTileIndex(1);
+
+                }
+                if (pSceneTouchEvent.isActionUp()) {
+                    setCurrentTileIndex(0);
+
+                    openPizzaMarketScene();
+                    pizzaMarketSceneOpen = true;
+                }
+                return true;
+            }
+        };
+        getMoreButton.setCurrentTileIndex(0);
+        getMoreButton.setScale(0.75f);
+        mPowerUpMarketScene.registerTouchArea(getMoreButton);
+        mPowerUpMarketScene.attachChild(getMoreButton);
 
     }
 
@@ -263,6 +325,9 @@ public class MarketScene extends BaseScene {
         final float purchaseButtonX = SCREEN_WIDTH/2;
         final float purchaseButtonY = selectButtonY;
 
+        final float getMoreButtonX = (SCREEN_WIDTH - mResourceManager.mGetMorePizzaButtonTextureRegion.getWidth()) / 2;
+        final float getMoreButtonY = boardY + mResourceManager.mTutorialBoardTextureRegion.getHeight() - mResourceManager.mGetMorePizzaButtonTextureRegion.getHeight();
+
         //final float currentUserTextY = (backButtonY * 2 + mResourceManager.mBackButtonTextureRegion.getHeight()) / 2;
 
         final float titleTextY = boardY + 20;
@@ -279,16 +344,16 @@ public class MarketScene extends BaseScene {
         titleText.setX((SCREEN_WIDTH - titleText.getWidth()) / 2);
         mBirdMarketScene.attachChild(titleText);
 
-        final Sprite totalPizzaSprite = new Sprite(0, totalPizzaY, mResourceManager.mCollectablePizzaTextureRegion, mVertexBufferObjectManager);
-        mBirdMarketScene.attachChild(totalPizzaSprite);
-        totalPizzaSprite.setScale(.5f);
+        birdMarketTotalPizzaSprite = new Sprite(0, totalPizzaY, mResourceManager.mCollectablePizzaTextureRegion, mVertexBufferObjectManager);
+        mBirdMarketScene.attachChild(birdMarketTotalPizzaSprite);
+        birdMarketTotalPizzaSprite.setScale(.5f);
 
-        final Text totalPizzaText = (new Text(0, totalPizzaTextY, mResourceManager.mFont3, "0123456789", new TextOptions(HorizontalAlign.LEFT), mVertexBufferObjectManager));
-        totalPizzaText.setText(Integer.toString(mActivity.getPizza()));
-        mBirdMarketScene.attachChild(totalPizzaText);
+        birdMarketTotalPizzaText = (new Text(0, totalPizzaTextY, mResourceManager.mFont3, "0123456789", new TextOptions(HorizontalAlign.LEFT), mVertexBufferObjectManager));
+        birdMarketTotalPizzaText.setText(Integer.toString(mActivity.getPizza()));
+        mBirdMarketScene.attachChild(birdMarketTotalPizzaText);
 
-        totalPizzaSprite.setX((SCREEN_WIDTH - totalPizzaSprite.getWidth() - totalPizzaText.getWidth()) / 2); //adjust margins
-        totalPizzaText.setX(totalPizzaSprite.getX() + totalPizzaSprite.getWidth());
+        birdMarketTotalPizzaSprite.setX((SCREEN_WIDTH - birdMarketTotalPizzaSprite.getWidth() - birdMarketTotalPizzaText.getWidth()) / 2); //adjust margins
+        birdMarketTotalPizzaText.setX(birdMarketTotalPizzaSprite.getX() + birdMarketTotalPizzaSprite.getWidth());
 
 
         final float birdNameY = (titleTextY + titleText.getHeight() + birdY) / 2 - mResourceManager.mFont2.getLineHeight() / 2;
@@ -375,6 +440,8 @@ public class MarketScene extends BaseScene {
                     setCurrentTileIndex(0);
 
                     openPowerUpsMarketScene();
+                    birdMarketSceneOpen = false;
+                    powerUpMarketSceneOpen = true;
                 }
                 return true;
             }
@@ -432,9 +499,7 @@ public class MarketScene extends BaseScene {
                         }
                         birdsSprite.setCurrentTileIndex(currentBird);
 
-                        totalPizzaText.setText(Integer.toString(pizza));
-                        totalPizzaSprite.setX((SCREEN_WIDTH - totalPizzaSprite.getWidth() - totalPizzaText.getWidth()) / 2); //adjust margins
-                        totalPizzaText.setX(totalPizzaSprite.getX() + totalPizzaSprite.getWidth());
+                        updateTotalPizzaText();
                     }
                 }
                 return true;
@@ -537,18 +602,322 @@ public class MarketScene extends BaseScene {
         mBirdMarketScene.attachChild(arrowRightButton);
 
 
+        final TiledSprite getMoreButton = new TiledSprite(getMoreButtonX, getMoreButtonY, mResourceManager.mGetMorePizzaButtonTextureRegion, mVertexBufferObjectManager) {
+
+            @Override
+            public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+                if (pSceneTouchEvent.isActionDown()) {
+                    setCurrentTileIndex(1);
+
+                }
+                if (pSceneTouchEvent.isActionUp()) {
+                    setCurrentTileIndex(0);
+
+                    openPizzaMarketScene();
+                    pizzaMarketSceneOpen = true;
+                }
+                return true;
+            }
+        };
+        getMoreButton.setCurrentTileIndex(0);
+        getMoreButton.setScale(0.75f);
+        mBirdMarketScene.registerTouchArea(getMoreButton);
+        mBirdMarketScene.attachChild(getMoreButton);
+
+    }
+
+    private void createPizzaMarketScene() {
+        mPizzaMarketScene = new CameraScene(mCamera);
+        mPizzaMarketScene.setBackgroundEnabled(false);
+
+        final float backButtonX = 0;
+        final float backButtonY = -5;
+
+        final float logoutButtonX = SCREEN_WIDTH - mResourceManager.mLogoutButtonTextureRegion.getWidth();
+        final float logoutButtonY = -5;
+
+        final float boardX = (SCREEN_WIDTH - mResourceManager.mTutorialBoardTextureRegion.getWidth()) / 2;
+        final float boardY = backButtonY + mResourceManager.mBackButtonTextureRegion.getHeight();
+
+        final float birdsButtonX = SCREEN_WIDTH/2 - mResourceManager.mBirdsMarketButtonTextureRegion.getWidth();
+        final float birdsButtonY = boardY + mResourceManager.mTutorialBoardTextureRegion.getHeight();
+
+        final float powerUpsButtonX = SCREEN_WIDTH/2;
+        final float powerUpsButtonY = birdsButtonY;
+
+        final float arrowLeftX = boardX;
+        final float arrowButtonsY = (2 * boardY + mResourceManager.mTutorialBoardTextureRegion.getHeight()) / 2 - mResourceManager.mArrowLeftButtonTextureRegion.getHeight() / 2;
+
+        final float arrowRightX = boardX + mResourceManager.mTutorialBoardTextureRegion.getWidth() - mResourceManager.mArrowLeftButtonTextureRegion.getWidth();
+
+        final float pizzaPurchasesX = (SCREEN_WIDTH - mResourceManager.mPizzaPurchasesTextureRegion.getWidth()) / 2;
+        final float pizzaPurchasesY = (2 * boardY + mResourceManager.mTutorialBoardTextureRegion.getHeight()) / 2 - mResourceManager.mPizzaPurchasesTextureRegion.getHeight() / 2;
+
+        final float purchaseButtonX = (SCREEN_WIDTH - mResourceManager.mPurchaseButtonTextureRegion.getWidth())/2;;
+        final float purchaseButtonY = arrowButtonsY + mResourceManager.mArrowLeftButtonTextureRegion.getHeight();
+
+        //final float currentUserTextY = (backButtonY * 2 + mResourceManager.mBackButtonTextureRegion.getHeight()) / 2;
+
+        final float titleTextY = boardY + 20;
+
+        final float totalPizzaY = (backButtonY * 2 + mResourceManager.mBackButtonTextureRegion.getHeight()) / 2 - mResourceManager.mCollectablePizzaTextureRegion.getHeight() / 2;
+        final float totalPizzaTextY = (backButtonY * 2 + mResourceManager.mBackButtonTextureRegion.getHeight()) / 2 - mResourceManager.mFont3.getLineHeight() / 2;
+
+
+        final Sprite popUpBoard = new Sprite(boardX, boardY, mResourceManager.mTutorialBoardTextureRegion, mVertexBufferObjectManager);
+        mPizzaMarketScene.attachChild(popUpBoard);
+
+
+        final Text titleText = (new Text(0, titleTextY, mResourceManager.mFont5, "Get More Pizza", new TextOptions(HorizontalAlign.LEFT), mVertexBufferObjectManager));
+        titleText.setX((SCREEN_WIDTH - titleText.getWidth()) / 2);
+        mPizzaMarketScene.attachChild(titleText);
+
+        pizzaMarketTotalPizzaSprite = new Sprite(0, totalPizzaY, mResourceManager.mCollectablePizzaTextureRegion, mVertexBufferObjectManager);
+        mPizzaMarketScene.attachChild(pizzaMarketTotalPizzaSprite);
+        pizzaMarketTotalPizzaSprite.setScale(.5f);
+
+        pizzaMarketTotalPizzaText = (new Text(0, totalPizzaTextY, mResourceManager.mFont3, "0123456789", new TextOptions(HorizontalAlign.LEFT), mVertexBufferObjectManager));
+        pizzaMarketTotalPizzaText.setText(Integer.toString(mActivity.getPizza()));
+        mPizzaMarketScene.attachChild(pizzaMarketTotalPizzaText);
+
+        pizzaMarketTotalPizzaSprite.setX((SCREEN_WIDTH - pizzaMarketTotalPizzaSprite.getWidth() - pizzaMarketTotalPizzaText.getWidth()) / 2); //adjust margins
+        pizzaMarketTotalPizzaText.setX(pizzaMarketTotalPizzaSprite.getX() + pizzaMarketTotalPizzaSprite.getWidth());
+
+
+        final float pizzaPurchaseTextY = (titleTextY + titleText.getHeight() + pizzaPurchasesY) / 2 - mResourceManager.mFont2.getLineHeight() / 2;
+        final float pizzaPurchasePriceTextY = (pizzaPurchaseTextY + mResourceManager.mFont2.getLineHeight() + pizzaPurchasesY) / 2 - mResourceManager.mFont3.getLineHeight() / 2;
+
+        final String initText = "0123456789 qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM$";
+
+        pizzaPurchaseText = (new Text(0, pizzaPurchaseTextY, mResourceManager.mFont2, initText, new TextOptions(HorizontalAlign.LEFT), mVertexBufferObjectManager));
+        pizzaPurchaseText.setText(PIZZA_PURCHASES[currentPizzaPurchase]);
+        mPizzaMarketScene.attachChild(pizzaPurchaseText);
+
+        pizzaPurchasePriceText = (new Text(0, pizzaPurchasePriceTextY, mResourceManager.mFont3, initText, new TextOptions(HorizontalAlign.LEFT), mVertexBufferObjectManager));
+        mPizzaMarketScene.attachChild(pizzaPurchasePriceText);
+
+        pizzaPurchaseText.setX((SCREEN_WIDTH - pizzaPurchaseText.getWidth()) / 2);
+        pizzaPurchasePriceText.setX((SCREEN_WIDTH - pizzaPurchasePriceText.getWidth()) / 2);
+
+        final TiledSprite logoutButton = new TiledSprite(logoutButtonX, logoutButtonY, mResourceManager.mLogoutButtonTextureRegion, mVertexBufferObjectManager) {
+
+            @Override
+            public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+                if (pSceneTouchEvent.isActionDown()) {
+                    setCurrentTileIndex(1);
+
+                }
+                if (pSceneTouchEvent.isActionUp()) {
+                    setCurrentTileIndex(0);
+                    //log the user out and set max score = 0. They can get it back by logging in again
+                    mActivity.logout();
+                }
+                return true;
+            }
+        };
+        logoutButton.setCurrentTileIndex(0);
+        logoutButton.setScale(0.75f);
+        mPizzaMarketScene.registerTouchArea(logoutButton);
+        mPizzaMarketScene.attachChild(logoutButton);
+
+        final TiledSprite backButton = new TiledSprite(backButtonX, backButtonY, mResourceManager.mBackButtonTextureRegion, mVertexBufferObjectManager) {
+
+            @Override
+            public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+                if (pSceneTouchEvent.isActionDown()) {
+                    setCurrentTileIndex(1);
+
+                }
+                if (pSceneTouchEvent.isActionUp()) {
+                    setCurrentTileIndex(0);
+
+                    mSceneManager.setScene(SceneManager.SceneType.SCENE_MENU);
+                }
+                return true;
+            }
+        };
+        backButton.setCurrentTileIndex(0);
+        backButton.setScale(0.75f);
+        mPizzaMarketScene.registerTouchArea(backButton);
+        mPizzaMarketScene.attachChild(backButton);
+
+        final TiledSprite birdsButton = new TiledSprite(birdsButtonX, birdsButtonY, mResourceManager.mBirdsMarketButtonTextureRegion, mVertexBufferObjectManager) {
+
+            @Override
+            public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+                if (pSceneTouchEvent.isActionDown()) {
+                    setCurrentTileIndex(1);
+
+                }
+                if (pSceneTouchEvent.isActionUp()) {
+                    setCurrentTileIndex(0);
+
+                    openBirdsMarketScene();
+                    birdMarketSceneOpen = true;
+                    powerUpMarketSceneOpen = false;
+                    pizzaMarketSceneOpen = false;
+                }
+                return true;
+            }
+        };
+        birdsButton.setCurrentTileIndex(0);
+        birdsButton.setScale(0.75f);
+        mPizzaMarketScene.registerTouchArea(birdsButton);
+        mPizzaMarketScene.attachChild(birdsButton);
+
+        final TiledSprite powerUpsButton = new TiledSprite(powerUpsButtonX, powerUpsButtonY, mResourceManager.mPowerUpsMarketButtonTextureRegion, mVertexBufferObjectManager) {
+
+            @Override
+            public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+                if (pSceneTouchEvent.isActionDown()) {
+                    setCurrentTileIndex(1);
+
+                }
+                if (pSceneTouchEvent.isActionUp()) {
+                    setCurrentTileIndex(0);
+
+                    openPowerUpsMarketScene();
+                    birdMarketSceneOpen = false;
+                    powerUpMarketSceneOpen = true;
+                    pizzaMarketSceneOpen = false;
+                }
+                return true;
+            }
+        };
+        powerUpsButton.setCurrentTileIndex(0);
+        powerUpsButton.setScale(0.75f);
+        mPizzaMarketScene.registerTouchArea(powerUpsButton);
+        mPizzaMarketScene.attachChild(powerUpsButton);
+
+        final TiledSprite pizzaPurchasesSprite = new TiledSprite(pizzaPurchasesX, pizzaPurchasesY, mResourceManager.mPizzaPurchasesTextureRegion, mVertexBufferObjectManager);
+        pizzaPurchasesSprite.setCurrentTileIndex(currentPizzaPurchase);
+        mPizzaMarketScene.attachChild(pizzaPurchasesSprite);
+
+
+        final TiledSprite purchaseButton = new TiledSprite(purchaseButtonX, purchaseButtonY, mResourceManager.mPurchaseButtonTextureRegion, mVertexBufferObjectManager) {
+
+            @Override
+            public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+                    if (pSceneTouchEvent.isActionDown()) {
+                        setCurrentTileIndex(2);
+                    }
+                    if(pSceneTouchEvent.isActionUp()) {
+                        setCurrentTileIndex(0);
+                        mActivity.purchasePizza(currentPizzaPurchase);
+                    }
+
+                return true;
+
+            }
+        };
+        purchaseButton.setCurrentTileIndex(0);
+        purchaseButton.setScale(0.75f);
+        mPizzaMarketScene.registerTouchArea(purchaseButton);
+        mPizzaMarketScene.attachChild(purchaseButton);
+
+        final TiledSprite arrowLeftButton = new TiledSprite(arrowLeftX, arrowButtonsY, mResourceManager.mArrowLeftButtonTextureRegion, mVertexBufferObjectManager) {
+
+            @Override
+            public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+                if (pSceneTouchEvent.isActionDown()) {
+                    setCurrentTileIndex(1);
+
+                }
+                if (pSceneTouchEvent.isActionUp()) {
+                    setCurrentTileIndex(0);
+                    if(currentPizzaPurchase != 0) {
+                        currentPizzaPurchase--;
+                    } else {
+                        currentPizzaPurchase = PIZZA_PURCHASES.length - 1;
+                    }
+                    pizzaPurchasesSprite.setCurrentTileIndex(currentPizzaPurchase);
+
+                    pizzaPurchaseText.setText(PIZZA_PURCHASES[currentPizzaPurchase]);
+                    pizzaPurchasePriceText.setText(mPizzaPurchasePrices[currentPizzaPurchase]);
+
+                    pizzaPurchaseText.setX((SCREEN_WIDTH - pizzaPurchaseText.getWidth()) / 2);
+                    pizzaPurchasePriceText.setX((SCREEN_WIDTH - pizzaPurchasePriceText.getWidth()) / 2);
+                }
+                return true;
+            }
+        };
+        arrowLeftButton.setCurrentTileIndex(0);
+        arrowLeftButton.setScale(0.75f);
+        mPizzaMarketScene.registerTouchArea(arrowLeftButton);
+        mPizzaMarketScene.attachChild(arrowLeftButton);
+
+        final TiledSprite arrowRightButton = new TiledSprite(arrowRightX, arrowButtonsY, mResourceManager.mArrowRightButtonTextureRegion, mVertexBufferObjectManager) {
+
+            @Override
+            public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+                if (pSceneTouchEvent.isActionDown()) {
+                    setCurrentTileIndex(1);
+
+                }
+                if (pSceneTouchEvent.isActionUp()) {
+                    setCurrentTileIndex(0);
+                    if(currentPizzaPurchase != PIZZA_PURCHASES.length - 1) {
+                        currentPizzaPurchase++;
+                    } else {
+                        currentPizzaPurchase = 0;
+                    }
+                    pizzaPurchasesSprite.setCurrentTileIndex(currentPizzaPurchase);
+
+                    pizzaPurchaseText.setText(PIZZA_PURCHASES[currentPizzaPurchase]);
+                    pizzaPurchasePriceText.setText(mPizzaPurchasePrices[currentPizzaPurchase]);
+
+                    pizzaPurchaseText.setX((SCREEN_WIDTH - pizzaPurchaseText.getWidth()) / 2);
+                    pizzaPurchasePriceText.setX((SCREEN_WIDTH - pizzaPurchasePriceText.getWidth()) / 2);
+                }
+                return true;
+            }
+        };
+        arrowRightButton.setCurrentTileIndex(0);
+        arrowRightButton.setScale(0.75f);
+        mPizzaMarketScene.registerTouchArea(arrowRightButton);
+        mPizzaMarketScene.attachChild(arrowRightButton);
+
     }
 
     private void openBirdsMarketScene() {
         clearChildScene();
         setChildScene(mBirdMarketScene, false, true, true);
+        currentPizzaPurchase = 0;
 
     }
 
     private void openPowerUpsMarketScene() {
         clearChildScene();
         setChildScene(mPowerUpMarketScene, false, true, true);
+        currentPizzaPurchase = 0;
 
+    }
+
+    private void openPizzaMarketScene() {
+        clearChildScene();
+        pizzaPurchaseText.setText(PIZZA_PURCHASES[currentPizzaPurchase]);
+        pizzaPurchasePriceText.setText(mPizzaPurchasePrices[currentPizzaPurchase]);
+
+        pizzaPurchaseText.setX((SCREEN_WIDTH - pizzaPurchaseText.getWidth()) / 2);
+        pizzaPurchasePriceText.setX((SCREEN_WIDTH - pizzaPurchasePriceText.getWidth()) / 2);
+        setChildScene(mPizzaMarketScene, false, true, true);
+
+    }
+
+    public void updateTotalPizzaText() {
+        int pizza = mActivity.getPizza();
+
+        birdMarketTotalPizzaText.setText(Integer.toString(pizza));
+        birdMarketTotalPizzaSprite.setX((SCREEN_WIDTH - birdMarketTotalPizzaSprite.getWidth() - birdMarketTotalPizzaText.getWidth()) / 2); //adjust margins
+        birdMarketTotalPizzaText.setX(birdMarketTotalPizzaSprite.getX() + birdMarketTotalPizzaSprite.getWidth());
+
+        pizzaMarketTotalPizzaText.setText(Integer.toString(pizza));
+        pizzaMarketTotalPizzaSprite.setX((SCREEN_WIDTH - birdMarketTotalPizzaSprite.getWidth() - birdMarketTotalPizzaText.getWidth()) / 2); //adjust margins
+        pizzaMarketTotalPizzaText.setX(birdMarketTotalPizzaSprite.getX() + birdMarketTotalPizzaSprite.getWidth());
+
+        powerUpMarketTotalPizzaText.setText(Integer.toString(pizza));
+        powerUpMarketTotalPizzaSprite.setX((SCREEN_WIDTH - birdMarketTotalPizzaSprite.getWidth() - birdMarketTotalPizzaText.getWidth()) / 2); //adjust margins
+        powerUpMarketTotalPizzaText.setX(birdMarketTotalPizzaSprite.getX() + birdMarketTotalPizzaSprite.getWidth());
     }
 
     private void createLoginScene() {
@@ -617,7 +986,18 @@ public class MarketScene extends BaseScene {
 
     @Override
     public void onBackKeyPressed() {
-        mSceneManager.setScene(SceneManager.SceneType.SCENE_MENU);
+        if(pizzaMarketSceneOpen) {
+            if(powerUpMarketSceneOpen) {
+                pizzaMarketSceneOpen = false;
+                openPowerUpsMarketScene();
+            } else if (birdMarketSceneOpen) {
+                pizzaMarketSceneOpen = false;
+                openBirdsMarketScene();
+            }
+            currentPizzaPurchase = 0;
+        } else {
+            mSceneManager.setScene(SceneManager.SceneType.SCENE_MENU);
+        }
     }
 
     @Override

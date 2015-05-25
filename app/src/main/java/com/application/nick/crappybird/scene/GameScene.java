@@ -64,12 +64,12 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
     private final float MAX_TARGETS_ON_SCREEN = 10;
     private final float DOUBLE_POINTS_TIME_TO_SHOW_PLUS_TWO = 0.4f;
     private final float MAX_COLLECTABLES_ON_SCREEN = 3;
-    private final int NUM_OBSTACLES = 20; //number of obstacles to allocate to pool
+    private final int NUM_OBSTACLES = 20; //number of obstacle to allocate to pool
     private final int NUM_TARGETS = 10; //number of targets (people) to allocate
     private final int NUM_CRAPS = 15; //number of craps to allocate
     private final int NUM_COLLECTABLES = 20; //number of generic collectables (pizza) to allocate to pool
     private final int MOTHERSHIP_OBSTACLE_INDEX = 35; //the obstacle index to have the mothership fly across the screen
-    private final int RESPAWN_PRICE = 500;
+    private final int RESPAWN_PRICE = 200;
 
 
     private AutoParallaxBackground mAutoParallaxBackground;
@@ -719,8 +719,10 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         final float totalPizzaTextY = (overY * 2 + mResourceManager.mCollectablePizzaTextureRegion.getHeight()) / 2 - mResourceManager.mFont3.getLineHeight() / 2;
         final float countDownX = (SCREEN_WIDTH - mResourceManager.mCountdownTextureRegion.getWidth()) / 2;
         final float countDownY = overY - mResourceManager.mCountdownTextureRegion.getHeight();
-        final float purchaseButtonX = (SCREEN_WIDTH - mResourceManager.mPlayButtonTextureRegion.getWidth()) / 2;
-        final float purchaseButtonY = overY + mResourceManager.mBoardTextureRegion.getHeight() - mResourceManager.mPlayButtonTextureRegion.getHeight() * 0.85f;
+        final float yesButtonX = overX + mResourceManager.mBoardTextureRegion.getWidth() - mResourceManager.mPlayButtonTextureRegion.getWidth() * 0.85f;
+        final float yesButtonY = overY + mResourceManager.mBoardTextureRegion.getHeight() - mResourceManager.mPlayButtonTextureRegion.getHeight() * 0.85f;
+        final float noButtonX = overX - mResourceManager.mPlayButtonTextureRegion.getWidth() * 0.15f;
+        final float noButtonY = yesButtonY;
 
         mCountdownSprite = new AnimatedSprite(countDownX, countDownY, mResourceManager.mCountdownTextureRegion, mVertexBufferObjectManager);
         mCountdownSprite.setCurrentTileIndex(0);
@@ -737,7 +739,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         mCountdownScene.attachChild(totalPizzaTextOnCountdownScene);
 
 
-        final TiledSprite purchaseButton = new TiledSprite(purchaseButtonX, purchaseButtonY, mResourceManager.mPurchaseButtonTextureRegion, mVertexBufferObjectManager) {
+        final TiledSprite yesRespawnButton = new TiledSprite(yesButtonX, yesButtonY, mResourceManager.mYesButtonTextureRegion, mVertexBufferObjectManager) {
 
             @Override
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
@@ -746,7 +748,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                         if (pizzaCollected + mActivity.getPizza() >= RESPAWN_PRICE) {
                             setCurrentTileIndex(1);
                         } else if(!mRespawnButtonPressed){
-                            mActivity.displayShortToast("Not enough pizza!");
+                            mActivity.alert("Not enough pizza! Get more in the market.");
                             mRespawnButtonPressed = true;
                         }
 
@@ -762,10 +764,32 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                 return true;
             }
         };
-        purchaseButton.setCurrentTileIndex(0);
-        purchaseButton.setScale(0.5f);
-        mCountdownScene.registerTouchArea(purchaseButton);
-        mCountdownScene.attachChild(purchaseButton);
+        yesRespawnButton.setCurrentTileIndex(0);
+        yesRespawnButton.setScale(0.5f);
+        mCountdownScene.registerTouchArea(yesRespawnButton);
+        mCountdownScene.attachChild(yesRespawnButton);
+
+        final TiledSprite noRespawnButton = new TiledSprite(noButtonX, noButtonY, mResourceManager.mNoButtonTextureRegion, mVertexBufferObjectManager) {
+
+            @Override
+            public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+
+                if (pSceneTouchEvent.isActionDown()) {
+                    setCurrentTileIndex(1);
+
+                }
+                if (pSceneTouchEvent.isActionUp()) {
+                    setCurrentTileIndex(0);
+                    setCountDown(false);
+                    displayScore();
+                }
+                return true;
+            }
+        };
+        noRespawnButton.setCurrentTileIndex(0);
+        noRespawnButton.setScale(0.5f);
+        mCountdownScene.registerTouchArea(noRespawnButton);
+        mCountdownScene.attachChild(noRespawnButton);
 
 
 
@@ -773,7 +797,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         final float respawnPricePizzaSpriteY = respawnTextY + mResourceManager.mFont2.getLineHeight();
         final float respawnPriceY = respawnPricePizzaSpriteY + mResourceManager.mCollectablePizzaTextureRegion.getHeight() / 2 - mResourceManager.mFont3.getLineHeight() / 2;
 
-        final Text respawnText = (new Text(0, respawnTextY, mResourceManager.mFont2, "Respawn?", new TextOptions(HorizontalAlign.LEFT), mVertexBufferObjectManager));
+        final Text respawnText = (new Text(0, respawnTextY, mResourceManager.mFont2, "Continue?", new TextOptions(HorizontalAlign.LEFT), mVertexBufferObjectManager));
         mCountdownScene.attachChild(respawnText);
 
         final Sprite respawnPricePizzaSprite = new Sprite(0, respawnPricePizzaSpriteY, mResourceManager.mCollectablePizzaTextureRegion, mVertexBufferObjectManager);
@@ -1534,7 +1558,11 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
             if(currentUser.getInt("highScore") < most) {
                 currentUser.put("highScore", most);
             }
-            currentUser.saveEventually(); //saves if connected, otherwise waits until there is a connection
+            if(mActivity.isNetworkAvailable()) {
+                currentUser.saveInBackground();
+            } else {
+                currentUser.saveEventually(); //saves if connected, otherwise waits until there is a connection
+            }
         }
 
 
