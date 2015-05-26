@@ -25,7 +25,7 @@ public class Obstacle extends AnimatedSprite {
     private float mWidth;
     private float mHeight;
 
-    boolean passedAddXValue = false, scoreAdded = false, collidedWith = false;
+    boolean passedAddXValue = false, scoreAdded = false, collidedWith = false, hitByMegaCrap = false;
 
 
     private final PhysicsHandler mPhysicsHandler;
@@ -104,9 +104,11 @@ public class Obstacle extends AnimatedSprite {
         setVelocity(-DEMO_VELOCITY, 0);
         setAngularVelocity(0);
         setRotation(0);
+        setAcceleration(0,0);
         passedAddXValue = false;
         scoreAdded = false;
         collidedWith = false;
+        hitByMegaCrap = false;
     }
 
     /**
@@ -156,6 +158,15 @@ public class Obstacle extends AnimatedSprite {
         }
         setAngularVelocity(100);
     }
+
+    public void hitWithMegaCrap(MegaCrap crap) {
+        hitByMegaCrap = true;
+        setVelocity(crap.getVelocityX(), crap.getVelocityY());
+        setAcceleration(crap.getAccelerationX(), crap.getAccelerationY());
+        setAngularVelocity(100);
+    }
+
+    public boolean getHitByMegaCrap() {return hitByMegaCrap;}
 
     public float getVelocityY() {
         return mPhysicsHandler.getVelocityY();

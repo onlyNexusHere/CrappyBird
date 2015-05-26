@@ -43,25 +43,7 @@ public class Crap extends AnimatedSprite {
         setPosition(POSITION_INITIAL, 0);
     }
 
-    /*@Override
-    public boolean collidesWith(IShape shape) {
-        if(shape.getClass().getName().equals("org.andengine.entity.primitive.Rectangle")) {
-            Rectangle rectangle = (Rectangle) shape;
-            float spriteRight = rectangle.getX();
-            float spriteLeft = spriteRight + rectangle.getWidth();
-            float spriteTop = rectangle.getY();
-            float spriteBottom = spriteTop + rectangle.getHeight();
-            float crapLeft = this.mX;
-            float crapRight = crapLeft + this.getWidth();
-            float crapTop = this.mY;
-            float crapBottom = crapTop + this.getHeight();
-
-            if ((spriteRight > crapLeft && spriteLeft < crapRight) && (spriteTop > crapBottom && spriteBottom < crapTop)) {
-                return true;
-            }
-        }
-        return false;
-    }*/
+    public void setAngularVelocity(float w) { mPhysicsHandler.setAngularVelocity(w);}
 
     public void die() {
         unregisterUpdateHandler(mPhysicsHandler);
@@ -76,6 +58,7 @@ public class Crap extends AnimatedSprite {
     public void reset() {
         super.reset();
         falling = true;
+        setScale(1);
         setCurrentTileIndex(0);
         setVelocity(-FALLING_X_VELOCITY, FALLING_Y_VELOCITY_INITIAL);
         setAcceleration(0, FALLING_Y_ACCELERATION);
@@ -88,16 +71,22 @@ public class Crap extends AnimatedSprite {
      * if !gameOver: sets x velocity to match obstacles and ground for sidescrolling effect;
      * if gameOver: sets x velocity to 0 bec side scrolling has stopped
      */
-    public void hitsGround(boolean gameOver) {
+    public void hitsGround(boolean gameOver, int selectedBird) {
         falling = false;
-        setCurrentTileIndex(1);
+        setCurrentTileIndex(selectedBird * 2 + 1);
         setAcceleration(0, 0);
+        setAngularVelocity(0);
+        setRotation(0);
         if (!gameOver) {
             setVelocity(-SCROLLING_X_VELOCITY, 0);
         } else {
             setVelocity(0,0);
         }
 
+    }
+
+    public void moveForRespawn() {
+        setVelocity(-SCROLLING_X_VELOCITY, 0);
     }
 
     /**
@@ -114,6 +103,14 @@ public class Crap extends AnimatedSprite {
 
         mPhysicsHandler.setVelocity(x, y);
     }
+
+    public float getVelocityX() {return mPhysicsHandler.getVelocityX();}
+
+    public float getVelocityY() {return mPhysicsHandler.getVelocityY();}
+
+    public float getAccelerationY() {return mPhysicsHandler.getAccelerationY();}
+
+    public float getAccelerationX() {return mPhysicsHandler.getAccelerationX();}
 
     /**
      * Set Acceleration of the crap (in px/s).

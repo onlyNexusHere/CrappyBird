@@ -40,6 +40,7 @@ public class ResourceManager {
     public TiledTextureRegion mPipeTextureRegion;
 
     public TiledTextureRegion mCrapTextureRegion;
+    public TiledTextureRegion mMegaCrapTextureRegion;
     public TiledTextureRegion mObstacleHouseTextureRegion;
     public TiledTextureRegion mObstacleTreesTextureRegion;
     public TiledTextureRegion mObstaclePlanesTextureRegion;
@@ -48,6 +49,8 @@ public class ResourceManager {
     public TiledTextureRegion mCollectablePizzaTextureRegion;
     public TiledTextureRegion mCollectableTacoTextureRegion;
     public TiledTextureRegion mCollectableHamTextureRegion;
+    public TiledTextureRegion mCollectableMelonTextureRegion;
+    public TiledTextureRegion mCollectableMuffinTextureRegion;
 
     public TiledTextureRegion mTargetPerson1TextureRegion;
 
@@ -170,7 +173,6 @@ public class ResourceManager {
 
         mTargetPerson1TextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "person1.png", 0, 30, 8, 4);
 
-        mCrapTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "crap.png", 0, 230, 1, 3);
         //mMeterTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "crap_supply_meter.png", 0, 270, 1, 1);
         mMeter2TextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "crap_supply_meter2.png", 0, 290, 1, 7);
 
@@ -182,6 +184,8 @@ public class ResourceManager {
         mCollectablePizzaTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "pizza.png", 0, 650, 1, 1);
         mCollectableTacoTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "taco.png", 35, 650, 1, 1);
         mCollectableHamTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "ham.png", 70, 650, 1, 1);
+        mCollectableMelonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "melon.png", 120, 650, 1, 1);
+        mCollectableMuffinTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "muffin.png", 185, 650, 1, 1);
 
         mAlertTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "alert_sign.png", 0, 700, 1, 1);
         mPlusTwoTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "plus_two.png", 50, 700, 1, 1);
@@ -229,9 +233,11 @@ public class ResourceManager {
 
         mMarketBitmapTextureAtlas.load();
 
-        mBirdsBitmapTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 130, 1400, TextureOptions.BILINEAR);
+        mBirdsBitmapTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 265, 1600, TextureOptions.BILINEAR);
         mBirdsTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBirdsBitmapTextureAtlas, mActivity, "birds-master.png", 0, 0, 3, 13);
         mMarketBirdsTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBirdsBitmapTextureAtlas, mActivity, "market_birds.png", 0, 340, 1, 13);
+        mCrapTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBirdsBitmapTextureAtlas, mActivity, "crap.png", 0, 1400, 2, 12);
+        mMegaCrapTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBirdsBitmapTextureAtlas, mActivity, "mega_crap.png", 135, 0, 2, 12);
 
         mBirdsBitmapTextureAtlas.load();
 
@@ -311,6 +317,7 @@ public class ResourceManager {
         mBitmapTextureAtlas = null;
         mBirdTextureRegion = null;
         mCrapTextureRegion = null;
+        mMegaCrapTextureRegion = null;
         mPipeTextureRegion = null;
 
         mObstacleHouseTextureRegion = null;
@@ -322,6 +329,8 @@ public class ResourceManager {
         mCollectablePizzaTextureRegion = null;
         mCollectableTacoTextureRegion = null;
         mCollectableHamTextureRegion = null;
+        mCollectableMelonTextureRegion = null;
+        mCollectableMuffinTextureRegion = null;
 
         mTargetPerson1TextureRegion = null;
 

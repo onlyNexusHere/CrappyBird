@@ -32,14 +32,6 @@ public class CollectablePool extends GenericPool<Collectable> {
     @Override
     public synchronized void batchAllocatePoolItems(final int pCount) {
         super.batchAllocatePoolItems(pCount);
-
-        //add special items to the pool
-        //taco is for machine crap
-        CollectableTaco taco = new CollectableTaco(mResourceManager.mCollectableTacoTextureRegion, mVertexBufferObjectManager, mGroundY, mResourceManager.mCollectableTacoTextureRegion.getHeight());
-        addAdditionalPoolItem(taco);
-        //ham is double points
-        CollectableHam ham = new CollectableHam(mResourceManager.mCollectableHamTextureRegion, mVertexBufferObjectManager, mGroundY, mResourceManager.mCollectableHamTextureRegion.getHeight());
-        addAdditionalPoolItem(ham);
     }
 
 

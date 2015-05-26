@@ -347,9 +347,15 @@ public class MainMenuScene extends BaseScene {
 
         Crap crap = mCraps.get(mCraps.size() - 1);
 
+        crap.setCurrentTileIndex(mActivity.getSelectedBird() * 2);
+
         crap.setPosition(currentXPosition, currentYPosition + (mBird.getHeight()));
 
         crap.setXVelocity(randomizeCrapVelocityX());
+
+        if(mActivity.getSelectedBird() == 6) {
+            crap.setAngularVelocity(600);
+        }
 
         attachChild(crap);
 
@@ -365,7 +371,7 @@ public class MainMenuScene extends BaseScene {
     private void checkForCrapGroundContact(IShape ground) {
         for (int i = mCraps.size() - 1; i >= 0; i--) {
             if (mCraps.get(i).getY() + mCraps.get(i).getHeight() > ground.getY()) {
-                mCraps.get(i).hitsGround(true);
+                mCraps.get(i).hitsGround(true, mActivity.getSelectedBird());
             }
         }
     }

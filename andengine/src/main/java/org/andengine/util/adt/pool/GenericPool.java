@@ -100,7 +100,7 @@ public abstract class GenericPool<T> {
 		return this.onAllocatePoolItem();
 	}
 
-	protected void addAdditionalPoolItem(T pItem) {
+	public void addAdditionalPoolItem(T pItem) {
 		this.mAvailableItems.add(pItem);
 	}
 

@@ -12,4 +12,5 @@ public class CollectableHam extends Collectable {
 
         super(pTiledTextureRegion, pVertexBufferObjectManager, pGroundY - pHeight, pHeight);
     }
+
 }
