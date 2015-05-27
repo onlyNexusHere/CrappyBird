@@ -27,7 +27,7 @@ public class Crap extends AnimatedSprite {
 
     private final PhysicsHandler mPhysicsHandler;
 
-    private boolean falling = true;
+    private boolean falling = true, slowMotion = false;
 
     public Crap(TiledTextureRegion pTiledTextureRegion, VertexBufferObjectManager pVertexBufferObjectManager) {
         super(POSITION_INITIAL, -pTiledTextureRegion.getHeight(), pTiledTextureRegion, pVertexBufferObjectManager);
@@ -58,6 +58,7 @@ public class Crap extends AnimatedSprite {
     public void reset() {
         super.reset();
         falling = true;
+        slowMotion = false;
         setScale(1);
         setCurrentTileIndex(0);
         setVelocity(-FALLING_X_VELOCITY, FALLING_Y_VELOCITY_INITIAL);
@@ -78,7 +79,12 @@ public class Crap extends AnimatedSprite {
         setAngularVelocity(0);
         setRotation(0);
         if (!gameOver) {
-            setVelocity(-SCROLLING_X_VELOCITY, 0);
+            if(slowMotion) {
+                setVelocity(-SCROLLING_X_VELOCITY / 2, 0);
+
+            } else {
+                setVelocity(-SCROLLING_X_VELOCITY, 0);
+            }
         } else {
             setVelocity(0,0);
         }
@@ -86,7 +92,11 @@ public class Crap extends AnimatedSprite {
     }
 
     public void moveForRespawn() {
-        setVelocity(-SCROLLING_X_VELOCITY, 0);
+        if(slowMotion) {
+            setVelocity(-SCROLLING_X_VELOCITY / 2, 0);
+        } else {
+            setVelocity(-SCROLLING_X_VELOCITY, 0);
+        }
     }
 
     /**
@@ -120,6 +130,18 @@ public class Crap extends AnimatedSprite {
     public void setAcceleration(float x, float y) {
 
         mPhysicsHandler.setAcceleration(x, y);
+    }
+
+    public void setSlowMotion(boolean bool) {
+        if(bool) {
+            slowMotion = true;
+            setAcceleration(getAccelerationX() / 2, getAccelerationY() / 2);
+            setVelocity(getVelocityX() / 2, getVelocityY() / 2);
+        } else {
+            slowMotion = false;
+            setAcceleration(getAccelerationX() * 2, getAccelerationY() * 2);
+            setVelocity(getVelocityX() * 2, getVelocityY() * 2);
+        }
     }
 
     /**

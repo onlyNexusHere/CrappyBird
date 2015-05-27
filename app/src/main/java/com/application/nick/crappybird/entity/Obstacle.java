@@ -97,6 +97,16 @@ public class Obstacle extends AnimatedSprite {
         registerUpdateHandler(mPhysicsHandler);
     }
 
+
+    public void setSlowMotion(boolean bool) {
+        if(bool) {
+            setVelocityX(getVelocityX() / 2);
+        } else {
+            setVelocityX(getVelocityX() * 2);
+        }
+    }
+
+
     @Override
     public void reset() {
         super.reset();

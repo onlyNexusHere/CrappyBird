@@ -27,8 +27,8 @@ android {
         applicationId "com.application.nick.crappybird"
         minSdkVersion 16
         targetSdkVersion 21
-        versionCode 26
-        versionName "4.4"
+        versionCode 27
+        versionName "4.5"
     }
     buildTypes {
         release {

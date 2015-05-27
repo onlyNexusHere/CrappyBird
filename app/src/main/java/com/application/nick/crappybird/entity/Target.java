@@ -14,7 +14,7 @@ import org.andengine.opengl.vbo.VertexBufferObjectManager;
  */
 public class Target extends AnimatedSprite {
 
-    private static final float DEMO_VELOCITY = 150.0f;
+    public static final float SCROLL_VELOCITY = 150.0f;
     private static final float VELOCITY_RANGE = 100.0f;
     private static final float DEMO_POSITION = 1.5f* GameActivity.CAMERA_WIDTH;
 
@@ -22,7 +22,7 @@ public class Target extends AnimatedSprite {
     private float mWidth;
     private float mHeight;
 
-    private boolean passedAddXValue = false, hit = false;
+    private boolean passedAddXValue = false, hit = false, slowMotion = false;
 
 
     private final PhysicsHandler mPhysicsHandler;
@@ -35,7 +35,7 @@ public class Target extends AnimatedSprite {
         mPhysicsHandler = new PhysicsHandler(this);
         registerUpdateHandler(mPhysicsHandler);
 
-        setVelocity(-DEMO_VELOCITY, 0);
+        setVelocity(-SCROLL_VELOCITY, 0);
 
         setZIndex(10); //put the targets in front of the obstacles and other sprites
 
@@ -46,7 +46,7 @@ public class Target extends AnimatedSprite {
     public void randomizeMovement() {
         int rand = (int) (Math.random() * 4);
         if (rand == 0) {
-            setVelocity(-DEMO_VELOCITY, 0);
+            setVelocity(-SCROLL_VELOCITY, 0);
             setCurrentTileIndex(0); //make target stationary
         } else {
             randomizeVelocity();
@@ -56,7 +56,17 @@ public class Target extends AnimatedSprite {
     public void randomizeVelocity() {
         float rand = (float) Math.random() - 0.5f;
         float deltaV = rand * VELOCITY_RANGE;
-        setVelocity(-(DEMO_VELOCITY + deltaV), 0);
+        setVelocity(-(SCROLL_VELOCITY + deltaV), 0);
+    }
+
+    public void setSlowMotion(boolean bool) {
+        if(bool) {
+            slowMotion = true;
+            setXVelocity(getXVelocity() / 2);
+        } else {
+            slowMotion = false;
+            setXVelocity(getXVelocity() * 2);
+        }
     }
 
     public void setVelocity(float x, float y) {
@@ -105,6 +115,7 @@ public class Target extends AnimatedSprite {
     @Override
     public void reset() {
         super.reset();
+        slowMotion = false;
         setX(DEMO_POSITION);
         passedAddXValue = false;
         randomizeMovement();
@@ -131,7 +142,11 @@ public class Target extends AnimatedSprite {
 
     public void hitByCrap() {
         hit = true;
-        this.setVelocity(-DEMO_VELOCITY , 0);
+        if(slowMotion) {
+            setVelocity(-SCROLL_VELOCITY / 2, 0);
+        } else {
+            setVelocity(-SCROLL_VELOCITY, 0);
+        }
     }
 
     public void hitByCrap(boolean gameOver) {
@@ -139,9 +154,15 @@ public class Target extends AnimatedSprite {
         if(gameOver) {
             setVelocity(0,0);
         } else {
-            setVelocity(-DEMO_VELOCITY, 0);
+            if(slowMotion) {
+                setVelocity(-SCROLL_VELOCITY / 2, 0);
+            } else {
+                setVelocity(-SCROLL_VELOCITY, 0);
+            }
         }
     }
+
+    public boolean getSlowMotion() {return slowMotion;}
 
 
 

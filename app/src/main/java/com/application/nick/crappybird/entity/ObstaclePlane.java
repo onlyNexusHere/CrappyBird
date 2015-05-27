@@ -47,6 +47,17 @@ public class ObstaclePlane extends Obstacle {
     }
 
     @Override
+    public void setSlowMotion(boolean bool) {
+        super.setSlowMotion(bool);
+        if(bool) {
+            animate(200);
+        } else {
+            animate(100);
+        }
+
+    }
+
+    @Override
     public void reset() {
         super.reset();
         randomizePlaneAltitude();

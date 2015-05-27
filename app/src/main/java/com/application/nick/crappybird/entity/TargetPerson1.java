@@ -30,7 +30,7 @@ public class TargetPerson1 extends Target {
 
     }
 
-
+    @Override
     public void randomizeMovement() {
         int rand = (int) (Math.random() * 4);
         if (rand == 0) {
@@ -49,8 +49,12 @@ public class TargetPerson1 extends Target {
     public void randomizeVelocity() {
         super.randomizeVelocity();
 
-        float scrollSpeed = -150;
-        float difference = Math.abs(getXVelocity() + 150);
+        setAnimation(-SCROLL_VELOCITY);
+
+    }
+
+    public void setAnimation(float scrollSpeed) {
+        float difference = Math.abs(getXVelocity() - scrollSpeed);
         int fDur = (int)(5000 / difference); //frame duration
         if(fDur < 50) {
             fDur = 50;
@@ -65,6 +69,16 @@ public class TargetPerson1 extends Target {
             this.animate(new long[]{fDur, fDur, fDur, fDur, fDur, fDur, fDur, fDur}, 24, 31, true); //walk facing right
         } else if(this.getXVelocity() == scrollSpeed) {
             this.setCurrentTileIndex(0);
+        }
+    }
+
+    @Override
+    public void setSlowMotion(boolean bool) {
+        super.setSlowMotion(bool);
+        if(bool) {
+            setAnimation(-SCROLL_VELOCITY / 2);
+        } else {
+            setAnimation(-SCROLL_VELOCITY);
         }
     }
 
@@ -95,10 +109,18 @@ public class TargetPerson1 extends Target {
         if (bool) {
             passedAddXValue();
             falling = true;
-            setYAcceleration(300);
+            long fDur;
+            if(getSlowMotion()) {
+                setYAcceleration(150);
+                fDur = 100;
+
+            } else {
+                setYAcceleration(300);
+                fDur = 50;
+
+            }
             setRotation(180);
             int rand = (int) (Math.random() * 2);
-            long fDur = 50;
             if (rand == 0) {
                 this.animate(new long[]{fDur, fDur, fDur, fDur, fDur, fDur, fDur, fDur}, 16, 23, true); //walk facing left
             } else if (rand == 1) {

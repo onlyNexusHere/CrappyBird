@@ -73,7 +73,7 @@ public class ResourceManager {
     public BitmapTextureAtlas mMarketBitmapTextureAtlas;
     public ITextureRegion mMarketLoginTextTextureRegion;
     public TiledTextureRegion mPizzaPurchasesTextureRegion;
-
+    public TiledTextureRegion mPowerUpPurchasesTextureRegion;
 
     public BitmapTextureAtlas mBirdsBitmapTextureAtlas;
     public TiledTextureRegion mBirdsTextureRegion;
@@ -219,17 +219,18 @@ public class ResourceManager {
 
         mLeaderboardBitmapTextureAtlas.load();
 
-        mMarketBitmapTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 360, 1225, TextureOptions.BILINEAR);
+        mMarketBitmapTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 360, 1625, TextureOptions.BILINEAR);
         mMarketLoginTextTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mMarketBitmapTextureAtlas, mActivity, "market_login_text.png", 0, 0);
         mArrowLeftButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mMarketBitmapTextureAtlas, mActivity, "arrow_button_left.png", 0, 200, 2, 1);
         mArrowRightButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mMarketBitmapTextureAtlas, mActivity, "arrow_button_right.png", 0, 350, 2, 1);
         mBirdsMarketButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mMarketBitmapTextureAtlas, mActivity, "birds_button.png", 0, 500, 2, 1);
         mPowerUpsMarketButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mMarketBitmapTextureAtlas, mActivity, "power_ups_button.png", 0, 575, 2, 1);
-        mPurchaseButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mMarketBitmapTextureAtlas, mActivity, "purchase_button.png", 0, 650, 3, 1);
-        mSelectButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mMarketBitmapTextureAtlas, mActivity, "select_button.png", 0, 725, 2, 1);
+        mPurchaseButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mMarketBitmapTextureAtlas, mActivity, "purchase_button.png", 0, 650, 3, 2);
         mMarketButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mMarketBitmapTextureAtlas, mActivity, "market_button.png", 0, 825, 2, 1);
         mPizzaPurchasesTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mMarketBitmapTextureAtlas, mActivity, "pizza_purchases.png", 0, 900, 1, 3);
         mGetMorePizzaButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mMarketBitmapTextureAtlas, mActivity, "get_more_button.png", 0, 1150, 2, 1);
+        mPowerUpPurchasesTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mMarketBitmapTextureAtlas, mActivity, "power-up_purchases.png", 0, 1225, 1, 4);
+        mSelectButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mMarketBitmapTextureAtlas, mActivity, "select_button.png", 0, 1550, 2, 1);
 
         mMarketBitmapTextureAtlas.load();
 
@@ -348,6 +349,7 @@ public class ResourceManager {
         mBirdsTextureRegion = null;
         mMarketBirdsTextureRegion = null;
         mPizzaPurchasesTextureRegion = null;
+        mPowerUpPurchasesTextureRegion = null;
 
         mStateTextureRegion = null;
         mMeterTextureRegion = null;

@@ -73,6 +73,7 @@ public class MainMenuScene extends BaseScene {
             mActivity.setSelectedBird(0); //no fancy birds without account
         }
 
+        mActivity.updateCurrentUser();
 
         final float birdX = (SCREEN_WIDTH - mResourceManager.mBirdTextureRegion.getWidth()) / 2;
         final float birdY = title.getY() + title.getHeight() + 25;

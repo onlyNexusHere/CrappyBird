@@ -113,8 +113,6 @@ public class GameActivity extends LayoutGameActivity {
             }
         });
 
-
-
     }
 
     /**
@@ -211,6 +209,25 @@ public class GameActivity extends LayoutGameActivity {
                 .build();
         mAdView.loadAd(adRequest);
 
+    }
+
+    public void saveCurrentUser() {
+        if(isNetworkAvailable()) {
+            ParseUser.getCurrentUser().saveInBackground();
+        } else {
+            ParseUser.getCurrentUser().saveEventually();
+        }
+    }
+
+    public void updateCurrentUser() {
+        if(ParseUser.getCurrentUser() != null && isNetworkAvailable()) {
+            ParseUser currentUser = ParseUser.getCurrentUser();
+            try {
+                currentUser.fetchInBackground();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
     }
 
     public void openTwitterShare(int score) {
@@ -414,7 +431,7 @@ public class GameActivity extends LayoutGameActivity {
                             addPizza(1000);
                             ParseUser currentUser = ParseUser.getCurrentUser();
                             currentUser.put("pizzaCollected", getPizza());
-                            currentUser.saveInBackground();
+                            saveCurrentUser();
                             alert("You have purchased 1000 pizza for " + getPrice1000Pizza() + ". You now have " + getPizza() + " pizza. Happy crapping!");
 
                         }
@@ -423,7 +440,7 @@ public class GameActivity extends LayoutGameActivity {
                             addPizza(5000);
                             ParseUser currentUser = ParseUser.getCurrentUser();
                             currentUser.put("pizzaCollected", getPizza());
-                            currentUser.saveInBackground();
+                            saveCurrentUser();
                             alert("You have purchased 5000 pizza for " + getPrice5000Pizza() + ". You now have " + getPizza() + " pizza. Happy crapping!");
 
                         }
@@ -432,7 +449,7 @@ public class GameActivity extends LayoutGameActivity {
                             addPizza(10000);
                             ParseUser currentUser = ParseUser.getCurrentUser();
                             currentUser.put("pizzaCollected", getPizza());
-                            currentUser.saveInBackground();
+                            saveCurrentUser();
                             alert("You have purchased 10000 pizza for " + getPrice10000Pizza() + ". You now have " + getPizza() + " pizza. Happy crapping!");
 
                         }
@@ -517,6 +534,33 @@ public class GameActivity extends LayoutGameActivity {
             setPizza(currentPizza);
         } else {
             setPizza(0);
+        }
+    }
+
+    /**
+     * For getting the level of a certain power up
+     * @param powerUpIndex the index of the power-up level to retrieve. 0 = thunder taco; 1 = ham; 2 = muffin; 3 = melon
+     * @return the level. 0 = user has not unlocked the powerup yet. 1 = lowest level (5 seconds)
+     */
+    public int getPowerUpLevel(int powerUpIndex) {
+        //return getPreferences(Context.MODE_PRIVATE).getInt("powerUp" + powerUpIndex, 0);
+        ParseUser currentUser = ParseUser.getCurrentUser();
+        int powerUpLevel = currentUser.getInt("powerUp" + powerUpIndex);
+        return powerUpLevel;
+    }
+
+    /**
+     * for setting the level of a certain power up
+     * @param powerUpIndex the index of the power up level to set. 0 = thunder taco; 1 = ham; 2 = muffin; 3 = melon
+     * @param level the level to set.
+     */
+    public void setPowerUpLevel(int powerUpIndex, int level) {
+        ParseUser currentUser = ParseUser.getCurrentUser();
+        currentUser.put("powerUp" + powerUpIndex, level);
+        if(isNetworkAvailable()) {
+            currentUser.saveInBackground();
+        } else {
+            currentUser.saveEventually();
         }
     }
 
