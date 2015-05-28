@@ -115,6 +115,7 @@ public class ResourceManager {
     public TiledTextureRegion mYesButtonTextureRegion;
     public TiledTextureRegion mNoButtonTextureRegion;
     public TiledTextureRegion mGetMorePizzaButtonTextureRegion;
+    public TiledTextureRegion mMenuButtonTextureRegion;
 
 
 
@@ -242,7 +243,7 @@ public class ResourceManager {
 
         mBirdsBitmapTextureAtlas.load();
 
-        mSubBitmapTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 512, 1025, TextureOptions.BILINEAR);
+        mSubBitmapTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 512, 1100, TextureOptions.BILINEAR);
         mStateTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mSubBitmapTextureAtlas, mActivity, "ready_over.png", 0, 0, 2, 1);
         mScoreBoardTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mSubBitmapTextureAtlas, mActivity, "score_board.png", 0, 60);
         mHelpTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mSubBitmapTextureAtlas, mActivity, "help.png", 0, 200);
@@ -259,6 +260,7 @@ public class ResourceManager {
         mBoardTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mSubBitmapTextureAtlas, mActivity, "board.png", 0, 810);
         mYesButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mSubBitmapTextureAtlas, mActivity, "yes_button.png", 0, 950, 2, 1);
         mNoButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mSubBitmapTextureAtlas, mActivity, "no_button.png", 250, 950, 2, 1);
+        mMenuButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mSubBitmapTextureAtlas, mActivity, "menu_button.png", 0, 1025, 2, 1);
 
         mSubBitmapTextureAtlas.load();
             //load fonts
@@ -386,6 +388,7 @@ public class ResourceManager {
         mYesButtonTextureRegion = null;
         mNoButtonTextureRegion = null;
         mGetMorePizzaButtonTextureRegion = null;
+        mMenuButtonTextureRegion = null;
 
         mTitleTextureRegion = null;
             //unload fonts

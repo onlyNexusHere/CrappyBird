@@ -11,6 +11,7 @@ import org.andengine.opengl.vbo.VertexBufferObjectManager;
 public class ObstaclePlane extends Obstacle {
 
     private final float PLANE_VELOCITY = 200f;
+    private final float MAX_PLANE_VERTICAL_VELOCITY = 50;
     float mGroundY, mHeight;
 
 
@@ -38,7 +39,7 @@ public class ObstaclePlane extends Obstacle {
      */
     public void randomizeYVelocity() {
         float middleOfScreen = mGroundY / 2 - this.getHeight() / 2;
-        float rand = (float) Math.random() * 90;
+        float rand = (float) Math.random() * MAX_PLANE_VERTICAL_VELOCITY;
         if(this.getY() > middleOfScreen) {
             setVelocityY(-rand);
         } else {
