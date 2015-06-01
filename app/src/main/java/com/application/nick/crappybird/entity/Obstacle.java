@@ -25,7 +25,7 @@ public class Obstacle extends AnimatedSprite {
     private float mWidth;
     private float mHeight;
 
-    boolean passedAddXValue = false, scoreAdded = false, collidedWith = false, hitByMegaCrap = false;
+    boolean passedAddXValue = false, scoreAdded = false, collidedWith = false, hitByMegaCrap = false, slowMotionActivated;
 
 
     private final PhysicsHandler mPhysicsHandler;
@@ -100,11 +100,15 @@ public class Obstacle extends AnimatedSprite {
 
     public void setSlowMotion(boolean bool) {
         if(bool) {
+            slowMotionActivated = true;
             setVelocityX(getVelocityX() / 2);
         } else {
+            slowMotionActivated = false;
             setVelocityX(getVelocityX() * 2);
         }
     }
+
+    public boolean getSlowMotion() {return slowMotionActivated;}
 
 
     @Override

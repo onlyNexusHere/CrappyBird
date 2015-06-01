@@ -5,10 +5,10 @@ android {
     buildToolsVersion "21.1.2"
 
     defaultConfig {
-        minSdkVersion 16
+        minSdkVersion 10
         targetSdkVersion 21
-        versionCode 29
-        versionName "4.52"
+        versionCode 35
+        versionName "4.71"
     }
     buildTypes {
         release {
@@ -22,4 +22,5 @@ dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     compile 'com.android.support:appcompat-v7:21.0.3'
     compile 'com.google.android.gms:play-services:7.3.0'
+
 }

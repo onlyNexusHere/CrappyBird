@@ -25,13 +25,14 @@ android {
 
     defaultConfig {
         applicationId "com.application.nick.crappybird"
-        minSdkVersion 16
+        minSdkVersion 10
         targetSdkVersion 21
-        versionCode 29
-        versionName "4.52"
+        versionCode 35
+        versionName "4.71"
     }
     buildTypes {
         release {
+            minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
@@ -43,8 +44,10 @@ dependencies {
     compile project(':andengine')
     compile files('libs/org_andengine_extension_physics_box2d.jar')
     compile files('libs/physicsbox2d_so_files.jar')
+    compile 'com.google.android.gms:play-services:7.3.0'
+
     //compile 'com.google.android.gms:play-services:7.3.0'
-    dependencies {
+    /*dependencies {
         compile('com.twitter.sdk.android:tweet-composer:0.7.3@aar')
                 {
                     transitive = true;
@@ -52,7 +55,7 @@ dependencies {
     }
     compile('com.twitter.sdk.android:twitter:1.4.0@aar') {
         transitive = true;
-    }
+    }*/
     dependencies {
         compile 'com.parse.bolts:bolts-android:1.+'
         compile fileTree(dir: 'libs', include: 'Parse-1.9.1.jar')

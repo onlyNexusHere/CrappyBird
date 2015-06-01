@@ -1,6 +1,7 @@
 package com.application.nick.crappybird;
 
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
@@ -13,6 +14,7 @@ import android.widget.Toast;
 
 import com.application.nick.crappybird.scene.GameScene;
 import com.application.nick.crappybird.scene.MarketScene;
+import com.application.nick.crappybird.util.DateUtil;
 import com.application.nick.crappybird.util.IabHelper;
 import com.application.nick.crappybird.util.IabResult;
 import com.application.nick.crappybird.util.Inventory;
@@ -20,13 +22,15 @@ import com.application.nick.crappybird.util.Purchase;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.parse.GetCallback;
 import com.parse.Parse;
+import com.parse.ParseException;
+import com.parse.ParseObject;
 import com.parse.ParseUser;
-import com.twitter.sdk.android.Twitter;
-import com.twitter.sdk.android.core.TwitterAuthConfig;
-import com.twitter.sdk.android.tweetcomposer.TweetComposer;
+import com.parse.SaveCallback;
 
-import io.fabric.sdk.android.Fabric;
 import org.andengine.engine.camera.Camera;
 import org.andengine.engine.handler.timer.ITimerCallback;
 import org.andengine.engine.handler.timer.TimerHandler;
@@ -37,6 +41,7 @@ import org.andengine.entity.scene.Scene;
 import org.andengine.ui.activity.LayoutGameActivity;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 
@@ -53,6 +58,14 @@ public class GameActivity extends LayoutGameActivity {
             "1000pizza",
             "5000pizza",
             "10000pizza"
+    };
+
+    public static final int[] DAILY_REWARDS = {
+            50,
+            100,
+            150,
+            200,
+            500
     };
 
     public static final int CAMERA_WIDTH = 320;
@@ -73,45 +86,52 @@ public class GameActivity extends LayoutGameActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //twitter stuff
-        TwitterAuthConfig authConfig = new TwitterAuthConfig(TWITTER_KEY, TWITTER_SECRET);
-        Fabric.with(this, new Twitter(authConfig));
-        Fabric.with(this, new TweetComposer());
 
-        //create banner ad from admob
-        createBannerAd();
+        int googlePlayServicesAvailable = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
+        if(!(googlePlayServicesAvailable == ConnectionResult.SUCCESS)) {
 
-        //Parse
-        Parse.initialize(this, "YpJ9WQuoN4XQYw2y0YOQRLvzSBEsskGpWebUgWzf", "4VswpUtUtyVdWSWrtugliH1zdkTOY91uoXm6kjMF");
+            Dialog dialog = GooglePlayServicesUtil.getErrorDialog(googlePlayServicesAvailable, this, 111);
+            dialog.show();
 
-        String base64EncodedPublicKey = "";
-        base64EncodedPublicKey += "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAysK9OGJEGjJW9XTNZYqs1j9y4x";
-        base64EncodedPublicKey += "Q0lIvtzuuqAvwZ74DiKCCQgjsp7/V8VEu0OQu0jsEVjTwPGf42JpaZJrETkivUQbfHSZcBEfQLx3QnJqoh1JO390nrsr6GmPYeXVkS6si5+RQjS8rblhYER5";
-        base64EncodedPublicKey += "j9gguDb6idqt8O7SST8wucVV5rehUWFJ7uZ3wX8fuzeiQwsAOUJJks41VW8fyKrcUW7nBOGTfAbQEazXxZa3JLlsaVlhZPz+NgCf4fk6eqD0GmtQo3/";
-        base64EncodedPublicKey += "eXOOnlcyaU72f8g9QZfINCYDu3bOz2A40ziqeus5MVaSGFJ90TDXLM1aVmwx47CqyA+S+9U6QYS4mhkHQIDAQAB";
+        } else {
+            if (isNetworkAvailable()) {
+                //create banner ad from admob
+                createBannerAd();
 
-        // compute your public key and store it in base64EncodedPublicKey
-        mHelper = new IabHelper(this, base64EncodedPublicKey);
+                //Parse
+                Parse.initialize(this, "YpJ9WQuoN4XQYw2y0YOQRLvzSBEsskGpWebUgWzf", "4VswpUtUtyVdWSWrtugliH1zdkTOY91uoXm6kjMF");
 
-        mHelper.startSetup(new IabHelper.OnIabSetupFinishedListener() {
-            public void onIabSetupFinished(IabResult result) {
-                if (!result.isSuccess()) {
-                    // Oh noes, there was a problem.
-                    Log.d("Crappy Bird", "Problem setting up In-app Billing: " + result);
-                } else {
-                    Log.i("In app Billing", "Successfully set up");
-
-                    List<String> additionalSkuList = new ArrayList<String>();
-                    additionalSkuList.add(SKU_1000_PIZZA);
-                    additionalSkuList.add(SKU_5000_PIZZA);
-                    additionalSkuList.add(SKU_10000_PIZZA);
-                    mHelper.queryInventoryAsync(true, additionalSkuList,
-                            mQueryFinishedListener);
-
-                }
-                // Hooray, IAB is fully set up!
             }
-        });
+            String base64EncodedPublicKey = "";
+            base64EncodedPublicKey += "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAysK9OGJEGjJW9XTNZYqs1j9y4x";
+            base64EncodedPublicKey += "Q0lIvtzuuqAvwZ74DiKCCQgjsp7/V8VEu0OQu0jsEVjTwPGf42JpaZJrETkivUQbfHSZcBEfQLx3QnJqoh1JO390nrsr6GmPYeXVkS6si5+RQjS8rblhYER5";
+            base64EncodedPublicKey += "j9gguDb6idqt8O7SST8wucVV5rehUWFJ7uZ3wX8fuzeiQwsAOUJJks41VW8fyKrcUW7nBOGTfAbQEazXxZa3JLlsaVlhZPz+NgCf4fk6eqD0GmtQo3/";
+            base64EncodedPublicKey += "eXOOnlcyaU72f8g9QZfINCYDu3bOz2A40ziqeus5MVaSGFJ90TDXLM1aVmwx47CqyA+S+9U6QYS4mhkHQIDAQAB";
+
+            // compute your public key and store it in base64EncodedPublicKey
+            mHelper = new IabHelper(this, base64EncodedPublicKey);
+
+            mHelper.startSetup(new IabHelper.OnIabSetupFinishedListener() {
+                public void onIabSetupFinished(IabResult result) {
+                    if (!result.isSuccess()) {
+                        // Oh noes, there was a problem.
+                        Log.d("Crappy Bird", "Problem setting up In-app Billing: " + result);
+                    } else {
+                        Log.i("In app Billing", "Successfully set up");
+
+                        List<String> additionalSkuList = new ArrayList<String>();
+                        additionalSkuList.add(SKU_1000_PIZZA);
+                        additionalSkuList.add(SKU_5000_PIZZA);
+                        additionalSkuList.add(SKU_10000_PIZZA);
+                        mHelper.queryInventoryAsync(true, additionalSkuList,
+                                mQueryFinishedListener);
+
+                    }
+                    // Hooray, IAB is fully set up!
+                }
+            });
+
+        }
 
     }
 
@@ -206,6 +226,7 @@ public class GameActivity extends LayoutGameActivity {
         mAdView = (AdView) findViewById(R.id.adViewId);
         AdRequest adRequest = new AdRequest.Builder()
                 .addTestDevice("B9BF21FBE22B0C2B4AC09A79D8D26A77")
+                .addTestDevice("1F5D4F5EF276A5EBD06A821334E7E4A1")
                 .build();
         mAdView.loadAd(adRequest);
 
@@ -221,19 +242,183 @@ public class GameActivity extends LayoutGameActivity {
 
     public void updateCurrentUser() {
         if(ParseUser.getCurrentUser() != null && isNetworkAvailable()) {
-            ParseUser currentUser = ParseUser.getCurrentUser();
+            final ParseUser currentUser = ParseUser.getCurrentUser();
             try {
-                currentUser.fetchInBackground();
+                currentUser.fetchInBackground(new GetCallback<ParseObject>() {
+                    public void done(ParseObject object, ParseException e) {
+                        if (e == null) {
+                            // Success!
+                            syncUser(object);
+                        } else {
+                            // Failure!
+                            e.printStackTrace();
+                        }
+                    }
+                });
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
         }
     }
 
+    /**
+     * Syncs the current user's highscore and pizza
+     * @param object
+     */
+    public void syncUser(ParseObject object) {
+        Log.i("Syncing User", "Syncing User");
+        Log.i("highScore", String.valueOf(object.getInt("highScore")));
+        Log.i("pizzaCollected", String.valueOf(object.getInt("pizzaCollected")));
+        Log.i("pizzaCollectedOffline", String.valueOf(getPizzaSinceOffline()));
+        if(object.getInt("highScore") > getMaxScore()) {
+            setMaxScore(object.getInt("highScore"));
+        }
+        setPizza(object.getInt("pizzaCollected") + getPizzaSinceOffline());
+        setPizzaSinceOffline(0);
+        ParseUser.getCurrentUser().put("pizzaCollected", getPizza());
+        saveCurrentUser();
+
+        Log.i("Scene Type", String.valueOf(mSceneManager.getCurrentSceneType()));
+        if(mSceneManager.getCurrentSceneType() == SceneManager.SceneType.SCENE_MARKET) {
+            Log.i("Scene Type", "Scene_market");
+            ((MarketScene)mSceneManager.getCurrentScene()).updateTotalPizzaText();
+        }
+    }
+
+    /**
+     * Handles the process of displaying the daily reward. Also syncs user. Should not be done without internet connection
+     */
+    public void displayDailyReward() {
+        ParseUser.getCurrentUser().fetchInBackground(new GetCallback<ParseObject>() {
+            public void done(ParseObject object, ParseException e) {
+                if (e == null) {
+                    syncUser(object);
+                    final Date lastCollectedDate = object.getDate("lastCollectedDailyReward");
+                    if (lastCollectedDate == null) {
+                        //give 1st reward
+                        displayDailyReward(0);
+                        if (mSceneManager.getCurrentSceneType() == SceneManager.SceneType.SCENE_GAME) {
+                            ((GameScene) mSceneManager.getCurrentScene()).updateGameOverScreenAfterSync();
+                        }
+                    } else {
+                        Log.i("lastCollectedDate", lastCollectedDate.toString());
+                        ParseUser.getCurrentUser().saveInBackground(new SaveCallback() {
+                            public void done(ParseException e) {
+                                if (e == null) {
+                                    ParseUser.getCurrentUser().fetchInBackground(new GetCallback<ParseObject>() {
+                                        public void done(ParseObject object, ParseException e) {
+                                            if (e == null) {
+                                                // Success!
+                                                Date today = object.getUpdatedAt();
+                                                Log.i("updatedAt", today.toString());
+                                                boolean isToday = false;
+                                                if (lastCollectedDate.toString().substring(4, 10).equals(today.toString().substring(4, 10))) { //substring 4-10 will give "mon dd"
+                                                    //give no reward. User already collected today's
+                                                    isToday = true;
+                                                }
+                                                Date nextDay = DateUtil.addDays(lastCollectedDate, 1);
+                                                Log.i("lastCollectedDay2", lastCollectedDate.toString());
+                                                Log.i("nextDay", nextDay.toString());
+                                                if (today.toString().substring(4, 10).equals(nextDay.toString().substring(4, 10))) {
+                                                    //give next reward
+                                                    displayDailyReward(getNextDailyRewardNumber());
+                                                    Log.i("Daily reward", "NEXT");
+                                                } else if (!isToday) {
+                                                    //give first reward
+                                                    displayDailyReward(0);
+                                                    Log.i("Daily reward", "FIRST");
+                                                }
+                                                if (mSceneManager.getCurrentSceneType() == SceneManager.SceneType.SCENE_GAME) {
+                                                    ((GameScene) mSceneManager.getCurrentScene()).updateGameOverScreenAfterSync();
+                                                }
+
+                                            } else {
+                                                // Failure! do nothing
+                                                Log.e("Daily Reward", "An error occurred");
+                                                e.printStackTrace();
+                                            }
+                                        }
+                                    });
+
+                                } else {
+                                    //Failure, do nothing
+                                    Log.e("Daily Reward", "An error occurred");
+                                    e.printStackTrace();
+                                }
+
+                            }
+                        });
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * @return the number of the daily reward to give the user
+     */
+    public static int getNextDailyRewardNumber() {
+            int rewardNum = ParseUser.getCurrentUser().getInt("lastDailyRewardNumber") + 1;
+            if(rewardNum >= GameActivity.DAILY_REWARDS.length) {
+                return 0;
+            }
+            return rewardNum;
+    }
+
+    public void displayDailyReward(int rewardNum) {
+
+            String rewardString;
+            if (rewardNum < GameActivity.DAILY_REWARDS.length - 1) {
+                rewardString = "You just collected a daily reward of " + GameActivity.DAILY_REWARDS[rewardNum] + " pizza! Come back tomorrow " +
+                        "for an even better delicious prize!";
+            } else {
+                rewardString = "You just collected a daily reward of " + GameActivity.DAILY_REWARDS[rewardNum] + " pizza! Come back tomorrow " +
+                        "for another delicious prize!";
+            }
+            addPizza(GameActivity.DAILY_REWARDS[rewardNum]);
+
+            ParseUser currentUser = ParseUser.getCurrentUser();
+
+            Log.i("currentUser UpdatedAt", currentUser.getUpdatedAt().toString());
+
+            currentUser.put("pizzaCollected", getPizza());
+            currentUser.put("lastCollectedDailyReward", currentUser.getUpdatedAt());
+            currentUser.put("lastDailyRewardNumber", rewardNum);
+
+            saveCurrentUser();
+
+            alert(rewardString);
+
+    }
+
     public void openTwitterShare(int score) {
-        TweetComposer.Builder builder = new TweetComposer.Builder(this)
+        /*TweetComposer.Builder builder = new TweetComposer.Builder(this)
                 .text("I just scored " + score + " points in Crappy Bird! This game is awesome! #crappybird #addicting #craptastic https://goo.gl/eDWvTO");
-        builder.show();
+        builder.show();*/
+
+        String application = "com.twitter.android";
+
+        String text = "I just scored " + score + " points in Crappy Bird! This game is awesome! #crappybird #addicting #craptastic https://goo.gl/eDWvTO";
+
+
+        Intent intent = this.getPackageManager().getLaunchIntentForPackage(application);
+        if (intent != null) {
+            // The application exists
+            Intent shareIntent = new Intent();
+            shareIntent.setAction(Intent.ACTION_SEND);
+            shareIntent.setPackage(application);
+            shareIntent.setType("text/plain");
+            shareIntent.putExtra(Intent.EXTRA_TEXT, text);
+            // Start the specific social application
+            startActivity(shareIntent);
+        } else {
+            // The application does not exist
+            String sharerUrl = "http://twitter.com/share?text=" + text;
+            Intent shareIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(sharerUrl));
+            startActivity(shareIntent);
+
+        }
+
 
     }
 
@@ -304,7 +489,7 @@ public class GameActivity extends LayoutGameActivity {
                 // billing...
                 if (requestCode == 100) {
                     if(resultCode == 200){ //result code is only 200 if a user just logged in or signed up
-                        syncUser();
+                        syncUserOnLogin();
                         mSceneManager.setScene(SceneManager.SceneType.SCENE_MENU);
 
                         displayLongToast("Signed in as " + ParseUser.getCurrentUser().getUsername());
@@ -323,7 +508,7 @@ public class GameActivity extends LayoutGameActivity {
      * Also adds all collected pizza to the account
      * Used when they log in or sign up
      */
-    public void syncUser() {
+    public void syncUserOnLogin() {
         ParseUser currentUser = ParseUser.getCurrentUser();
         if (currentUser != null) {
             int savedScore = currentUser.getInt("highScore");
@@ -504,7 +689,6 @@ public class GameActivity extends LayoutGameActivity {
     }
 
 
-
     public int getSelectedBird() {
         return getPreferences(Context.MODE_PRIVATE).getInt("selectedBird", 0);
     }
@@ -537,6 +721,28 @@ public class GameActivity extends LayoutGameActivity {
         }
     }
 
+    public int getPizzaSinceOffline() {
+        return getPreferences(Context.MODE_PRIVATE).getInt("pizzaSinceOffline", 0);
+    }
+
+    public void setPizzaSinceOffline(int pizza) {
+        getPreferences(Context.MODE_PRIVATE).edit().putInt("pizzaSinceOffline", pizza).commit();
+    }
+
+    public void addPizzaSinceOffline(int pizza) {
+        int currentPizza = getPizzaSinceOffline();
+        currentPizza += pizza;
+        setPizzaSinceOffline(currentPizza);
+    }
+
+    public void subtractPizzaSinceOffline(int pizza) {
+        int currentPizza = getPizzaSinceOffline();
+        currentPizza -= pizza;
+        setPizzaSinceOffline(currentPizza);
+
+    }
+
+
     /**
      * For getting the level of a certain power up
      * @param powerUpIndex the index of the power-up level to retrieve. 0 = thunder taco; 1 = ham; 2 = muffin; 3 = melon
@@ -557,11 +763,7 @@ public class GameActivity extends LayoutGameActivity {
     public void setPowerUpLevel(int powerUpIndex, int level) {
         ParseUser currentUser = ParseUser.getCurrentUser();
         currentUser.put("powerUp" + powerUpIndex, level);
-        if(isNetworkAvailable()) {
-            currentUser.saveInBackground();
-        } else {
-            currentUser.saveEventually();
-        }
+        saveCurrentUser();
     }
 
     public String getPrice10000Pizza() {
@@ -604,6 +806,8 @@ public class GameActivity extends LayoutGameActivity {
     @Override
     protected void onResume() {
         super.onResume();
+
+
         /*
         if(mHelper != null && !mHelper.getAsyncInProgress()) {
             List<String> additionalSkuList = new ArrayList<String>();
@@ -621,6 +825,12 @@ public class GameActivity extends LayoutGameActivity {
     protected void onPause() {
         if (mResourceManager.mMusic!=null && mResourceManager.mMusic.isPlaying()) {
             mResourceManager.mMusic.pause();
+        }
+        if (mResourceManager.mMariachiFast !=null && mResourceManager.mMariachiFast.isPlaying()) {
+            mResourceManager.mMariachiFast.pause();
+        }
+        if (mResourceManager.mMariachiSlow !=null && mResourceManager.mMariachiSlow.isPlaying()) {
+            mResourceManager.mMariachiSlow.pause();
         }
 
         if(mSceneManager.getCurrentSceneType() == SceneManager.SceneType.SCENE_GAME) {

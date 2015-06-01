@@ -33,7 +33,12 @@ public class MarketScene extends BaseScene {
             "Hungry Bird",
             "Blocky Bird",
             "Ghost Bird",
-            "Golden Bird"
+            "Golden Bird",
+            "Backward Bird",
+            "#FFB Bird",
+            "Pirate Bird",
+            "Flashy Bird",
+            "Mystery Bird"
     };
 
     public static final int[] BIRD_PRICES = {
@@ -48,7 +53,12 @@ public class MarketScene extends BaseScene {
             1000, //hungry bird
             1000, //blocky bird
             2000, //ghost bird
-            5000  //golden bird
+            5000,  //golden bird
+            500, //backward bird
+            1000, //flickr bird
+            300, //pirate bird
+            500, //flashy bird
+            2500 //mystery bird
     };
 
     public static final String[] PIZZA_PURCHASES = {
@@ -73,7 +83,7 @@ public class MarketScene extends BaseScene {
 
     private static String[] mPizzaPurchasePrices = new String[3];
 
-    private final int MYSTERY_INDEX = 12;
+    private final int MYSTERY_INDEX = 16;
 
     private CameraScene mLoginScene, mBirdMarketScene, mPowerUpMarketScene, mPizzaMarketScene;
 
@@ -116,9 +126,7 @@ public class MarketScene extends BaseScene {
         MarketScene.mPizzaPurchasePrices[2] = mActivity.getPrice10000Pizza();
 
         if (!mResourceManager.mMusic.isPlaying()) {
-            mResourceManager.mMusic.play();
-            mResourceManager.mMusic.setVolume(0.6f);
-            mResourceManager.mMusic.setLooping(true);
+            mResourceManager.mMusic.resume();
         }
 
         //if user is not logged in already, open login popup
@@ -143,14 +151,11 @@ public class MarketScene extends BaseScene {
             createPizzaMarketScene();
             openPowerUpsMarketScene();
 
+            if(mActivity.isNetworkAvailable()) {
+                mActivity.updateCurrentUser();
+            }
         }
 
-
-        /*final float loadingTextY = 90;
-        loadingText = (new Text(0, loadingTextY, mResourceManager.mFont3, "Loading...", new TextOptions(HorizontalAlign.LEFT), mVertexBufferObjectManager));
-        loadingText.setX((SCREEN_WIDTH - loadingText.getWidth()) / 2);
-        attachChild(loadingText);
-        */
     }
 
 
@@ -260,6 +265,7 @@ public class MarketScene extends BaseScene {
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
                 if (pSceneTouchEvent.isActionDown()) {
                     setCurrentTileIndex(1);
+                    mResourceManager.mButtonSound.play();
 
                 }
                 if (pSceneTouchEvent.isActionUp()) {
@@ -280,6 +286,7 @@ public class MarketScene extends BaseScene {
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
                 if (pSceneTouchEvent.isActionDown()) {
                     setCurrentTileIndex(1);
+                    mResourceManager.mButtonSound.play();
 
                 }
                 if (pSceneTouchEvent.isActionUp()) {
@@ -300,6 +307,7 @@ public class MarketScene extends BaseScene {
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
                 if (pSceneTouchEvent.isActionDown()) {
                     setCurrentTileIndex(1);
+                    mResourceManager.mButtonSound.play();
 
                 }
                 if (pSceneTouchEvent.isActionUp()) {
@@ -328,6 +336,7 @@ public class MarketScene extends BaseScene {
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
                 if (pSceneTouchEvent.isActionDown()) {
                     setCurrentTileIndex(1);
+                    mResourceManager.mButtonSound.play();
 
                 }
                 if (pSceneTouchEvent.isActionUp()) {
@@ -361,6 +370,7 @@ public class MarketScene extends BaseScene {
                         } else if (getCurrentTileIndex() == 3) {
                             setCurrentTileIndex(5);
                         }
+                        mResourceManager.mButtonSound.play();
                     }
 
                     if (pSceneTouchEvent.isActionUp()) {
@@ -370,7 +380,12 @@ public class MarketScene extends BaseScene {
                             setCurrentTileIndex(4); //max out
                         }
                         mActivity.subtractPizza(POWER_UP_PRICES[currentPowerUp][mActivity.getPowerUpLevel(currentPowerUp)]);
-                        mActivity.setPowerUpLevel(currentPowerUp, mActivity.getPowerUpLevel(currentPowerUp) + 1);
+                        if(mActivity.isNetworkAvailable()) {
+                            ParseUser.getCurrentUser().put("pizzaCollected", mActivity.getPizza());
+                        } else {
+                            mActivity.subtractPizzaSinceOffline(POWER_UP_PRICES[currentPowerUp][mActivity.getPowerUpLevel(currentPowerUp)]);
+                        }
+                        mActivity.setPowerUpLevel(currentPowerUp, mActivity.getPowerUpLevel(currentPowerUp) + 1); //this saves user
 
                             //update name and price in UI
                         if(mActivity.getPowerUpLevel(currentPowerUp) < POWER_UP_PRICES[currentPowerUp].length) {
@@ -416,6 +431,7 @@ public class MarketScene extends BaseScene {
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
                 if (pSceneTouchEvent.isActionDown()) {
                     setCurrentTileIndex(1);
+                    mResourceManager.mButtonSound.play();
 
                 }
                 if (pSceneTouchEvent.isActionUp()) {
@@ -469,6 +485,7 @@ public class MarketScene extends BaseScene {
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
                 if (pSceneTouchEvent.isActionDown()) {
                     setCurrentTileIndex(1);
+                    mResourceManager.mButtonSound.play();
 
                 }
                 if (pSceneTouchEvent.isActionUp()) {
@@ -616,6 +633,7 @@ public class MarketScene extends BaseScene {
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
                 if (pSceneTouchEvent.isActionDown()) {
                     setCurrentTileIndex(1);
+                    mResourceManager.mButtonSound.play();
 
                 }
                 if (pSceneTouchEvent.isActionUp()) {
@@ -637,6 +655,7 @@ public class MarketScene extends BaseScene {
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
                 if (pSceneTouchEvent.isActionDown()) {
                     setCurrentTileIndex(1);
+                    mResourceManager.mButtonSound.play();
 
                 }
                 if (pSceneTouchEvent.isActionUp()) {
@@ -663,6 +682,7 @@ public class MarketScene extends BaseScene {
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
                 if (pSceneTouchEvent.isActionDown()) {
                     setCurrentTileIndex(1);
+                    mResourceManager.mButtonSound.play();
 
                 }
                 if (pSceneTouchEvent.isActionUp()) {
@@ -691,6 +711,7 @@ public class MarketScene extends BaseScene {
                     if (pSceneTouchEvent.isActionDown()) {
                         setCurrentTileIndex(1);
                         mActivity.setSelectedBird(currentBird);
+                        mResourceManager.mButtonSound.play();
 
                     }
                 }
@@ -709,6 +730,7 @@ public class MarketScene extends BaseScene {
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
                 if(getCurrentTileIndex() == 0 && mActivity.getPizza() >= BIRD_PRICES[currentBird]) {
                     if (pSceneTouchEvent.isActionDown()) {
+                        mResourceManager.mButtonSound.play();
                         setCurrentTileIndex(1);
                         Log.i("current bird", "" + currentBird);
                         selectButton.setCurrentTileIndex(1);
@@ -717,7 +739,13 @@ public class MarketScene extends BaseScene {
                         int pizza = mActivity.getPizza();
                         pizza -= BIRD_PRICES[currentBird];
                         mActivity.setPizza(pizza);
-                        currentUser.put("pizzaCollected", pizza);
+
+                        if(mActivity.isNetworkAvailable()) {
+                            ParseUser.getCurrentUser().put("pizzaCollected", mActivity.getPizza());
+                        } else {
+                            mActivity.subtractPizzaSinceOffline(BIRD_PRICES[currentBird]);
+                        }
+
                         currentUser.put("hasBird" + currentBird, true);
 
                         mActivity.saveCurrentUser();
@@ -742,6 +770,7 @@ public class MarketScene extends BaseScene {
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
                 if (pSceneTouchEvent.isActionDown()) {
                     setCurrentTileIndex(1);
+                    mResourceManager.mButtonSound.play();
 
                 }
                 if (pSceneTouchEvent.isActionUp()) {
@@ -787,6 +816,7 @@ public class MarketScene extends BaseScene {
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
                 if (pSceneTouchEvent.isActionDown()) {
                     setCurrentTileIndex(1);
+                    mResourceManager.mButtonSound.play();
 
                 }
                 if (pSceneTouchEvent.isActionUp()) {
@@ -833,6 +863,7 @@ public class MarketScene extends BaseScene {
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
                 if (pSceneTouchEvent.isActionDown()) {
                     setCurrentTileIndex(1);
+                    mResourceManager.mButtonSound.play();
 
                 }
                 if (pSceneTouchEvent.isActionUp()) {
@@ -929,6 +960,7 @@ public class MarketScene extends BaseScene {
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
                 if (pSceneTouchEvent.isActionDown()) {
                     setCurrentTileIndex(1);
+                    mResourceManager.mButtonSound.play();
 
                 }
                 if (pSceneTouchEvent.isActionUp()) {
@@ -950,6 +982,7 @@ public class MarketScene extends BaseScene {
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
                 if (pSceneTouchEvent.isActionDown()) {
                     setCurrentTileIndex(1);
+                    mResourceManager.mButtonSound.play();
 
                 }
                 if (pSceneTouchEvent.isActionUp()) {
@@ -971,6 +1004,7 @@ public class MarketScene extends BaseScene {
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
                 if (pSceneTouchEvent.isActionDown()) {
                     setCurrentTileIndex(1);
+                    mResourceManager.mButtonSound.play();
 
                 }
                 if (pSceneTouchEvent.isActionUp()) {
@@ -993,6 +1027,7 @@ public class MarketScene extends BaseScene {
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
                 if (pSceneTouchEvent.isActionDown()) {
                     setCurrentTileIndex(1);
+                    mResourceManager.mButtonSound.play();
 
                 }
                 if (pSceneTouchEvent.isActionUp()) {
@@ -1020,6 +1055,8 @@ public class MarketScene extends BaseScene {
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
                     if (pSceneTouchEvent.isActionDown()) {
                         setCurrentTileIndex(2);
+                        mResourceManager.mButtonSound.play();
+
                     }
                     if(pSceneTouchEvent.isActionUp()) {
                         setCurrentTileIndex(0);
@@ -1041,6 +1078,7 @@ public class MarketScene extends BaseScene {
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
                 if (pSceneTouchEvent.isActionDown()) {
                     setCurrentTileIndex(1);
+                    mResourceManager.mButtonSound.play();
 
                 }
                 if (pSceneTouchEvent.isActionUp()) {
@@ -1072,6 +1110,7 @@ public class MarketScene extends BaseScene {
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
                 if (pSceneTouchEvent.isActionDown()) {
                     setCurrentTileIndex(1);
+                    mResourceManager.mButtonSound.play();
 
                 }
                 if (pSceneTouchEvent.isActionUp()) {
@@ -1133,6 +1172,8 @@ public class MarketScene extends BaseScene {
     }
 
     public void updateTotalPizzaText() {
+        Log.i("Updating Total", "Pizza Text");
+
         int pizza = mActivity.getPizza();
 
         birdMarketTotalPizzaText.setText(Integer.toString(pizza));
@@ -1176,6 +1217,7 @@ public class MarketScene extends BaseScene {
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
                 if (pSceneTouchEvent.isActionDown()) {
                     setCurrentTileIndex(1);
+                    mResourceManager.mButtonSound.play();
 
                 }
                 if (pSceneTouchEvent.isActionUp()) {
@@ -1195,6 +1237,7 @@ public class MarketScene extends BaseScene {
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
                 if (pSceneTouchEvent.isActionDown()) {
                     setCurrentTileIndex(1);
+                    mResourceManager.mButtonSound.play();
 
                 }
                 if (pSceneTouchEvent.isActionUp()) {
@@ -1230,7 +1273,7 @@ public class MarketScene extends BaseScene {
 
     @Override
     public SceneManager.SceneType getSceneType() {
-        return SceneManager.SceneType.SCENE_MENU;
+        return SceneManager.SceneType.SCENE_MARKET;
     }
 
     @Override

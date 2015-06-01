@@ -46,7 +46,7 @@ public class SignUpActivity extends Activity {
         password1 = editPassword1.getText().toString();
         password2 = editPassword2.getText().toString();
 
-        if((username.length() >= 3 && username.length() <= 12) && password1.equals(password2) && password1.length() >= 6) {
+        if((username.length() >= 3 && username.length() <= 16) && password1.equals(password2) && password1.length() >= 6) {
             ParseUser user = new ParseUser();
             user.setUsername(username);
             user.setPassword(password1);
@@ -81,7 +81,7 @@ public class SignUpActivity extends Activity {
             Context context = getApplicationContext();
             CharSequence text = "An error occurred. Please try again.";
             if(username.length() < 3 || username.length() > 12) {
-                text = "Username length must be between 3 and 12 characters";
+                text = "Username length must be between 3 and 16 characters";
             } else if(!password1.equals(password2)) {
                 text = "Passwords do not match";
             } else if(password1.length() < 6) {

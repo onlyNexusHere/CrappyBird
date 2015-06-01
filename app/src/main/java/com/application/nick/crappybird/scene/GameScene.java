@@ -134,7 +134,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
     private float MAX_CRAP_METER_SIZE;
 
-    private int selectedBird, collectableAllocationIndex;
+    private int selectedBird, collectableAllocationIndex, numPlanesOnScreen = 0;
 
 
     @Override
@@ -143,8 +143,16 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
         setOnSceneTouchListener(this);
 
+        if(ParseUser.getCurrentUser() != null && mActivity.isNetworkAvailable()) {
+            mActivity.updateCurrentUser();
+        }
+
         if (mResourceManager.mMusic != null && !mResourceManager.mMusic.isPlaying()) {
-            mResourceManager.mMusic.play();
+            mResourceManager.mMusic.resume();
+        }
+        if (mResourceManager.mMariachiFast.isPlaying() || mResourceManager.mMariachiSlow.isPlaying()) {
+            mResourceManager.mMariachiFast.pause();
+            mResourceManager.mMariachiSlow.pause();
         }
 
         mAutoParallaxBackground = new AutoParallaxBackground(0, 0, 0, 10);
@@ -223,7 +231,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         mObstaclePool.batchAllocatePoolItems(NUM_OBSTACLES);
 
         mObstacles = new ArrayList<Obstacle>();
-        mObstacles.add(mObstaclePool.obtainPoolItem());
+        addObstacle(0);
+        //mObstacles.add(mObstaclePool.obtainPoolItem());
 
         mCollectablePool = new CollectablePool(mResourceManager, mVertexBufferObjectManager, mGround.getY());
         mCollectablePool.batchAllocatePoolItems(NUM_COLLECTABLES[collectableAllocationIndex]);
@@ -275,7 +284,6 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
         attachChild(mGround);
         attachChild(roof);
-        attachChild(mObstacles.get(mObstacles.size() - 1));
         attachChild(mCollectables.get(mCollectables.size() - 1));
         attachChild(mTargets.get(mTargets.size() - 1));
         attachChild(mAlertSign);
@@ -318,7 +326,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                 addNewTarget(SCREEN_WIDTH / 2); //add a new target if the earliest added on the screen passes x
 
                 if(mCollectables.size() <= MAX_COLLECTABLES_ON_SCREEN) {
-                    addNewCollectable(SCREEN_WIDTH * 3 / 4); //add a new collectable if the earliest added on the screen passes x
+                    addNewCollectable(SCREEN_WIDTH * 5 / 6); //add a new collectable if the earliest added on the screen passes x
                 }
 
                 //Add new obstacles///////////////////////////////////
@@ -461,13 +469,19 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                     mCrapMeter.setVisible(true);
                     pauseButton.setVisible(true);
 
+                    if(numPlanesOnScreen > 0) {
+                        mResourceManager.mPropellerSound.play();
+                    }
+
                 }
                 return true;
             }
         });
 
         setChildScene(mGameReadyScene, false, true, true);
-
+        if(numPlanesOnScreen > 0) {
+            mResourceManager.mPropellerSound.stop();
+        }
 
 
         //create CameraScene for game over
@@ -538,8 +552,11 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                 if (pSceneTouchEvent.isActionDown()) {
                     if(!mSharingVisible) {
                         setCurrentTileIndex(1);
+                        mResourceManager.mButtonSound.play();
+
                     } else { //if the twitter button is visible on top of the play button
                         twitterButton.setCurrentTileIndex(1);
+                        mResourceManager.mButtonSound.play();
                     }
                 }
                 if (pSceneTouchEvent.isActionUp()) {
@@ -573,8 +590,10 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                 if (pSceneTouchEvent.isActionDown()) {
                     if(!mSharingVisible) {
                         setCurrentTileIndex(1);
+                        mResourceManager.mButtonSound.play();
                     } else {
                         facebookButton.setCurrentTileIndex(1);
+                        mResourceManager.mButtonSound.play();
                     }
                 }
                 if (pSceneTouchEvent.isActionUp()) {
@@ -608,6 +627,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                 if (pSceneTouchEvent.isActionDown()) {
                     if(!mSharingVisible) {
                         setCurrentTileIndex(1);
+                        mResourceManager.mButtonSound.play();
                     }
                 }
                 if (pSceneTouchEvent.isActionUp()) {
@@ -633,8 +653,10 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                 if (pSceneTouchEvent.isActionDown()) {
                     if(!mSharingVisible) {
                         setCurrentTileIndex(1);
+                        mResourceManager.mButtonSound.play();
                     } else { //if the other button is visible on top of the rate button
                         otherButton.setCurrentTileIndex(1);
+                        mResourceManager.mButtonSound.play();
                     }
                 }
                 if (pSceneTouchEvent.isActionUp()) {
@@ -673,8 +695,10 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                 if (pSceneTouchEvent.isActionDown()) {
                     if(!mSharingVisible) {
                         setCurrentTileIndex(1);
+                        mResourceManager.mButtonSound.play();
                     } else { //if the back button is visible on top of the share button
                         backButton.setCurrentTileIndex(1);
+                        mResourceManager.mButtonSound.play();
                     }
 
                 }
@@ -710,6 +734,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                 if (pSceneTouchEvent.isActionDown()) {
                     if(!mSharingVisible) {
                         setCurrentTileIndex(1);
+                        mResourceManager.mButtonSound.play();
                     }
                 }
                 if (pSceneTouchEvent.isActionUp()) {
@@ -795,6 +820,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
                 if (pSceneTouchEvent.isActionDown()) {
                     setCurrentTileIndex(1);
+                    mResourceManager.mButtonSound.play();
                 }
                 if (pSceneTouchEvent.isActionUp()) {
                     setCurrentTileIndex(0);
@@ -814,6 +840,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
                 if (pSceneTouchEvent.isActionDown()) {
                     setCurrentTileIndex(1);
+                    mResourceManager.mButtonSound.play();
                 }
                 if (pSceneTouchEvent.isActionUp()) {
                     setCurrentTileIndex(0);
@@ -838,6 +865,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                 if (pSceneTouchEvent.isActionDown()) {
                     if(isVisible()) {
                         setCurrentTileIndex(1);
+                        mResourceManager.mButtonSound.play();
                     }
                 }
                 if (pSceneTouchEvent.isActionUp()) {
@@ -895,9 +923,11 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                     if (pSceneTouchEvent.isActionDown()) {
                         if (pizzaCollected + mActivity.getPizza() >= RESPAWN_PRICE) {
                             setCurrentTileIndex(1);
+                            mResourceManager.mButtonSound.play();
                         } else if(!mRespawnButtonPressed){
                             mActivity.alert("Not enough pizza! Get more in the market.");
                             mRespawnButtonPressed = true;
+                            mResourceManager.mButtonSound.play();
                         }
 
                     }
@@ -924,7 +954,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
                 if (pSceneTouchEvent.isActionDown()) {
                     setCurrentTileIndex(1);
-
+                    mResourceManager.mButtonSound.play();
                 }
                 if (pSceneTouchEvent.isActionUp()) {
                     setCurrentTileIndex(0);
@@ -1083,17 +1113,40 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                 setIgnoreUpdate(true);
                 setChildScene(mPauseScene, false, true, true);
 
-                if (mResourceManager.mMusic!=null && mResourceManager.mMusic.isPlaying()) {
-                    mResourceManager.mMusic.pause();
+                mMachineCrapping = false;
+
+                mResourceManager.mMusic.pause();
+                mResourceManager.mMariachiFast.pause();
+                mResourceManager.mMariachiSlow.pause();
+
+                if(numPlanesOnScreen > 0) {
+                    mResourceManager.mPropellerSound.pause();
                 }
+                if(mMotherShipOnScreen) {
+                    mResourceManager.mMotherShipSound.pause();
+                }
+
             }
         } else {
             clearChildScene();
             setIgnoreUpdate(false);
             pauseButton.setVisible(true);
 
-            if (mResourceManager.mMusic != null && !mResourceManager.mMusic.isPlaying()) {
-                mResourceManager.mMusic.play();
+            if (mMachineCrapActivated) {
+                if(mSlowMotionActivated) {
+                    mResourceManager.mMariachiSlow.resume();
+                } else {
+                    mResourceManager.mMariachiFast.resume();
+                }
+            } else {
+                mResourceManager.mMusic.resume();
+            }
+
+            if(numPlanesOnScreen > 0) {
+                mResourceManager.mPropellerSound.resume();
+            }
+            if(mMotherShipOnScreen) {
+                mResourceManager.mMotherShipSound.resume();
             }
         }
     }
@@ -1166,7 +1219,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
     private void setGameOver(boolean bool) {
         if(bool) {
             mGameOver = true;
-            mResourceManager.mSound.play();
+            mResourceManager.mHitSound.play();
             mBird.stopAnimation(selectedBird * 3);
             mMachineCrapping = false; //stop current hold session
             stopCrap();
@@ -1206,6 +1259,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         if(bool) {
             mMotherShipIncoming = true;
             mAlertSign.setVisible(true);
+            mResourceManager.mAlertSound.play();
         } else {
             mMotherShipIncoming = false;
             mAlertSign.setVisible(false);
@@ -1222,6 +1276,11 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
             mMotherShipOnScreen = true;
             mMotherShip.flyingPastScreen(true);
             attachChild(mMotherShip);
+            mResourceManager.mMotherShipSound.play();
+            if(mSlowMotionActivated) {
+                mMotherShip.setSlowMotion(true);
+                mResourceManager.mMotherShipSound.setRate(0.5f);
+            }
         } else {
             mMotherShipOnScreen = false;
             mMotherShipPassed = true;
@@ -1242,11 +1301,18 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                 newObstacle.setX(SCREEN_WIDTH);
                 //scale plane velocity according to number of passed obstacles
                 if (newObstacle.getClass().getName().equals("com.application.nick.crappybird.entity.ObstaclePlane")) {
+                    mResourceManager.mPropellerSound.play();
+                    mResourceManager.mPropellerSound.setVolume(1f);
                     if (mObstaclePool.getObstacleIndex() < 100) {
                         newObstacle.setVelocity(-200f - mObstaclePool.getObstacleIndex(), 0);
+                        mResourceManager.mPropellerSound.setRate((float)(1 + mObstaclePool.getObstacleIndex() / 100.0));
                     } else {
                         newObstacle.setVelocity(-300, 0);
+                        mResourceManager.mPropellerSound.setRate(2);
                     }
+
+                    numPlanesOnScreen++;
+
                     //if passed obstacle number x, have plane fly at random angles across the screen
                     if (mObstaclePool.getObstacleIndex() > 50) {
                         ((ObstaclePlane) newObstacle).randomizeYVelocity();
@@ -1271,15 +1337,22 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                         newObstacle.setX(SCREEN_WIDTH);
                         //scale plane velocity according to number of passed obstacles
                         if (newObstacle.getClass().getName().equals("com.application.nick.crappybird.entity.ObstaclePlane")) {
+                            mResourceManager.mPropellerSound.play();
+                            mResourceManager.mPropellerSound.setVolume(1f);
                             if (mObstaclePool.getObstacleIndex() < 100) {
                                 newObstacle.setVelocity(-200f - mObstaclePool.getObstacleIndex(), 0);
+                                mResourceManager.mPropellerSound.setRate((float) (1 + mObstaclePool.getObstacleIndex() / 100.0));
                             } else {
                                 newObstacle.setVelocity(-300, 0);
+                                mResourceManager.mPropellerSound.setRate(2);
                             }
                             //if passed obstacle number x, have plane fly at random angles across the screen
                             if (mObstaclePool.getObstacleIndex() > 50) {
                                 ((ObstaclePlane) newObstacle).randomizeYVelocity();
                             }
+
+                            numPlanesOnScreen++;
+
                         } else if (newObstacle.getClass().getName().equals("com.application.nick.crappybird.entity.ObstacleBalloon")) {
                             if (mObstaclePool.getObstacleIndex() > 0) {
                                 ((ObstacleBalloon) newObstacle).randomizeYVelocity();
@@ -1377,6 +1450,9 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                 } else {
                     obstacle.setVelocityX(-MIN_PLANE_SPEED_ON_GAMEOVER);
                 }
+                if(!mSlowMotionActivated) {
+                    mResourceManager.mPropellerSound.setRate(mResourceManager.mPropellerSound.getRate() / 2);
+                }
             } else if (obstacle.getClass().getName().equals("com.application.nick.crappybird.entity.ObstacleBalloon")) {
                 obstacle.setVelocityX(0);
             } else {
@@ -1422,6 +1498,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                     }
                     obstacle.blastOff(velocityY);
                     obstacle.setCollidedWith();
+
+
                 } else {
 
                     setGameOver();
@@ -1432,8 +1510,14 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                             ((ObstacleBalloon)obstacle).collidesWithBasket(mBird) && !((ObstacleBalloon) obstacle).getBasketHit()) {
                 ((ObstacleBalloon) obstacle).birdHitsBasket();
                 mTargets.add(mTargetPool.obtainPoolItem());
+
+                mResourceManager.mWilhelmScream.play();
+
                 if(mSlowMotionActivated) {
                     mTargets.get(mTargets.size() - 1).setSlowMotion(true);
+                    mResourceManager.mWilhelmScream.setRate(0.5f);
+                } else {
+                    mResourceManager.mWilhelmScream.setRate(1);
                 }
                 ((TargetPerson1)(mTargets.get(mTargets.size() - 1))).setFalling(obstacle.getVelocityX(), obstacle.getX() + 28, obstacle.getY() + 110);
                 attachChild(mTargets.get(mTargets.size() - 1));
@@ -1447,6 +1531,9 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                 addPoint();
             } else if (obstacle.getX() < -obstacle.getWidth() || obstacle.getY() < -obstacle.getHeight() || obstacle.getY() > SCREEN_HEIGHT) {
                 detachChild(obstacle);
+                if (obstacle.getClass().getName().equals("com.application.nick.crappybird.entity.ObstaclePlane")) {
+                    numPlanesOnScreen--;
+                }
                 mObstaclePool.recyclePoolItem(obstacle);
                 mObstaclePool.shufflePoolItems();
                 mObstacles.remove(i);
@@ -1483,6 +1570,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                     mHudTextPizza.setX(pizzaCollectedSprite.getX() + pizzaCollectedSprite.getWidth());
                 }
                 growCrapMeter(MAX_CRAP_METER_SIZE); //fill crap meter
+
+                mResourceManager.mCollectionSound.play();
             }
 
 
@@ -1563,6 +1652,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                             obstacle.hitWithMegaCrap((MegaCrap) crap);
                             obstacle.setScoreAdded();
 
+
                             addPoint(); //add one point for "passing" the obstacle
                             addPoint(); //and another for knocking it off the screen with mega crap
                         }
@@ -1575,6 +1665,14 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
 
     private void addPoint() {
+        mResourceManager.mCoinSound.play();
+        mResourceManager.mCoinSound.setVolume(0.1f);
+        if(mSlowMotionActivated) {
+            mResourceManager.mCoinSound.setRate(0.5f);
+        } else {
+            mResourceManager.mCoinSound.setRate(1);
+        }
+
         if(mDoublePointsActivated) {
             addDoublePoints();
         } else {
@@ -1608,11 +1706,26 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
             mCrapMeter.setVisible(false);
             machineCrappingLastCrapTime = 0;
             machineCrappingTime = 0;
+
+
+            mResourceManager.mMusic.pause();
+            if(mSlowMotionActivated) {
+                mResourceManager.mMariachiSlow.resume();
+            } else {
+                mResourceManager.mMariachiFast.resume();
+            }
+
         } else {
             mMachineCrapActivated = false;
             mAnimatedCrapMeter.setVisible(false);
             mCrapMeter.setVisible(true);
             growCrapMeter(MAX_CRAP_METER_SIZE);
+
+
+            mResourceManager.mMariachiFast.pause();
+            mResourceManager.mMariachiSlow.pause();
+            mResourceManager.mMusic.resume();
+
         }
     }
 
@@ -1641,12 +1754,26 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                 }
                 for(int i = 0; i < mTargets.size(); i++) {
                     mTargets.get(i).setSlowMotion(true);
+                    if(((TargetPerson1)mTargets.get(i)).getFalling()) {
+                        mResourceManager.mWilhelmScream.setRate(0.5f);
+                    }
                 }
                 for(int i = 0; i < mCraps.size(); i++) {
                     mCraps.get(i).setSlowMotion(true);
                 }
+                if(mMotherShipOnScreen) {
+                    mMotherShip.setSlowMotion(true);
+                    mResourceManager.mMotherShipSound.setRate(0.5f);
+                }
                 mAutoParallaxBackground.setParallaxChangePerSecond(PARALLAX_CHANGE_PER_SECOND / 2);
 
+                if(mMachineCrapActivated) {
+                    mResourceManager.mMariachiFast.pause();
+                    mResourceManager.mMariachiSlow.resume();
+                }
+                if (numPlanesOnScreen > 0) { //handle propeller sound slow down
+                    mResourceManager.mPropellerSound.setRate(mResourceManager.mPropellerSound.getRate() / 2);
+                }
             }
 
         } else {
@@ -1658,11 +1785,26 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
             }
             for(int i = 0; i < mTargets.size(); i++) {
                 mTargets.get(i).setSlowMotion(false);
+                if(((TargetPerson1)mTargets.get(i)).getFalling()) {
+                    mResourceManager.mWilhelmScream.setRate(1);
+                }
             }
             for(int i = 0; i < mCraps.size(); i++) {
                 mCraps.get(i).setSlowMotion(false);
             }
+            if(mMotherShipOnScreen) {
+                mMotherShip.setSlowMotion(false);
+                mResourceManager.mMotherShipSound.setRate(1f);
+
+            }
             mAutoParallaxBackground.setParallaxChangePerSecond(PARALLAX_CHANGE_PER_SECOND);
+            if(mMachineCrapActivated) {
+                mResourceManager.mMariachiSlow.pause();
+                mResourceManager.mMariachiFast.resume();
+            }
+            if (numPlanesOnScreen > 0) { //handle propeller sound speed up back to normal
+                mResourceManager.mPropellerSound.setRate(mResourceManager.mPropellerSound.getRate() * 2);
+            }
         }
     }
 
@@ -1771,7 +1913,23 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         Vector2Pool.recycle(newVelocity);
 
         dropCrap(currentXPosition, currentYPosition);
-
+        if(mMegaCrapActivated) {
+            mResourceManager.mMegaCrapSound.play();
+            mResourceManager.mMegaCrapSound.setVolume(2);
+            if(mSlowMotionActivated) {
+                mResourceManager.mMegaCrapSound.setRate(0.5f);
+            } else {
+                mResourceManager.mMegaCrapSound.setRate(1);
+            }
+        } else {
+            mResourceManager.mJumpSound.play();
+            mResourceManager.mJumpSound.setVolume(0.75f);
+            if (mSlowMotionActivated) {
+                mResourceManager.mJumpSound.setRate(0.5f);
+            } else {
+                mResourceManager.mJumpSound.setRate(1);
+            }
+        }
 
     }
 
@@ -1788,7 +1946,13 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         //update user's account highscore if logged in
         ParseUser currentUser = ParseUser.getCurrentUser();
         if (currentUser != null) {
-            currentUser.put("pizzaCollected", mActivity.getPizza());
+            if(mActivity.isNetworkAvailable()) {
+                mActivity.displayDailyReward(); //give the player their daily reward if they haven't gotten it yet.
+                currentUser.put("pizzaCollected", mActivity.getPizza());
+                mActivity.setPizzaSinceOffline(0);
+            } else {
+                mActivity.addPizzaSinceOffline(pizzaCollected);
+            }
             if(currentUser.getInt("highScore") < most) {
                 currentUser.put("highScore", most);
             }
@@ -1822,6 +1986,23 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         pizzaTextOnGameOver.setX(pizzaCollectedSpriteOnGameOver.getX() + pizzaCollectedSpriteOnGameOver.getWidth());
 
         setChildScene(mGameOverScene, false, true, true);
+
+    }
+
+    /**
+     * updates the value of pizza collected and max score on gameover screen and adjusts margins
+     */
+    public void updateGameOverScreenAfterSync() {
+        Log.i("updating gameover", "Pizza = " + String.valueOf(mActivity.getPizza()) + " & Most = " + mActivity.getMaxScore());
+
+        float originalWidth = mostText.getWidth();
+        mostText.setText(String.valueOf(mActivity.getMaxScore()));
+        float newWidth = mostText.getWidth();
+        mostText.setX(mostText.getX() - (newWidth - originalWidth) / 2);
+
+        pizzaTextOnGameOver.setText(String.valueOf(mActivity.getPizza()));
+        pizzaCollectedSpriteOnGameOver.setX((SCREEN_WIDTH - pizzaCollectedSpriteOnGameOver.getWidth() - pizzaTextOnGameOver.getWidth()) / 2); //adjust margins
+        pizzaTextOnGameOver.setX(pizzaCollectedSpriteOnGameOver.getX() + pizzaCollectedSpriteOnGameOver.getWidth());
 
     }
 
@@ -1883,6 +2064,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
             mCrapMeter.setVisible(false);
             mPlusTwo.setVisible(false);
             mAlertSign.setVisible(false);
+            mResourceManager.mMariachiFast.pause();
+            mResourceManager.mMariachiSlow.pause();
 
             mSceneManager.setScene(SceneManager.SceneType.SCENE_MENU);
 

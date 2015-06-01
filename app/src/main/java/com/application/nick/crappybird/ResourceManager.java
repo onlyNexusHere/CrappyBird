@@ -128,8 +128,8 @@ public class ResourceManager {
     public Font mFont5;
     public Font mFont6;
 
-    public Sound mSound;
-    public Music mMusic;
+    public Sound mHitSound, mCoinSound, mButtonSound, mJumpSound, mMegaCrapSound, mMotherShipSound, mPropellerSound, mAlertSound, mCollectionSound, mWilhelmScream;
+    public Music mMusic, mMariachiFast, mMariachiSlow;
 
     private ResourceManager() {}
 
@@ -235,11 +235,11 @@ public class ResourceManager {
 
         mMarketBitmapTextureAtlas.load();
 
-        mBirdsBitmapTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 265, 1600, TextureOptions.BILINEAR);
-        mBirdsTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBirdsBitmapTextureAtlas, mActivity, "birds-master.png", 0, 0, 3, 13);
-        mMarketBirdsTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBirdsBitmapTextureAtlas, mActivity, "market_birds.png", 0, 340, 1, 13);
-        mCrapTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBirdsBitmapTextureAtlas, mActivity, "crap.png", 0, 1400, 2, 12);
-        mMegaCrapTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBirdsBitmapTextureAtlas, mActivity, "mega_crap.png", 135, 0, 2, 12);
+        mBirdsBitmapTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 400, 1600, TextureOptions.BILINEAR);
+        mBirdsTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBirdsBitmapTextureAtlas, mActivity, "birds-master.png", 0, 0, 3, 17);
+        mMarketBirdsTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBirdsBitmapTextureAtlas, mActivity, "market_birds.png", 130, 0, 1, 18);
+        mCrapTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBirdsBitmapTextureAtlas, mActivity, "crap.png", 260, 0, 2, 17);
+        mMegaCrapTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBirdsBitmapTextureAtlas, mActivity, "mega_crap.png", 300, 0, 2, 17);
 
         mBirdsBitmapTextureAtlas.load();
 
@@ -288,8 +288,18 @@ public class ResourceManager {
             //load sound/music
         SoundFactory.setAssetBasePath("mfx/");
         try {
-            mSound = SoundFactory.createSoundFromAsset(mActivity.getEngine().getSoundManager(), mActivity, "metal_hit.ogg");
-            mSound.setVolume(0.75f);
+            mHitSound = SoundFactory.createSoundFromAsset(mActivity.getEngine().getSoundManager(), mActivity, "metal_hit.ogg");
+            mHitSound.setVolume(0.5f);
+            mCoinSound = SoundFactory.createSoundFromAsset(mActivity.getEngine().getSoundManager(), mActivity, "coin.ogg");
+            mCoinSound.setVolume(0.5f);
+            mButtonSound = SoundFactory.createSoundFromAsset(mActivity.getEngine().getSoundManager(), mActivity, "button.ogg");
+            mJumpSound = SoundFactory.createSoundFromAsset(mActivity.getEngine().getSoundManager(), mActivity, "jump.ogg");
+            mMegaCrapSound = SoundFactory.createSoundFromAsset(mActivity.getEngine().getSoundManager(), mActivity, "mega_crap_drop.ogg");
+            mMotherShipSound = SoundFactory.createSoundFromAsset(mActivity.getEngine().getSoundManager(), mActivity, "space_ship.ogg");
+            mPropellerSound = SoundFactory.createSoundFromAsset(mActivity.getEngine().getSoundManager(), mActivity, "propeller.ogg");
+            mAlertSound = SoundFactory.createSoundFromAsset(mActivity.getEngine().getSoundManager(), mActivity, "alert.ogg");
+            mCollectionSound = SoundFactory.createSoundFromAsset(mActivity.getEngine().getSoundManager(), mActivity, "collection.ogg");
+            mWilhelmScream = SoundFactory.createSoundFromAsset(mActivity.getEngine().getSoundManager(), mActivity, "wilhelm.ogg");
         } catch (final IOException e) {
             Debug.e(e);
         }
@@ -298,6 +308,18 @@ public class ResourceManager {
         try {
             mMusic = MusicFactory.createMusicFromAsset(mActivity.getEngine().getMusicManager(), mActivity, "music.ogg");
             mMusic.setLooping(true);
+            mMusic.play();
+            mMusic.pause();
+            mMariachiFast = MusicFactory.createMusicFromAsset(mActivity.getEngine().getMusicManager(), mActivity, "mariachi-short-fast.ogg");
+            mMariachiFast.setLooping(true);
+            mMariachiFast.setVolume(0.5f);
+            mMariachiFast.play();
+            mMariachiFast.pause();
+            mMariachiSlow = MusicFactory.createMusicFromAsset(mActivity.getEngine().getMusicManager(), mActivity, "mariachi-short.ogg");
+            mMariachiSlow.setLooping(true);
+            mMariachiSlow.setVolume(0.5f);
+            mMariachiSlow.play();
+            mMariachiSlow.pause();
         } catch (final IOException e) {
             Debug.e(e);
         }
@@ -408,13 +430,47 @@ public class ResourceManager {
         mFont6 = null;
 
             //unload sound/music
-        mSound.release();
-        mSound = null;
+        mHitSound.release();
+        mHitSound = null;
+
+        mCoinSound.release();
+        mCoinSound = null;
+
+        mButtonSound.release();
+        mButtonSound = null;
+
+        mJumpSound.release();
+        mJumpSound = null;
+
+        mMegaCrapSound.release();
+        mMegaCrapSound = null;
+
+        mMotherShipSound.release();
+        mMotherShipSound = null;
+
+        mPropellerSound.release();
+        mPropellerSound = null;
+
+        mAlertSound.release();
+        mAlertSound = null;
+
+        mCollectionSound.release();
+        mCollectionSound = null;
+
+        mWilhelmScream.release();
+        mWilhelmScream = null;
 
         mMusic.stop();
         mMusic.release();
         mMusic = null;
 
+        mMariachiFast.stop();
+        mMariachiFast.release();
+        mMariachiFast = null;
+
+        mMariachiSlow.stop();
+        mMariachiSlow.release();
+        mMariachiSlow = null;
 
     }
 }

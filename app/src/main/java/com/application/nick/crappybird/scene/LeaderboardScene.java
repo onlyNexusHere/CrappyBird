@@ -83,6 +83,7 @@ public class LeaderboardScene extends BaseScene {
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
                 if (pSceneTouchEvent.isActionDown()) {
                     setCurrentTileIndex(1);
+                    mResourceManager.mButtonSound.play();
 
                 }
                 if (pSceneTouchEvent.isActionUp()) {
@@ -102,6 +103,7 @@ public class LeaderboardScene extends BaseScene {
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
                 if (pSceneTouchEvent.isActionDown()) {
                     setCurrentTileIndex(1);
+                    mResourceManager.mButtonSound.play();
 
                 }
                 if (pSceneTouchEvent.isActionUp()) {
@@ -121,6 +123,7 @@ public class LeaderboardScene extends BaseScene {
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
                 if (pSceneTouchEvent.isActionDown()) {
                     setCurrentTileIndex(1);
+                    mResourceManager.mButtonSound.play();
 
                 }
                 if (pSceneTouchEvent.isActionUp()) {
@@ -147,6 +150,7 @@ public class LeaderboardScene extends BaseScene {
                 public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
                     if (pSceneTouchEvent.isActionDown()) {
                         setCurrentTileIndex(1);
+                        mResourceManager.mButtonSound.play();
 
                     }
                     if (pSceneTouchEvent.isActionUp()) {
@@ -169,6 +173,7 @@ public class LeaderboardScene extends BaseScene {
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
                 if (pSceneTouchEvent.isActionDown()) {
                     setCurrentTileIndex(1);
+                    mResourceManager.mButtonSound.play();
 
                 }
                 if (pSceneTouchEvent.isActionUp()) {
@@ -275,7 +280,7 @@ public class LeaderboardScene extends BaseScene {
 
     @Override
     public SceneManager.SceneType getSceneType() {
-        return SceneManager.SceneType.SCENE_MENU;
+        return SceneManager.SceneType.SCENE_LEADERBOARD;
     }
 
     @Override
