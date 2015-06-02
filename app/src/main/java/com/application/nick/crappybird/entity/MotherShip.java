@@ -52,7 +52,7 @@ public class MotherShip extends Obstacle {
         int[] regionYBottom = {130, 150, 170, 170, 170, 190};
 
         for(int i = 0; i < regionYTop.length; i++) {
-            if ((spriteRight > left + regionX[i] && spriteLeft < regionX[i+1]) && (spriteTop < top + regionYBottom[i] && spriteBottom > top + regionYTop[i])) {
+            if ((spriteRight > left + regionX[i] && spriteLeft < left + regionX[i+1]) && (spriteTop < top + regionYBottom[i] && spriteBottom > top + regionYTop[i])) {
                 return true;
             }
         }

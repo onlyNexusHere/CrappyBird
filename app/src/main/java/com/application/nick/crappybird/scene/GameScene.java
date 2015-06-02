@@ -64,7 +64,7 @@ import java.util.List;
  */
 public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
-    private final int MAX_OBSTACLES = 5;
+    private final int MAX_OBSTACLES_ON_SCREEN = 5;
     private final float DEFAULT_MACHINE_CRAPPING_TIME = 5;
     private final float MACHINE_CRAPPING_TIME_BETWEEN_CRAPS = 0.1f;
     private final float DEFAULT_DOUBLE_POINTS_TIME = 5;
@@ -326,16 +326,16 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                 addNewTarget(SCREEN_WIDTH / 2); //add a new target if the earliest added on the screen passes x
 
                 if(mCollectables.size() <= MAX_COLLECTABLES_ON_SCREEN) {
-                    addNewCollectable(SCREEN_WIDTH * 5 / 6); //add a new collectable if the earliest added on the screen passes x
+                    addNewCollectable(300); //add a new collectable if the earliest added on the screen passes x
                 }
 
                 //Add new obstacles///////////////////////////////////
                 int obstaclesOnScreen = mObstacles.size();
-                if(obstaclesOnScreen <= MAX_OBSTACLES && !mMotherShipIncoming && !mMotherShipOnScreen) { //max obstacles on the screen can't be more than x. Don't add new obstacles if mother ship is coming or on screen
-                    if (mObstaclePool.getObstacleIndex() < 40) {
-                        addObstacle(mObstaclePool.getObstacleIndex() * 5); //add a new obstacle if the earliest added obstacle on the screen passes x
+                if(obstaclesOnScreen < MAX_OBSTACLES_ON_SCREEN && !mMotherShipIncoming && !mMotherShipOnScreen) { //max obstacles on the screen can't be more than x. Don't add new obstacles if mother ship is coming or on screen
+                    if (mObstaclePool.getObstacleIndex() < 100) {
+                        addObstacle((float)((300 / Math.pow(100.0, 2.0/3)) * Math.pow(mObstaclePool.getObstacleIndex(), 2.0/3))); //add a new obstacle if the earliest added obstacle on the screen passes x
                     } else {
-                        addObstacle(200);
+                        addObstacle(300);
                     }
                 }
 
@@ -1339,12 +1339,12 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                         if (newObstacle.getClass().getName().equals("com.application.nick.crappybird.entity.ObstaclePlane")) {
                             mResourceManager.mPropellerSound.play();
                             mResourceManager.mPropellerSound.setVolume(1f);
-                            if (mObstaclePool.getObstacleIndex() < 100) {
+                            if (mObstaclePool.getObstacleIndex() < 50) {
                                 newObstacle.setVelocity(-200f - mObstaclePool.getObstacleIndex(), 0);
                                 mResourceManager.mPropellerSound.setRate((float) (1 + mObstaclePool.getObstacleIndex() / 100.0));
                             } else {
-                                newObstacle.setVelocity(-300, 0);
-                                mResourceManager.mPropellerSound.setRate(2);
+                                newObstacle.setVelocity(-250, 0);
+                                mResourceManager.mPropellerSound.setRate(1.5f);
                             }
                             //if passed obstacle number x, have plane fly at random angles across the screen
                             if (mObstaclePool.getObstacleIndex() > 50) {
@@ -1979,6 +1979,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         scoreText.setX(scoreText.getX() - (scoreText.getWidth() / 2)); //adjust margins
         mostText.setX(mostText.getX() - (mostText.getWidth() / 2));
 
+
         //Display pizza collected
         pizzaTextOnGameOver.setText(String.valueOf(mActivity.getPizza()));
 
@@ -1996,8 +1997,11 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         Log.i("updating gameover", "Pizza = " + String.valueOf(mActivity.getPizza()) + " & Most = " + mActivity.getMaxScore());
 
         float originalWidth = mostText.getWidth();
+        Log.i("original width", String.valueOf(originalWidth));
         mostText.setText(String.valueOf(mActivity.getMaxScore()));
         float newWidth = mostText.getWidth();
+        Log.i("new width", String.valueOf(newWidth));
+
         mostText.setX(mostText.getX() - (newWidth - originalWidth) / 2);
 
         pizzaTextOnGameOver.setText(String.valueOf(mActivity.getPizza()));

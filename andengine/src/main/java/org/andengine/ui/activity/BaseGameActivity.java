@@ -62,6 +62,7 @@ public abstract class BaseGameActivity extends BaseActivity implements IGameInte
 	private boolean mGameCreated;
 	private boolean mCreateGameCalled;
 	private boolean mOnReloadResourcesScheduled;
+	private boolean mResourcesLoaded = false;
 
 	// ===========================================================
 	// Constructors
@@ -161,6 +162,7 @@ public abstract class BaseGameActivity extends BaseActivity implements IGameInte
 		final OnCreateResourcesCallback onCreateResourcesCallback = new OnCreateResourcesCallback() {
 			@Override
 			public void onCreateResourcesFinished() {
+				mResourcesLoaded = true;
 				try {
 					if(BuildConfig.DEBUG) {
 						Debug.d(BaseGameActivity.this.getClass().getSimpleName() + ".onCreateScene" + " @(Thread: '" + Thread.currentThread().getName() + "')");
@@ -182,6 +184,10 @@ public abstract class BaseGameActivity extends BaseActivity implements IGameInte
 		} catch(final Throwable pThrowable) {
 			Debug.e(this.getClass().getSimpleName() + ".onCreateGame failed." + " @(Thread: '" + Thread.currentThread().getName() + "')", pThrowable);
 		}
+	}
+
+	public boolean getResourcesLoaded() {
+		return mResourcesLoaded;
 	}
 
 	@Override

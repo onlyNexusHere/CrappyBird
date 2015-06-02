@@ -73,23 +73,18 @@ public class ObstaclePlane extends Obstacle {
         float spriteRight = spriteLeft + sprite.getWidth();
         float spriteTop = sprite.getY();
         float spriteBottom = spriteTop + sprite.getHeight();
-        float obstacleLeft = this.getX();
-        float obstacleRight = obstacleLeft + this.getWidth();
-        float obstacleTop = this.getY();
-        float obstacleBottom = obstacleTop + this.getHeight();
+        float left = this.getX();
+        float top = this.getY();
 
-        //take into account odd shape of plane
-        float obstacleMiddleX = (obstacleLeft + obstacleRight) / 2;
-        float obstacleRadiusX = (obstacleRight - obstacleLeft) / 2;
-        obstacleLeft = obstacleMiddleX - obstacleRadiusX * (5f/6);
-        obstacleRight = obstacleMiddleX + obstacleRadiusX * (5f/6);
-        float obstacleMiddleY = (obstacleTop + obstacleBottom) / 2;
-        float obstacleRadiusY = (obstacleBottom - obstacleTop) / 2;
-        obstacleTop = obstacleMiddleY - obstacleRadiusY * (5f/6);
-        obstacleBottom = obstacleMiddleY + obstacleRadiusY * (5f/6);
+        //create regions to handle the irregular shape of the obstacle
+        int[] regionX = {5, 40, 70, 90};
+        int[] regionYTop = {9, 17, 0};
+        int[] regionYBottom = {37, 31, 26};
 
-        if ((spriteRight > obstacleLeft && spriteLeft < obstacleRight) && (spriteTop < obstacleBottom && spriteBottom > obstacleTop)) {
-            return true;
+        for(int i = 0; i < regionYTop.length; i++) {
+            if ((spriteRight > left + regionX[i] && spriteLeft < left + regionX[i+1]) && (spriteTop < top + regionYBottom[i] && spriteBottom > top + regionYTop[i])) {
+                return true;
+            }
         }
         return false;
     }

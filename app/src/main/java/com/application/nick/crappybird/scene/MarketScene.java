@@ -151,10 +151,9 @@ public class MarketScene extends BaseScene {
             createPizzaMarketScene();
             openPowerUpsMarketScene();
 
-            if(mActivity.isNetworkAvailable()) {
-                mActivity.updateCurrentUser();
-            }
         }
+
+        mActivity.updateCurrentUser();
 
     }
 
@@ -1159,15 +1158,20 @@ public class MarketScene extends BaseScene {
     }
 
     private void openPizzaMarketScene() {
-        clearChildScene();
-        pizzaPurchaseText.setText(PIZZA_PURCHASES[currentPizzaPurchase]);
-        pizzaPurchasePriceText.setText(mPizzaPurchasePrices[currentPizzaPurchase]);
+        if(mActivity.getInAppBillingSetup()) {
+            clearChildScene();
 
-        pizzaPurchaseText.setX((SCREEN_WIDTH - pizzaPurchaseText.getWidth()) / 2);
-        pizzaPurchasePriceText.setX((SCREEN_WIDTH - pizzaPurchasePriceText.getWidth()) / 2);
-        setChildScene(mPizzaMarketScene, false, true, true);
+            pizzaPurchaseText.setText(PIZZA_PURCHASES[currentPizzaPurchase]);
+            pizzaPurchasePriceText.setText(mPizzaPurchasePrices[currentPizzaPurchase]);
 
-        pizzaMarketSceneOpen = true;
+            pizzaPurchaseText.setX((SCREEN_WIDTH - pizzaPurchaseText.getWidth()) / 2);
+            pizzaPurchasePriceText.setX((SCREEN_WIDTH - pizzaPurchasePriceText.getWidth()) / 2);
+            setChildScene(mPizzaMarketScene, false, true, true);
+
+            pizzaMarketSceneOpen = true;
+        } else {
+            mActivity.displayConnectionError();
+        }
 
     }
 

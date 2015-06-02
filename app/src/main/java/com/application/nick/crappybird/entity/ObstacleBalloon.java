@@ -60,21 +60,19 @@ public class ObstacleBalloon extends Obstacle {
         float spriteRight = spriteLeft + sprite.getWidth();
         float spriteTop = sprite.getY();
         float spriteBottom = spriteTop + sprite.getHeight();
-        float obstacleLeft = this.getX();
-        float obstacleRight = obstacleLeft + this.getWidth();
-        float obstacleTop = this.getY();
-        float obstacleBottom = obstacleTop + this.getHeight();
+        float left = this.getX();
+        float top = this.getY();
 
         //just balloon
-        float obstacleMiddleX = (obstacleLeft + obstacleRight) / 2;
-        obstacleLeft = obstacleMiddleX - 30;
-        obstacleRight = obstacleMiddleX + 30;
-        float obstacleMiddleY = (obstacleTop + obstacleBottom) / 2;
-        obstacleTop = obstacleMiddleY - 55;
-        obstacleBottom = obstacleMiddleY + 20;
+        //create regions to handle the irregular shape of the obstacle
+        int[] regionX = {1, 7, 15, 23, 55, 63, 71, 77};
+        int[] regionYTop = {26, 21, 10, 2, 10, 21, 26};
+        int[] regionYBottom = {50, 59, 73, 83, 73, 59, 50};
 
-        if ((spriteRight > obstacleLeft && spriteLeft < obstacleRight) && (spriteTop < obstacleBottom && spriteBottom > obstacleTop)) {
-            return true;
+        for(int i = 0; i < regionYTop.length; i++) {
+            if ((spriteRight > left + regionX[i] && spriteLeft < left + regionX[i+1]) && (spriteTop < top + regionYBottom[i] && spriteBottom > top + regionYTop[i])) {
+                return true;
+            }
         }
         return false;
     }

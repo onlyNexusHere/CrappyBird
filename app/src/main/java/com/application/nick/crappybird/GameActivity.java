@@ -47,12 +47,11 @@ import java.util.List;
 
 public class GameActivity extends LayoutGameActivity {
 
-    // Note: Your consumer key and secret should be obfuscated in your source code before shipping.
-    private static final String TWITTER_KEY = "Tph6xDindFcHhG1ppVMNoSbMj";
-    private static final String TWITTER_SECRET = "3TSVql418kxQkN9vTzhfo9y0baprccJgCgYjBipu7pwGPX7Kqj";
     private final String SKU_1000_PIZZA = "1000pizza";
     private final String SKU_5000_PIZZA = "5000pizza";
     private final String SKU_10000_PIZZA = "10000pizza";
+    private final int IAB_REQUEST_CODE = 10001;
+    private final int PLAY_SERVICES_ERROR_REQUEST_CODE = 10002;
 
     private static final String[] SKU_PIZZA_PURCHASE = {
             "1000pizza",
@@ -83,56 +82,70 @@ public class GameActivity extends LayoutGameActivity {
     private String price5000Pizza;
     private String price10000Pizza;
 
+    private boolean inAppBillingSetup = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        int googlePlayServicesAvailable = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
-        if(!(googlePlayServicesAvailable == ConnectionResult.SUCCESS)) {
+        if(!(GooglePlayServicesUtil.isGooglePlayServicesAvailable(this) == ConnectionResult.SUCCESS)) {
 
-            Dialog dialog = GooglePlayServicesUtil.getErrorDialog(googlePlayServicesAvailable, this, 111);
+            Dialog dialog = GooglePlayServicesUtil.getErrorDialog(GooglePlayServicesUtil.isGooglePlayServicesAvailable(this), this, PLAY_SERVICES_ERROR_REQUEST_CODE);
             dialog.show();
 
         } else {
+
             if (isNetworkAvailable()) {
                 //create banner ad from admob
                 createBannerAd();
 
                 //Parse
-                Parse.initialize(this, "YpJ9WQuoN4XQYw2y0YOQRLvzSBEsskGpWebUgWzf", "4VswpUtUtyVdWSWrtugliH1zdkTOY91uoXm6kjMF");
 
+                setupInAppBilling();
             }
-            String base64EncodedPublicKey = "";
-            base64EncodedPublicKey += "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAysK9OGJEGjJW9XTNZYqs1j9y4x";
-            base64EncodedPublicKey += "Q0lIvtzuuqAvwZ74DiKCCQgjsp7/V8VEu0OQu0jsEVjTwPGf42JpaZJrETkivUQbfHSZcBEfQLx3QnJqoh1JO390nrsr6GmPYeXVkS6si5+RQjS8rblhYER5";
-            base64EncodedPublicKey += "j9gguDb6idqt8O7SST8wucVV5rehUWFJ7uZ3wX8fuzeiQwsAOUJJks41VW8fyKrcUW7nBOGTfAbQEazXxZa3JLlsaVlhZPz+NgCf4fk6eqD0GmtQo3/";
-            base64EncodedPublicKey += "eXOOnlcyaU72f8g9QZfINCYDu3bOz2A40ziqeus5MVaSGFJ90TDXLM1aVmwx47CqyA+S+9U6QYS4mhkHQIDAQAB";
 
-            // compute your public key and store it in base64EncodedPublicKey
-            mHelper = new IabHelper(this, base64EncodedPublicKey);
-
-            mHelper.startSetup(new IabHelper.OnIabSetupFinishedListener() {
-                public void onIabSetupFinished(IabResult result) {
-                    if (!result.isSuccess()) {
-                        // Oh noes, there was a problem.
-                        Log.d("Crappy Bird", "Problem setting up In-app Billing: " + result);
-                    } else {
-                        Log.i("In app Billing", "Successfully set up");
-
-                        List<String> additionalSkuList = new ArrayList<String>();
-                        additionalSkuList.add(SKU_1000_PIZZA);
-                        additionalSkuList.add(SKU_5000_PIZZA);
-                        additionalSkuList.add(SKU_10000_PIZZA);
-                        mHelper.queryInventoryAsync(true, additionalSkuList,
-                                mQueryFinishedListener);
-
-                    }
-                    // Hooray, IAB is fully set up!
-                }
-            });
+            Parse.initialize(this, "YpJ9WQuoN4XQYw2y0YOQRLvzSBEsskGpWebUgWzf", "4VswpUtUtyVdWSWrtugliH1zdkTOY91uoXm6kjMF");
 
         }
 
+    }
+
+
+    private void setupInAppBilling() {
+        String base64EncodedPublicKey = "";
+        base64EncodedPublicKey += "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAysK9OGJEGjJW9XTNZYqs1j9y4x";
+        base64EncodedPublicKey += "Q0lIvtzuuqAvwZ74DiKCCQgjsp7/V8VEu0OQu0jsEVjTwPGf42JpaZJrETkivUQbfHSZcBEfQLx3QnJqoh1JO390nrsr6GmPYeXVkS6si5+RQjS8rblhYER5";
+        base64EncodedPublicKey += "j9gguDb6idqt8O7SST8wucVV5rehUWFJ7uZ3wX8fuzeiQwsAOUJJks41VW8fyKrcUW7nBOGTfAbQEazXxZa3JLlsaVlhZPz+NgCf4fk6eqD0GmtQo3/";
+        base64EncodedPublicKey += "eXOOnlcyaU72f8g9QZfINCYDu3bOz2A40ziqeus5MVaSGFJ90TDXLM1aVmwx47CqyA+S+9U6QYS4mhkHQIDAQAB";
+
+        // compute your public key and store it in base64EncodedPublicKey
+        mHelper = new IabHelper(this, base64EncodedPublicKey);
+
+        mHelper.startSetup(new IabHelper.OnIabSetupFinishedListener() {
+            public void onIabSetupFinished(IabResult result) {
+                if (!result.isSuccess()) {
+                    // Oh noes, there was a problem.
+                    Log.d("Crappy Bird", "Problem setting up In-app Billing: " + result);
+                } else {
+                    Log.i("In app Billing", "Successfully set up");
+
+                    List<String> additionalSkuList = new ArrayList<String>();
+                    additionalSkuList.add(SKU_1000_PIZZA);
+                    additionalSkuList.add(SKU_5000_PIZZA);
+                    additionalSkuList.add(SKU_10000_PIZZA);
+                    mHelper.queryInventoryAsync(true, additionalSkuList,
+                            mQueryFinishedListener);
+
+                }
+                // Hooray, IAB is fully set up!
+                inAppBillingSetup = true;
+            }
+        });
+
+    }
+
+    public boolean getInAppBillingSetup() {
+        return inAppBillingSetup;
     }
 
     /**
@@ -258,6 +271,8 @@ public class GameActivity extends LayoutGameActivity {
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
+        } else if (isNetworkAvailable() && !inAppBillingSetup) {
+            setupInAppBilling();
         }
     }
 
@@ -470,18 +485,28 @@ public class GameActivity extends LayoutGameActivity {
     }
 
     public void openLoginActivity() {
-        Intent intent = new Intent(this, LoginActivity.class);
-        startActivityForResult(intent, 100);
+        if (isNetworkAvailable()) {
+            Intent intent = new Intent(this, LoginActivity.class);
+            startActivityForResult(intent, 100);
+        } else {
+            displayConnectionError();
+        }
     }
 
     public void openSignUpActivity() {
-        Intent intent = new Intent(this, SignUpActivity.class);
-        startActivityForResult(intent, 100);
+        if(isNetworkAvailable()) {
+            Intent intent = new Intent(this, SignUpActivity.class);
+            startActivityForResult(intent, 100);
+        } else {
+            displayConnectionError();
+        }
     }
 
 
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
-
+            if(intent == null) {
+                intent = new Intent();
+            }
             // Pass on the activity result to the helper for handling
             if (!mHelper.handleActivityResult(requestCode, resultCode, intent)) {
                 // not handled, so handle it ourselves (here's where you'd
@@ -495,6 +520,10 @@ public class GameActivity extends LayoutGameActivity {
                         displayLongToast("Signed in as " + ParseUser.getCurrentUser().getUsername());
 
                     }
+                } else if (requestCode == PLAY_SERVICES_ERROR_REQUEST_CODE) {
+                    Intent refreshIntent = new Intent(this, GameActivity.class);
+                    startActivity(refreshIntent);
+                    finish();
                 }
                 super.onActivityResult(requestCode, resultCode, intent);
             } else {
@@ -577,7 +606,7 @@ public class GameActivity extends LayoutGameActivity {
     public void purchasePizza(int pizzaPurchaseIndex) {
         if(isNetworkAvailable()) {
             if(!mHelper.getAsyncInProgress()) {
-                mHelper.launchPurchaseFlow(this, SKU_PIZZA_PURCHASE[pizzaPurchaseIndex], 10001,
+                mHelper.launchPurchaseFlow(this, SKU_PIZZA_PURCHASE[pizzaPurchaseIndex], IAB_REQUEST_CODE,
                         mPurchaseFinishedListener, ParseUser.getCurrentUser() + "-" + SKU_PIZZA_PURCHASE[pizzaPurchaseIndex] + "-" + getPurchaseNumber());
                 incrementPurchaseNumber();
 
@@ -807,34 +836,30 @@ public class GameActivity extends LayoutGameActivity {
     protected void onResume() {
         super.onResume();
 
-
-        /*
-        if(mHelper != null && !mHelper.getAsyncInProgress()) {
-            List<String> additionalSkuList = new ArrayList<String>();
-            additionalSkuList.add(SKU_1000_PIZZA);
-            additionalSkuList.add(SKU_5000_PIZZA);
-            additionalSkuList.add(SKU_10000_PIZZA);
-            mHelper.queryInventoryAsync(true, additionalSkuList,
-                    mQueryFinishedListener);
+        if(getResourcesLoaded() && !(mSceneManager.getCurrentSceneType() == SceneManager.SceneType.SCENE_GAME)) {
+            if (mResourceManager.mMusic != null && !mResourceManager.mMusic.isPlaying()) {
+                mResourceManager.mMusic.play();
+            }
         }
-        */
 
     }
 
     @Override
     protected void onPause() {
-        if (mResourceManager.mMusic!=null && mResourceManager.mMusic.isPlaying()) {
-            mResourceManager.mMusic.pause();
-        }
-        if (mResourceManager.mMariachiFast !=null && mResourceManager.mMariachiFast.isPlaying()) {
-            mResourceManager.mMariachiFast.pause();
-        }
-        if (mResourceManager.mMariachiSlow !=null && mResourceManager.mMariachiSlow.isPlaying()) {
-            mResourceManager.mMariachiSlow.pause();
-        }
+        if(getResourcesLoaded()) {
+            if (mResourceManager.mMusic != null && mResourceManager.mMusic.isPlaying()) {
+                mResourceManager.mMusic.pause();
+            }
+            if (mResourceManager.mMariachiFast != null && mResourceManager.mMariachiFast.isPlaying()) {
+                mResourceManager.mMariachiFast.pause();
+            }
+            if (mResourceManager.mMariachiSlow != null && mResourceManager.mMariachiSlow.isPlaying()) {
+                mResourceManager.mMariachiSlow.pause();
+            }
 
-        if(mSceneManager.getCurrentSceneType() == SceneManager.SceneType.SCENE_GAME) {
-            ((GameScene)mSceneManager.getCurrentScene()).setPause(true);
+            if (mSceneManager.getCurrentSceneType() == SceneManager.SceneType.SCENE_GAME) {
+                ((GameScene) mSceneManager.getCurrentScene()).setPause(true);
+            }
         }
 
         super.onPause();
