@@ -5,11 +5,15 @@ import android.app.Dialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Point;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Display;
+import android.view.View;
 import android.widget.Toast;
 
 import com.application.nick.crappybird.scene.GameScene;
@@ -82,32 +86,76 @@ public class GameActivity extends LayoutGameActivity {
     private String price5000Pizza;
     private String price10000Pizza;
 
-    private boolean inAppBillingSetup = false;
+    public String[] pizzaPurchasePrices = new String[3];
+
+    private boolean inAppBillingSetup = false, soundOn = true;
+
+    private GameActivity mActivity = this;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if(!(GooglePlayServicesUtil.isGooglePlayServicesAvailable(this) == ConnectionResult.SUCCESS)) {
+        int screenWidth;
+        int screenHeight;
 
-            Dialog dialog = GooglePlayServicesUtil.getErrorDialog(GooglePlayServicesUtil.isGooglePlayServicesAvailable(this), this, PLAY_SERVICES_ERROR_REQUEST_CODE);
-            dialog.show();
-
+        if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB_MR2) {
+            Display display = getWindowManager().getDefaultDisplay();
+            screenWidth = display.getWidth();  // deprecated
+            screenHeight = display.getHeight();  // deprecated
         } else {
+            Display display = getWindowManager().getDefaultDisplay();
+            Point size = new Point();
+            display.getSize(size);
+            screenWidth = size.x;
+            screenHeight = size.y;
+        }
 
+        double dimensionRatio = (double)screenHeight / screenWidth;
+
+
+        Log.i("Screen Width", String.valueOf(screenWidth));
+        Log.i("Screen Height", String.valueOf(screenHeight));
+        Log.i("Dimension Ratio", String.valueOf(dimensionRatio));
+
+
+        if(isGooglePlayServicesAvailable()) {
+
+            /*Dialog dialog = GooglePlayServicesUtil.getErrorDialog(GooglePlayServicesUtil.isGooglePlayServicesAvailable(this), this, PLAY_SERVICES_ERROR_REQUEST_CODE);
+            dialog.show();
+            */
             if (isNetworkAvailable()) {
-                //create banner ad from admob
-                createBannerAd();
+
+                if(dimensionRatio > 1.6) { //don't create banner ad if it will cover up buttons.
+                    //create banner ad from admob
+                    createBannerAd();
+                }
 
                 //Parse
-
                 setupInAppBilling();
             }
 
-            Parse.initialize(this, "YpJ9WQuoN4XQYw2y0YOQRLvzSBEsskGpWebUgWzf", "4VswpUtUtyVdWSWrtugliH1zdkTOY91uoXm6kjMF");
-
         }
 
+
+        Parse.initialize(this, "YpJ9WQuoN4XQYw2y0YOQRLvzSBEsskGpWebUgWzf", "4VswpUtUtyVdWSWrtugliH1zdkTOY91uoXm6kjMF");
+
+
+
+    }
+
+    public boolean isGooglePlayServicesAvailable() {
+        return GooglePlayServicesUtil.isGooglePlayServicesAvailable(this) == ConnectionResult.SUCCESS;
+    }
+
+    public void openGooglePlayServicesErrorDialog() {
+
+        runOnUiThread(new Runnable() {
+            public void run() {
+                Dialog dialog = GooglePlayServicesUtil.getErrorDialog(GooglePlayServicesUtil.isGooglePlayServicesAvailable(mActivity), mActivity, PLAY_SERVICES_ERROR_REQUEST_CODE);
+                dialog.show();
+            }
+        });
     }
 
 
@@ -138,7 +186,7 @@ public class GameActivity extends LayoutGameActivity {
 
                 }
                 // Hooray, IAB is fully set up!
-                inAppBillingSetup = true;
+
             }
         });
 
@@ -162,8 +210,15 @@ public class GameActivity extends LayoutGameActivity {
             }
             //get prices of available purchases
             price1000Pizza = inventory.getSkuDetails(SKU_1000_PIZZA).getPrice();
+            pizzaPurchasePrices[0] = price1000Pizza;
             price5000Pizza = inventory.getSkuDetails(SKU_5000_PIZZA).getPrice();
+            pizzaPurchasePrices[1] = price5000Pizza;
             price10000Pizza = inventory.getSkuDetails(SKU_10000_PIZZA).getPrice();
+            pizzaPurchasePrices[2] = price10000Pizza;
+
+            if(price1000Pizza != null && price5000Pizza != null && price10000Pizza != null) {
+                inAppBillingSetup = true;
+            }
 
             //consume any unconsumed purchases
             if(ParseUser.getCurrentUser() != null) {
@@ -245,6 +300,7 @@ public class GameActivity extends LayoutGameActivity {
 
     }
 
+
     public void saveCurrentUser() {
         if(isNetworkAvailable()) {
             ParseUser.getCurrentUser().saveInBackground();
@@ -271,7 +327,9 @@ public class GameActivity extends LayoutGameActivity {
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
-        } else if (isNetworkAvailable() && !inAppBillingSetup) {
+        }
+
+        if (isNetworkAvailable() && !inAppBillingSetup && isGooglePlayServicesAvailable()) {
             setupInAppBilling();
         }
     }
@@ -508,7 +566,7 @@ public class GameActivity extends LayoutGameActivity {
                 intent = new Intent();
             }
             // Pass on the activity result to the helper for handling
-            if (!mHelper.handleActivityResult(requestCode, resultCode, intent)) {
+            if (!isGooglePlayServicesAvailable() || !mHelper.handleActivityResult(requestCode, resultCode, intent)) {
                 // not handled, so handle it ourselves (here's where you'd
                 // perform any handling of activity results not related to in-app
                 // billing...
@@ -570,13 +628,10 @@ public class GameActivity extends LayoutGameActivity {
 
     public void displayConnectionError() {
         alert("Please check your connection and try again.");
-        /*final CharSequence text = "Please check your connection and try again";
+    }
 
-        runOnUiThread(new Runnable() {
-            public void run() {
-                Toast.makeText(getApplicationContext(), text, Toast.LENGTH_LONG).show();
-            }
-        });*/
+    public void displayNotEnoughPizzaAlert() {
+        alert("Not enough pizza.");
     }
 
     public void displayLongToast(String string) {
@@ -597,6 +652,30 @@ public class GameActivity extends LayoutGameActivity {
                 Toast.makeText(getApplicationContext(), text, Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    public void setSoundOn(boolean bool) {
+        if(bool) {
+            soundOn = true;
+            getEngine().getMusicManager().setMasterVolume(1);
+            getEngine().getSoundManager().setMasterVolume(1);
+        } else {
+            soundOn = false;
+            getEngine().getMusicManager().setMasterVolume(0);
+            getEngine().getSoundManager().setMasterVolume(0);
+        }
+    }
+
+    public void toggleSound() {
+        if(soundOn) {
+            setSoundOn(false);
+        } else {
+            setSoundOn(true);
+        }
+    }
+
+    public boolean getSoundOn() {
+        return soundOn;
     }
 
     /**

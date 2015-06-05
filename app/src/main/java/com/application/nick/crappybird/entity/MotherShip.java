@@ -72,5 +72,6 @@ public class MotherShip extends Obstacle {
         }
     }
 
+    public Obstacle.obstacleType getObstacleType() {return obstacleType.MOTHERSHIP;}
 
 }

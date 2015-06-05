@@ -8,7 +8,7 @@ import org.andengine.opengl.vbo.VertexBufferObjectManager;
 /**
  * Created by Nick on 4/9/2015.
  */
-public class ObstaclePlane extends Obstacle {
+public class ObstaclePlane extends ObstacleAir {
 
     private final float PLANE_VELOCITY = 200f;
     private final float MAX_PLANE_VERTICAL_VELOCITY = 50;
@@ -88,4 +88,7 @@ public class ObstaclePlane extends Obstacle {
         }
         return false;
     }
+
+    @Override
+    public Obstacle.obstacleType getObstacleType() {return obstacleType.PLANE;}
 }

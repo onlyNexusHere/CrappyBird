@@ -71,27 +71,27 @@ public class MarketScene extends BaseScene {
             "Thunder Taco",
             "Double Points Ham",
             "Slo-mo Muffin",
-            "Mega Melon"
+            "Mega Melon",
+            "Hyper-Speed Hamburger"
     };
 
     public static final int[][] POWER_UP_PRICES = {
             {0, 200, 500, 1000, 1500, 2000},   //thunder taco
             {0, 200, 500, 1000, 1500, 2000},   //double points ham
             {100, 200, 500, 1000, 1500, 2000}, //slo-mo muffin
-            {100, 200, 500, 1000, 1500, 2000}  //mega melon
+            {100, 200, 500, 1000, 1500, 2000},  //mega melon
+            {500, 1000, 2000, 4000} //hyper speed hamburger
     };
-
-    private static String[] mPizzaPurchasePrices = new String[3];
 
     private final int MYSTERY_INDEX = 16;
 
     private CameraScene mLoginScene, mBirdMarketScene, mPowerUpMarketScene, mPizzaMarketScene;
 
-    private Text loadingText, pizzaPurchasePriceText, pizzaPurchaseText, birdMarketTotalPizzaText, pizzaMarketTotalPizzaText, powerUpMarketTotalPizzaText;
+    private Text pizzaPurchasePriceText, pizzaPurchaseText, birdMarketTotalPizzaText, pizzaMarketTotalPizzaText, powerUpMarketTotalPizzaText;
 
     private Sprite birdMarketTotalPizzaSprite, pizzaMarketTotalPizzaSprite, powerUpMarketTotalPizzaSprite;
 
-    private int currentBird, numBirds, currentPizzaPurchase = 0, currentPowerUp = 0;
+    private int currentBird, numBirds, currentPizzaPurchase, currentPowerUp;
 
     private AutoParallaxBackground autoParallaxBackground;
     private ParallaxBackground.ParallaxEntity parallaxLayerBack;
@@ -107,7 +107,7 @@ public class MarketScene extends BaseScene {
     public void createScene() {
         mEngine.registerUpdateHandler(new FPSLogger());
 
-        AutoParallaxBackground autoParallaxBackground = new AutoParallaxBackground(0, 0, 0, 10);
+        autoParallaxBackground = new AutoParallaxBackground(0, 0, 0, 10);
         parallaxLayerBack = new ParallaxBackground.ParallaxEntity(0, new Sprite(0, SCREEN_HEIGHT - mResourceManager.mParallaxLayerBack.getHeight(), mResourceManager.mParallaxLayerBack, mVertexBufferObjectManager));
         parallaxLayerMiddle = new ParallaxBackground.ParallaxEntity(0, new Sprite(0, SCREEN_HEIGHT - mResourceManager.mParallaxLayerFront.getHeight() - mResourceManager.mParallaxLayerMiddle.getHeight(), mResourceManager.mParallaxLayerMiddle, mVertexBufferObjectManager));
         parallaxLayerFront = new ParallaxBackground.ParallaxEntity(0, new Sprite(0, SCREEN_HEIGHT - mResourceManager.mParallaxLayerFront.getHeight(), mResourceManager.mParallaxLayerFront, mVertexBufferObjectManager));
@@ -119,11 +119,10 @@ public class MarketScene extends BaseScene {
         setBackground(autoParallaxBackground);
 
         currentBird = mActivity.getSelectedBird();
+        currentPizzaPurchase = 0;
+        currentPowerUp = 4;
         numBirds = MarketScene.BIRD_NAMES.length;
 
-        MarketScene.mPizzaPurchasePrices[0] = mActivity.getPrice1000Pizza();
-        MarketScene.mPizzaPurchasePrices[1] = mActivity.getPrice5000Pizza();
-        MarketScene.mPizzaPurchasePrices[2] = mActivity.getPrice10000Pizza();
 
         if (!mResourceManager.mMusic.isPlaying()) {
             mResourceManager.mMusic.resume();
@@ -150,6 +149,9 @@ public class MarketScene extends BaseScene {
             createPowerUpMarketScene();
             createPizzaMarketScene();
             openPowerUpsMarketScene();
+
+            System.out.println("pizza1price " + mActivity.getPrice1000Pizza());
+            System.out.println("pizza2price " + mActivity.getPrice5000Pizza());
 
         }
 
@@ -229,7 +231,11 @@ public class MarketScene extends BaseScene {
         final String initText = "0123456789 qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM";
 
         final Text powerUpNameText = (new Text(0, powerUpNameY, mResourceManager.mFont2, initText, new TextOptions(HorizontalAlign.LEFT), mVertexBufferObjectManager));
-        powerUpNameText.setText(POWER_UPS[currentPowerUp] + " (lvl " + (mActivity.getPowerUpLevel(currentPowerUp) + 1) + ")");
+        if(mActivity.getPowerUpLevel(currentPowerUp) < POWER_UP_PRICES[currentPowerUp].length) {
+            powerUpNameText.setText(POWER_UPS[currentPowerUp] + " (lvl " + (mActivity.getPowerUpLevel(currentPowerUp) + 1) + ")");
+        } else {
+            powerUpNameText.setText(POWER_UPS[currentPowerUp]);
+        }
         mPowerUpMarketScene.attachChild(powerUpNameText);
 
         final Sprite powerUpPricePizzaSprite = new Sprite(0, powerUpPricePizzaSpriteY, mResourceManager.mCollectablePizzaTextureRegion, mVertexBufferObjectManager);
@@ -407,6 +413,8 @@ public class MarketScene extends BaseScene {
 
                         updateTotalPizzaText();
                     }
+                } else if(pSceneTouchEvent.isActionUp() && mActivity.getPizza() < POWER_UP_PRICES[currentPowerUp][mActivity.getPowerUpLevel(currentPowerUp)]){
+                    mActivity.displayNotEnoughPizzaAlert();
                 }
 
                 return true;
@@ -753,6 +761,8 @@ public class MarketScene extends BaseScene {
 
                         updateTotalPizzaText();
                     }
+                } else if (pSceneTouchEvent.isActionUp() && mActivity.getPizza() < BIRD_PRICES[currentBird]){
+                    mActivity.displayNotEnoughPizzaAlert();
                 }
                 return true;
 
@@ -1090,7 +1100,7 @@ public class MarketScene extends BaseScene {
                     pizzaPurchasesSprite.setCurrentTileIndex(currentPizzaPurchase);
 
                     pizzaPurchaseText.setText(PIZZA_PURCHASES[currentPizzaPurchase]);
-                    pizzaPurchasePriceText.setText(mPizzaPurchasePrices[currentPizzaPurchase]);
+                    pizzaPurchasePriceText.setText(mActivity.pizzaPurchasePrices[currentPizzaPurchase]);
 
                     pizzaPurchaseText.setX((SCREEN_WIDTH - pizzaPurchaseText.getWidth()) / 2);
                     pizzaPurchasePriceText.setX((SCREEN_WIDTH - pizzaPurchasePriceText.getWidth()) / 2);
@@ -1122,7 +1132,7 @@ public class MarketScene extends BaseScene {
                     pizzaPurchasesSprite.setCurrentTileIndex(currentPizzaPurchase);
 
                     pizzaPurchaseText.setText(PIZZA_PURCHASES[currentPizzaPurchase]);
-                    pizzaPurchasePriceText.setText(mPizzaPurchasePrices[currentPizzaPurchase]);
+                    pizzaPurchasePriceText.setText(mActivity.pizzaPurchasePrices[currentPizzaPurchase]);
 
                     pizzaPurchaseText.setX((SCREEN_WIDTH - pizzaPurchaseText.getWidth()) / 2);
                     pizzaPurchasePriceText.setX((SCREEN_WIDTH - pizzaPurchasePriceText.getWidth()) / 2);
@@ -1162,15 +1172,24 @@ public class MarketScene extends BaseScene {
             clearChildScene();
 
             pizzaPurchaseText.setText(PIZZA_PURCHASES[currentPizzaPurchase]);
-            pizzaPurchasePriceText.setText(mPizzaPurchasePrices[currentPizzaPurchase]);
+            pizzaPurchasePriceText.setText(mActivity.pizzaPurchasePrices[currentPizzaPurchase]);
 
             pizzaPurchaseText.setX((SCREEN_WIDTH - pizzaPurchaseText.getWidth()) / 2);
             pizzaPurchasePriceText.setX((SCREEN_WIDTH - pizzaPurchasePriceText.getWidth()) / 2);
             setChildScene(mPizzaMarketScene, false, true, true);
 
             pizzaMarketSceneOpen = true;
-        } else {
+
+        } else if (!mActivity.isNetworkAvailable()){
             mActivity.displayConnectionError();
+        } else if (!mActivity.isGooglePlayServicesAvailable()) {
+            mActivity.openGooglePlayServicesErrorDialog();
+        } else if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN) {
+            // only for Jelly Bean and newer versions
+            mActivity.alert("Unfortunately at this time, Crappy Bird cannot guarantee support for in-app purchases on devices running Android versions earlier than 4.1 Jellybean. Feel free to login to your Crappy Bird account on a newer device and purchase pizza from there. \n\nNote: If you recently updated Play Services you may need to clear the Play Store's user data and cache in your device's settings.Then open the Play Store and come back over to Crappy Bird.");
+        } else {
+            mActivity.alert("An error occurred. Please try again in a little while. \n\nNote: If you recently updated Play Services you may need to clear the Play Store's user data and cache in your device's settings. Then open the Play Store and come back over to Crappy Bird.");
+            mActivity.updateCurrentUser();
         }
 
     }

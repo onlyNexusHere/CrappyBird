@@ -3,6 +3,8 @@ package com.application.nick.crappybird.entity;
 import android.util.Log;
 
 import com.application.nick.crappybird.GameActivity;
+import com.application.nick.crappybird.scene.GameScene;
+import com.google.android.gms.games.Game;
 
 import org.andengine.engine.handler.physics.PhysicsHandler;
 import org.andengine.entity.shape.IShape;
@@ -16,16 +18,18 @@ import org.andengine.opengl.vbo.VertexBufferObjectManager;
 /**
  * Created by Nick on 4/5/2015.
  */
-public class Obstacle extends AnimatedSprite {
+public abstract class Obstacle extends AnimatedSprite {
 
     private static final float DEMO_VELOCITY = 150.0f;
     private static final float DEMO_POSITION = 1.1f* GameActivity.CAMERA_WIDTH;
+
+    public enum obstacleType {HOUSE, TREE, PLANE, BALLOON, MOTHERSHIP}
 
     private float mObstacleY;
     private float mWidth;
     private float mHeight;
 
-    boolean passedAddXValue = false, scoreAdded = false, collidedWith = false, hitByMegaCrap = false, slowMotionActivated;
+    boolean scoreAdded = false, collidedWith = false, hitByMegaCrap = false, slowMotionActivated, hyperSpeedActivated = false;
 
 
     private final PhysicsHandler mPhysicsHandler;
@@ -111,6 +115,23 @@ public class Obstacle extends AnimatedSprite {
     public boolean getSlowMotion() {return slowMotionActivated;}
 
 
+    public void setHyperSpeed(boolean bool) {
+            if (bool) {
+                if(!hyperSpeedActivated) {
+                    hyperSpeedActivated = true;
+                    setVelocityX(getVelocityX() - GameScene.HYPER_SPEED_VELOCITY_SHIFT);
+                }
+            } else {
+                hyperSpeedActivated = false;
+                setVelocityX(getVelocityX() + GameScene.HYPER_SPEED_VELOCITY_SHIFT);
+            }
+
+    }
+
+    public boolean getHyperSpeed() {
+        return hyperSpeedActivated;
+    }
+
     @Override
     public void reset() {
         super.reset();
@@ -119,26 +140,10 @@ public class Obstacle extends AnimatedSprite {
         setAngularVelocity(0);
         setRotation(0);
         setAcceleration(0,0);
-        passedAddXValue = false;
         scoreAdded = false;
         collidedWith = false;
         hitByMegaCrap = false;
-    }
-
-    /**
-     * set passedAddXValue to true
-     */
-    public void passedAddXValue() {
-        passedAddXValue = true;
-    }
-
-    /**
-     * gets value for passedAddXValue, the boolean that says whether this object has passed the x value that makes a new
-     * obstacle get created (used so that too many obstacles are not created)
-     * @return
-     */
-    public boolean getPassedAddXValue() {
-        return passedAddXValue;
+        hyperSpeedActivated = false;
     }
 
     /**
@@ -189,6 +194,8 @@ public class Obstacle extends AnimatedSprite {
     public float getVelocityX() {
         return mPhysicsHandler.getVelocityX();
     }
+
+    public abstract obstacleType getObstacleType();
 
 
 }

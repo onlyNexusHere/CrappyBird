@@ -1,6 +1,7 @@
 package com.application.nick.crappybird.entity;
 
 import com.application.nick.crappybird.GameActivity;
+import com.application.nick.crappybird.scene.GameScene;
 
 import org.andengine.engine.handler.physics.PhysicsHandler;
 import org.andengine.entity.shape.IShape;
@@ -12,7 +13,7 @@ import org.andengine.opengl.vbo.VertexBufferObjectManager;
 /**
  * Created by Nick on 4/5/2015.
  */
-public class Target extends AnimatedSprite {
+public abstract class Target extends AnimatedSprite {
 
     public static final float SCROLL_VELOCITY = 150.0f;
     private static final float VELOCITY_RANGE = 100.0f;
@@ -22,8 +23,9 @@ public class Target extends AnimatedSprite {
     private float mWidth;
     private float mHeight;
 
-    private boolean passedAddXValue = false, hit = false, slowMotion = false;
+    private boolean passedAddXValue = false, hit = false, slowMotion = false, hyperSpeedActivated = false;
 
+    public enum targetType {PERSON1}
 
     private final PhysicsHandler mPhysicsHandler;
 
@@ -62,10 +64,22 @@ public class Target extends AnimatedSprite {
     public void setSlowMotion(boolean bool) {
         if(bool) {
             slowMotion = true;
-            setXVelocity(getXVelocity() / 2);
+            setVelocityX(getVelocityX() / 2);
         } else {
             slowMotion = false;
-            setXVelocity(getXVelocity() * 2);
+            setVelocityX(getVelocityX() * 2);
+        }
+    }
+
+    public void setHyperSpeed(boolean bool) {
+        if(bool) {
+            if(!hyperSpeedActivated) {
+                hyperSpeedActivated = true;
+                setVelocityX(getVelocityX() - GameScene.HYPER_SPEED_VELOCITY_SHIFT);
+            }
+        } else {
+            hyperSpeedActivated = false;
+            setVelocityX(getVelocityX() + GameScene.HYPER_SPEED_VELOCITY_SHIFT);
         }
     }
 
@@ -73,17 +87,17 @@ public class Target extends AnimatedSprite {
         mPhysicsHandler.setVelocity(x, y);
     }
 
-    public void setXVelocity(float x) {mPhysicsHandler.setVelocityX(x);}
+    public void setVelocityX(float x) {mPhysicsHandler.setVelocityX(x);}
 
-    public void setYVelocity(float y) {mPhysicsHandler.setVelocityY(y);}
+    public void setVelocityY(float y) {mPhysicsHandler.setVelocityY(y);}
 
-    public float getXVelocity() {return mPhysicsHandler.getVelocityX();}
+    public float getVelocityX() {return mPhysicsHandler.getVelocityX();}
 
     public void setAcceleration(float x, float y) {
         mPhysicsHandler.setAcceleration(x, y);
     }
 
-    public void setYAcceleration(float y) {mPhysicsHandler.setAccelerationY(y);}
+    public void setAccelerationY(float y) {mPhysicsHandler.setAccelerationY(y);}
 
     @Override
     public boolean collidesWith(IShape pOtherShape) {
@@ -120,6 +134,7 @@ public class Target extends AnimatedSprite {
         passedAddXValue = false;
         randomizeMovement();
         hit = false;
+        hyperSpeedActivated = false;
     }
 
     /**
@@ -164,6 +179,6 @@ public class Target extends AnimatedSprite {
 
     public boolean getSlowMotion() {return slowMotion;}
 
-
+    public abstract targetType getTargetType();
 
 }

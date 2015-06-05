@@ -13,4 +13,6 @@ public class CollectableHam extends Collectable {
         super(pTiledTextureRegion, pVertexBufferObjectManager, pGroundY - pHeight, pHeight);
     }
 
+    public Collectable.collectableType getCollectableType() {return collectableType.HAM;}
+
 }

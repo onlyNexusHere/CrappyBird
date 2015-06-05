@@ -1,11 +1,9 @@
 package com.application.nick.crappybird.scene;
 
-import com.application.nick.crappybird.GameActivity;
 import com.application.nick.crappybird.SceneManager;
-import com.application.nick.crappybird.entity.BasicBird;
+import com.application.nick.crappybird.entity.Bird;
 import com.application.nick.crappybird.entity.Crap;
 import com.application.nick.crappybird.entity.CrapPool;
-import com.application.nick.crappybird.entity.Tutorial;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.parse.ParseUser;
@@ -32,7 +30,7 @@ public class MainMenuScene extends BaseScene {
 
     private final int MAX_TUTORIAL_TILE_INDEX = 3;
 
-    private BasicBird mBird;
+    private Bird mBird;
     private CrapPool mCrapPool;
     private List<Crap> mCraps = new ArrayList<Crap>();
 
@@ -54,280 +52,277 @@ public class MainMenuScene extends BaseScene {
     @Override
     public void createScene() {
 
-        int googlePlayServicesAvailable = GooglePlayServicesUtil.isGooglePlayServicesAvailable(mActivity);
-        if(googlePlayServicesAvailable == ConnectionResult.SUCCESS) {
-            mEngine.registerUpdateHandler(new FPSLogger());
+        mEngine.registerUpdateHandler(new FPSLogger());
+
+        AutoParallaxBackground autoParallaxBackground = new AutoParallaxBackground(0, 0, 0, 10);
+        parallaxLayerBack = new ParallaxBackground.ParallaxEntity(0, new Sprite(0, SCREEN_HEIGHT - mResourceManager.mParallaxLayerBack.getHeight(), mResourceManager.mParallaxLayerBack, mVertexBufferObjectManager));
+        parallaxLayerMiddle = new ParallaxBackground.ParallaxEntity(0, new Sprite(0, SCREEN_HEIGHT - mResourceManager.mParallaxLayerFront.getHeight() - mResourceManager.mParallaxLayerMiddle.getHeight(), mResourceManager.mParallaxLayerMiddle, mVertexBufferObjectManager));
+        parallaxLayerFront = new ParallaxBackground.ParallaxEntity(0, new Sprite(0, SCREEN_HEIGHT - mResourceManager.mParallaxLayerFront.getHeight(), mResourceManager.mParallaxLayerFront, mVertexBufferObjectManager));
+
+        autoParallaxBackground.attachParallaxEntity(parallaxLayerBack);
+        autoParallaxBackground.attachParallaxEntity(parallaxLayerFront);
+        autoParallaxBackground.attachParallaxEntity(parallaxLayerMiddle);
+
+        setBackground(autoParallaxBackground);
+
+        title = new Sprite(0, 0, mResourceManager.mTitleTextureRegion, mVertexBufferObjectManager);
+        title.setPosition((SCREEN_WIDTH - title.getWidth()) / 2f, 75);
+        title.setScale(1.5f);
+        attachChild(title);
 
 
-            AutoParallaxBackground autoParallaxBackground = new AutoParallaxBackground(0, 0, 0, 10);
-            parallaxLayerBack = new ParallaxBackground.ParallaxEntity(0, new Sprite(0, SCREEN_HEIGHT - mResourceManager.mParallaxLayerBack.getHeight(), mResourceManager.mParallaxLayerBack, mVertexBufferObjectManager));
-            parallaxLayerMiddle = new ParallaxBackground.ParallaxEntity(0, new Sprite(0, SCREEN_HEIGHT - mResourceManager.mParallaxLayerFront.getHeight() - mResourceManager.mParallaxLayerMiddle.getHeight(), mResourceManager.mParallaxLayerMiddle, mVertexBufferObjectManager));
-            parallaxLayerFront = new ParallaxBackground.ParallaxEntity(0, new Sprite(0, SCREEN_HEIGHT - mResourceManager.mParallaxLayerFront.getHeight(), mResourceManager.mParallaxLayerFront, mVertexBufferObjectManager));
+        if (ParseUser.getCurrentUser() == null) {
+            mActivity.setSelectedBird(0); //no fancy birds without account
+        }
 
-            autoParallaxBackground.attachParallaxEntity(parallaxLayerBack);
-            autoParallaxBackground.attachParallaxEntity(parallaxLayerFront);
-            autoParallaxBackground.attachParallaxEntity(parallaxLayerMiddle);
+        mActivity.updateCurrentUser();
 
-            setBackground(autoParallaxBackground);
+        final float birdX = (SCREEN_WIDTH - mResourceManager.mBirdTextureRegion.getWidth()) / 2;
+        final float birdY = title.getY() + title.getHeight() + 25;
+        mBird = new Bird(birdX, birdY, mResourceManager.mBirdsTextureRegion, mVertexBufferObjectManager);
+        mBird.setRotation(-15);
+        mBird.animate(mActivity.getSelectedBird());
+        attachChild(mBird);
 
-            title = new Sprite(0, 0, mResourceManager.mTitleTextureRegion, mVertexBufferObjectManager);
-            title.setPosition((SCREEN_WIDTH - title.getWidth()) / 2f, 75);
-            title.setScale(1.5f);
-            attachChild(title);
+        mCrapPool = new CrapPool(mResourceManager.mCrapTextureRegion, mVertexBufferObjectManager);
+        mCrapPool.batchAllocatePoolItems(MAX_CRAPS);
 
 
-            if (ParseUser.getCurrentUser() == null) {
-                mActivity.setSelectedBird(0); //no fancy birds without account
+        if (!mResourceManager.mMusic.isPlaying()) {
+            mResourceManager.mMusic.resume();
+        }
+
+
+        final float playX = SCREEN_WIDTH / 2 - mResourceManager.mPlayButtonTextureRegion.getWidth();
+        final float playY = SCREEN_HEIGHT / 2 - mResourceManager.mPlayButtonTextureRegion.getHeight() / 4;
+
+        playButton = new TiledSprite(playX, playY, mResourceManager.mPlayButtonTextureRegion, mVertexBufferObjectManager) {
+
+            @Override
+            public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+                if (playButton.isVisible()) {
+                    if (pSceneTouchEvent.isActionDown()) {
+                        setCurrentTileIndex(1);
+                        mResourceManager.mButtonSound.play();
+                    }
+                    if (pSceneTouchEvent.isActionUp()) {
+                        setCurrentTileIndex(0);
+                        playTransition = true;
+                        mBird.setVelocityX(90);
+                        playButton.setVisible(false);
+                        leaderboardButton.setVisible(false);
+                        marketButton.setVisible(false);
+                        helpButton.setVisible(false);
+
+                    }
+                }
+                return true;
             }
-
-            mActivity.updateCurrentUser();
-
-            final float birdX = (SCREEN_WIDTH - mResourceManager.mBirdTextureRegion.getWidth()) / 2;
-            final float birdY = title.getY() + title.getHeight() + 25;
-            mBird = new BasicBird(birdX, birdY, mResourceManager.mBirdsTextureRegion, mVertexBufferObjectManager);
-            mBird.setRotation(-15);
-            mBird.animate(mActivity.getSelectedBird());
-            attachChild(mBird);
-
-            mCrapPool = new CrapPool(mResourceManager.mCrapTextureRegion, mVertexBufferObjectManager);
-            mCrapPool.batchAllocatePoolItems(MAX_CRAPS);
+        };
 
 
-            if (!mResourceManager.mMusic.isPlaying()) {
-                mResourceManager.mMusic.resume();
+        playButton.setCurrentTileIndex(0);
+        playButton.setScale(0.75f);
+        registerTouchArea(playButton);
+        attachChild(playButton);
+
+
+        final float leaderboardX = SCREEN_WIDTH / 2;
+        final float leaderboardY = playY;
+
+        leaderboardButton = new TiledSprite(leaderboardX, leaderboardY, mResourceManager.mLeaderboardButtonTextureRegion, mVertexBufferObjectManager) {
+
+            @Override
+            public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+                if (leaderboardButton.isVisible()) {
+                    if (pSceneTouchEvent.isActionDown()) {
+                        setCurrentTileIndex(1);
+                        mResourceManager.mButtonSound.play();
+
+                    }
+
+                    if (pSceneTouchEvent.isActionUp()) {
+                        setCurrentTileIndex(0);
+                        if (mActivity.isNetworkAvailable()) {
+                            mSceneManager.setScene(SceneManager.SceneType.SCENE_LEADERBOARD);
+                        } else {
+                            mActivity.displayConnectionError();
+                        }
+                    }
+                }
+                return true;
             }
+        };
+        leaderboardButton.setCurrentTileIndex(0);
+        leaderboardButton.setScale(0.75f);
+        registerTouchArea(leaderboardButton);
+        attachChild(leaderboardButton);
 
 
-            final float playX = SCREEN_WIDTH / 2 - mResourceManager.mPlayButtonTextureRegion.getWidth();
-            final float playY = SCREEN_HEIGHT / 2 - mResourceManager.mPlayButtonTextureRegion.getHeight() / 4;
+        final float marketX = playX;
+        final float marketY = playY + playButton.getHeight();
 
-            playButton = new TiledSprite(playX, playY, mResourceManager.mPlayButtonTextureRegion, mVertexBufferObjectManager) {
+        marketButton = new TiledSprite(marketX, marketY, mResourceManager.mMarketButtonTextureRegion, mVertexBufferObjectManager) {
 
-                @Override
-                public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
-                    if (playButton.isVisible()) {
-                        if (pSceneTouchEvent.isActionDown()) {
-                            setCurrentTileIndex(1);
-                            mResourceManager.mButtonSound.play();
-                        }
-                        if (pSceneTouchEvent.isActionUp()) {
-                            setCurrentTileIndex(0);
-                            playTransition = true;
-                            mBird.setXVelocity(90);
-                            playButton.setVisible(false);
-                            leaderboardButton.setVisible(false);
-                            marketButton.setVisible(false);
-                            helpButton.setVisible(false);
+            @Override
+            public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+                if(marketButton.isVisible()) {
+                    if (pSceneTouchEvent.isActionDown()) {
+                        setCurrentTileIndex(1);
+                        mResourceManager.mButtonSound.play();
 
-                        }
                     }
-                    return true;
-                }
-            };
+                    if (pSceneTouchEvent.isActionUp()) {
+                        setCurrentTileIndex(0);
+                        mSceneManager.setScene(SceneManager.SceneType.SCENE_MARKET);
 
-
-            playButton.setCurrentTileIndex(0);
-            playButton.setScale(0.75f);
-            registerTouchArea(playButton);
-            attachChild(playButton);
-
-
-            final float leaderboardX = SCREEN_WIDTH / 2;
-            final float leaderboardY = playY;
-
-            leaderboardButton = new TiledSprite(leaderboardX, leaderboardY, mResourceManager.mLeaderboardButtonTextureRegion, mVertexBufferObjectManager) {
-
-                @Override
-                public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
-                    if (leaderboardButton.isVisible()) {
-                        if (pSceneTouchEvent.isActionDown()) {
-                            setCurrentTileIndex(1);
-                            mResourceManager.mButtonSound.play();
-
-                        }
-
-                        if (pSceneTouchEvent.isActionUp()) {
-                            setCurrentTileIndex(0);
-                            if (mActivity.isNetworkAvailable()) {
-                                mSceneManager.setScene(SceneManager.SceneType.SCENE_LEADERBOARD);
-                            } else {
-                                mActivity.displayConnectionError();
-                            }
-                        }
                     }
-                    return true;
                 }
-            };
-            leaderboardButton.setCurrentTileIndex(0);
-            leaderboardButton.setScale(0.75f);
-            registerTouchArea(leaderboardButton);
-            attachChild(leaderboardButton);
+                return true;
+            }
+        };
+        marketButton.setCurrentTileIndex(0);
+        marketButton.setScale(0.75f);
+        registerTouchArea(marketButton);
+        attachChild(marketButton);
 
 
-            final float marketX = playX;
-            final float marketY = playY + playButton.getHeight();
+        final float helpX = leaderboardX;
+        final float helpY = playY + playButton.getHeight();
 
-            marketButton = new TiledSprite(marketX, marketY, mResourceManager.mMarketButtonTextureRegion, mVertexBufferObjectManager) {
+        helpButton = new TiledSprite(helpX, helpY, mResourceManager.mHelpButtonTextureRegion, mVertexBufferObjectManager) {
 
-                @Override
-                public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
-                    if(marketButton.isVisible()) {
-                        if (pSceneTouchEvent.isActionDown()) {
-                            setCurrentTileIndex(1);
-                            mResourceManager.mButtonSound.play();
+            @Override
+            public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+                if(helpButton.isVisible()) {
+                    if (pSceneTouchEvent.isActionDown()) {
+                        setCurrentTileIndex(1);
+                        mResourceManager.mButtonSound.play();
 
-                        }
-                        if (pSceneTouchEvent.isActionUp()) {
-                            setCurrentTileIndex(0);
-                            mSceneManager.setScene(SceneManager.SceneType.SCENE_MARKET);
-
-                        }
-                    }
-                    return true;
-                }
-            };
-            marketButton.setCurrentTileIndex(0);
-            marketButton.setScale(0.75f);
-            registerTouchArea(marketButton);
-            attachChild(marketButton);
-
-
-            final float helpX = leaderboardX;
-            final float helpY = playY + playButton.getHeight();
-
-            helpButton = new TiledSprite(helpX, helpY, mResourceManager.mHelpButtonTextureRegion, mVertexBufferObjectManager) {
-
-                @Override
-                public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
-                    if(helpButton.isVisible()) {
-                        if (pSceneTouchEvent.isActionDown()) {
-                            setCurrentTileIndex(1);
-                            mResourceManager.mButtonSound.play();
-
-                        }
-
-                        if (pSceneTouchEvent.isActionUp()) {
-                            setCurrentTileIndex(0);
-                            showingTutorial = true;
-                            setChildScene(mTutorialScene, false, true, true); //open tutorial scene
-
-                        }
                     }
 
-                    return true;
+                    if (pSceneTouchEvent.isActionUp()) {
+                        setCurrentTileIndex(0);
+                        showingTutorial = true;
+                        setChildScene(mTutorialScene, false, true, true); //open tutorial scene
+
+                    }
                 }
-            };
+
+                return true;
+            }
+        };
 
 
-            helpButton.setCurrentTileIndex(0);
-            helpButton.setScale(0.75f);
-            registerTouchArea(helpButton);
-            attachChild(helpButton);
+        helpButton.setCurrentTileIndex(0);
+        helpButton.setScale(0.75f);
+        registerTouchArea(helpButton);
+        attachChild(helpButton);
 
 
-            final Rectangle ground = new Rectangle(0, SCREEN_HEIGHT - mResourceManager.mParallaxLayerFront.getHeight(), SCREEN_WIDTH, mResourceManager.mParallaxLayerFront.getHeight(), mVertexBufferObjectManager);
-            ground.setColor(Color.TRANSPARENT);
+        final Rectangle ground = new Rectangle(0, SCREEN_HEIGHT - mResourceManager.mParallaxLayerFront.getHeight(), SCREEN_WIDTH, mResourceManager.mParallaxLayerFront.getHeight(), mVertexBufferObjectManager);
+        ground.setColor(Color.TRANSPARENT);
 
         /* The actual collision-checking. */
-            registerUpdateHandler(new IUpdateHandler() {
+        registerUpdateHandler(new IUpdateHandler() {
 
-                @Override
-                public void reset() {
+            @Override
+            public void reset() {
+            }
+
+            @Override
+            public void onUpdate(float pSecondsElapsed) {
+
+                checkBirdPosition(SCREEN_HEIGHT / 2 - mBird.getHeight() * 2);
+
+                if (mCraps.size() > 0) {
+                    checkForCrapGroundContact(ground);
                 }
 
-                @Override
-                public void onUpdate(float pSecondsElapsed) {
-
-                    checkBirdPosition(SCREEN_HEIGHT / 2 - mBird.getHeight() * 2);
-
-                    if (mCraps.size() > 0) {
-                        checkForCrapGroundContact(ground);
-                    }
-
-                    //rotate bird with changing velocity
-                    if (mBird.getY() + mBird.getHeight() < ground.getY()) {
-                        mBird.setRotation((mBird.getVelocityY() / 30) * 2 - 10);
-                    }
-
-                    if (mBird.getX() > SCREEN_WIDTH && playTransition) {
-                        playTransition = false;
-                        mSceneManager.setScene(SceneManager.SceneType.SCENE_GAME);
-                    }
-
-
+                //rotate bird with changing velocity
+                if (mBird.getY() + mBird.getHeight() < ground.getY()) {
+                    mBird.setRotation((mBird.getVelocityY() / 30) * 2 - 10);
                 }
-            });
 
-
-            mTutorialScene = new CameraScene(mCamera);
-            mTutorialScene.setBackgroundEnabled(false);
-
-            final float boardX = (SCREEN_WIDTH - mResourceManager.mTutorialBoardTextureRegion.getWidth()) / 2;
-            final float boardY = boardX;
-
-            final float tutorialX = boardX;
-            final float tutorialY = boardY;
-
-            final float nextX = boardX + mResourceManager.mTutorialBoardTextureRegion.getWidth() - mResourceManager.mNextButtonTextureRegion.getWidth();
-            final float nextY = boardY + mResourceManager.mTutorialBoardTextureRegion.getHeight() - mResourceManager.mNextButtonTextureRegion.getHeight();
-
-            final float closeX = boardX;
-            final float closeY = nextY;
-
-            final Sprite tutorialBoard = new Sprite(boardX, boardY, mResourceManager.mTutorialBoardTextureRegion, mVertexBufferObjectManager);
-            mTutorialScene.attachChild(tutorialBoard);
-
-            final TiledSprite tutorial = new TiledSprite(tutorialX, tutorialY, mResourceManager.mTutorialTextureRegion, mVertexBufferObjectManager);
-            mTutorialScene.attachChild(tutorial);
-
-            final TiledSprite nextButton = new TiledSprite(nextX, nextY, mResourceManager.mNextButtonTextureRegion, mVertexBufferObjectManager) {
-
-                @Override
-                public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
-                    if (pSceneTouchEvent.isActionDown()) {
-                        setCurrentTileIndex(1);
-                        mResourceManager.mButtonSound.play();
-                    }
-                    if (pSceneTouchEvent.isActionUp()) {
-                        setCurrentTileIndex(0);
-                        int tutorialTileIndex = tutorial.getCurrentTileIndex();
-                        if (tutorialTileIndex == MAX_TUTORIAL_TILE_INDEX) {
-                            tutorial.setCurrentTileIndex(0);
-                        } else {
-                            tutorial.setCurrentTileIndex(tutorialTileIndex + 1);
-                        }
-                    }
-                    return true;
+                if (mBird.getX() > SCREEN_WIDTH && playTransition) {
+                    playTransition = false;
+                    mSceneManager.setScene(SceneManager.SceneType.SCENE_GAME);
                 }
-            };
-            nextButton.setCurrentTileIndex(0);
-            nextButton.setScale(0.75f);
-            mTutorialScene.registerTouchArea(nextButton);
-            mTutorialScene.attachChild(nextButton);
 
 
-            final TiledSprite closeButton = new TiledSprite(closeX, closeY, mResourceManager.mCloseButtonTextureRegion, mVertexBufferObjectManager) {
+            }
+        });
 
-                @Override
-                public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
-                    if (pSceneTouchEvent.isActionDown()) {
-                        setCurrentTileIndex(1);
-                        mResourceManager.mButtonSound.play();
-                    }
-                    if (pSceneTouchEvent.isActionUp()) {
-                        setCurrentTileIndex(0);
-                        showingTutorial = false;
+
+        mTutorialScene = new CameraScene(mCamera);
+        mTutorialScene.setBackgroundEnabled(false);
+
+        final float boardX = (SCREEN_WIDTH - mResourceManager.mTutorialBoardTextureRegion.getWidth()) / 2;
+        final float boardY = boardX;
+
+        final float tutorialX = boardX;
+        final float tutorialY = boardY;
+
+        final float nextX = boardX + mResourceManager.mTutorialBoardTextureRegion.getWidth() - mResourceManager.mNextButtonTextureRegion.getWidth();
+        final float nextY = boardY + mResourceManager.mTutorialBoardTextureRegion.getHeight() - mResourceManager.mNextButtonTextureRegion.getHeight();
+
+        final float closeX = boardX;
+        final float closeY = nextY;
+
+        final Sprite tutorialBoard = new Sprite(boardX, boardY, mResourceManager.mTutorialBoardTextureRegion, mVertexBufferObjectManager);
+        mTutorialScene.attachChild(tutorialBoard);
+
+        final TiledSprite tutorial = new TiledSprite(tutorialX, tutorialY, mResourceManager.mTutorialTextureRegion, mVertexBufferObjectManager);
+        mTutorialScene.attachChild(tutorial);
+
+        final TiledSprite nextButton = new TiledSprite(nextX, nextY, mResourceManager.mNextButtonTextureRegion, mVertexBufferObjectManager) {
+
+            @Override
+            public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+                if (pSceneTouchEvent.isActionDown()) {
+                    setCurrentTileIndex(1);
+                    mResourceManager.mButtonSound.play();
+                }
+                if (pSceneTouchEvent.isActionUp()) {
+                    setCurrentTileIndex(0);
+                    int tutorialTileIndex = tutorial.getCurrentTileIndex();
+                    if (tutorialTileIndex == MAX_TUTORIAL_TILE_INDEX) {
                         tutorial.setCurrentTileIndex(0);
-                        clearChildScene();
+                    } else {
+                        tutorial.setCurrentTileIndex(tutorialTileIndex + 1);
                     }
-                    return true;
                 }
-            };
-            closeButton.setCurrentTileIndex(0);
-            closeButton.setScale(0.75f);
-            mTutorialScene.registerTouchArea(closeButton);
-            mTutorialScene.attachChild(closeButton);
-        }
+                return true;
+            }
+        };
+        nextButton.setCurrentTileIndex(0);
+        nextButton.setScale(0.75f);
+        mTutorialScene.registerTouchArea(nextButton);
+        mTutorialScene.attachChild(nextButton);
+
+
+        final TiledSprite closeButton = new TiledSprite(closeX, closeY, mResourceManager.mCloseButtonTextureRegion, mVertexBufferObjectManager) {
+
+            @Override
+            public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+                if (pSceneTouchEvent.isActionDown()) {
+                    setCurrentTileIndex(1);
+                    mResourceManager.mButtonSound.play();
+                }
+                if (pSceneTouchEvent.isActionUp()) {
+                    setCurrentTileIndex(0);
+                    showingTutorial = false;
+                    tutorial.setCurrentTileIndex(0);
+                    clearChildScene();
+                }
+                return true;
+            }
+        };
+        closeButton.setCurrentTileIndex(0);
+        closeButton.setScale(0.75f);
+        mTutorialScene.registerTouchArea(closeButton);
+        mTutorialScene.attachChild(closeButton);
+
     }
 
     /**

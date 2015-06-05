@@ -1,10 +1,11 @@
 package com.application.nick.crappybird.scene;
 
-import android.hardware.SensorManager;
 import android.util.Log;
 
 import com.application.nick.crappybird.SceneManager;
+import com.application.nick.crappybird.entity.Bird;
 import com.application.nick.crappybird.entity.Collectable;
+import com.application.nick.crappybird.entity.CollectableBurger;
 import com.application.nick.crappybird.entity.CollectableHam;
 import com.application.nick.crappybird.entity.CollectableMelon;
 import com.application.nick.crappybird.entity.CollectableMuffin;
@@ -18,19 +19,11 @@ import com.application.nick.crappybird.entity.MotherShip;
 import com.application.nick.crappybird.entity.Obstacle;
 import com.application.nick.crappybird.entity.ObstacleBalloon;
 import com.application.nick.crappybird.entity.ObstaclePlane;
-import com.application.nick.crappybird.entity.ObstaclePool;
+import com.application.nick.crappybird.entity.ObstaclePoolAir;
+import com.application.nick.crappybird.entity.ObstaclePoolGround;
 import com.application.nick.crappybird.entity.Target;
 import com.application.nick.crappybird.entity.TargetPerson1;
 import com.application.nick.crappybird.entity.TargetPool;
-import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.physics.box2d.Body;
-import com.badlogic.gdx.physics.box2d.BodyDef;
-import com.badlogic.gdx.physics.box2d.Contact;
-import com.badlogic.gdx.physics.box2d.ContactImpulse;
-import com.badlogic.gdx.physics.box2d.ContactListener;
-import com.badlogic.gdx.physics.box2d.Fixture;
-import com.badlogic.gdx.physics.box2d.FixtureDef;
-import com.badlogic.gdx.physics.box2d.Manifold;
 import com.parse.ParseUser;
 
 import org.andengine.engine.camera.hud.HUD;
@@ -48,10 +41,6 @@ import org.andengine.entity.sprite.TiledSprite;
 import org.andengine.entity.text.Text;
 import org.andengine.entity.text.TextOptions;
 import org.andengine.entity.util.FPSLogger;
-import org.andengine.extension.physics.box2d.PhysicsConnector;
-import org.andengine.extension.physics.box2d.PhysicsFactory;
-import org.andengine.extension.physics.box2d.PhysicsWorld;
-import org.andengine.extension.physics.box2d.util.Vector2Pool;
 import org.andengine.input.touch.TouchEvent;
 import org.andengine.util.HorizontalAlign;
 import org.andengine.util.color.Color;
@@ -64,14 +53,18 @@ import java.util.List;
  */
 public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
-    private final int MAX_OBSTACLES_ON_SCREEN = 5;
+    public static final float HYPER_SPEED_VELOCITY_SHIFT = 300;
+    public static final float SCROLL_SPEED = 150;
+    public static final float GRAVITY = 15f * 30;
+    private final float HYPER_SPEED_Y_ACCELERATION = 5f * 30;
     private final float DEFAULT_MACHINE_CRAPPING_TIME = 5;
+    private final float MAX_INVINCIBILITY_TIME = 2;
     private final float MACHINE_CRAPPING_TIME_BETWEEN_CRAPS = 0.1f;
+    private final float HYPER_SPEED_TIME_BETWEEN_CRAPS = 0.1f;
     private final float DEFAULT_DOUBLE_POINTS_TIME = 5;
     private final float MAX_TARGETS_ON_SCREEN = 10;
     private final float DOUBLE_POINTS_TIME_TO_SHOW_PLUS_TWO = 0.4f;
     private final float MAX_COLLECTABLES_ON_SCREEN = 5;
-    private final float SCROLL_SPEED = 150;
     private final float MIN_PLANE_SPEED_ON_GAMEOVER = 60;
     private final int PARALLAX_CHANGE_PER_SECOND = 10;
     private final int NUM_OBSTACLES = 20; //number of obstacle to allocate to pool
@@ -81,10 +74,15 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
     private final int RESPAWN_PRICE = 200;
     private final int CRAP_METER_SHRINK_STOP_OBSTACLE_INDEX = 50; //the obstacle index to stop having the crap meter rate of shrinkage increase
 
+    public static final int[] MAX_OBSTACLES_ON_SCREEN = {1, 2, 3, 4, 5, 6};
+
+    public static final int[] MAX_OBSTACLES_ON_SCREEN_OBSTACLE_INDEX = {0, 3, 10, 100, 250, 450};
+
     public static final int[] NUM_COLLECTABLES = { //number of generic collectables (pizza) to allocate to pool
             20, //if player only has first 2 power-ups unlocked
             25, //if player has three power-ups
-            30  //if player has 4 power-ups
+            30,  //if player has 4 power-ups
+            35 //if player has 5 power-ups
     };
 
     private AutoParallaxBackground mAutoParallaxBackground;
@@ -96,14 +94,17 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
     private Sprite pizzaCollectedSpriteOnGameOver, pizzaCollectedSprite;
 
-    private AnimatedSprite mBird, mAnimatedCrapMeter, mCountdownSprite;
+    private Bird mBird;
+
+    private AnimatedSprite mAnimatedCrapMeter, mCountdownSprite;
 
     private TiledSprite mCrapMeter, mAlertSign;
 
     private MotherShip mMotherShip;
 
     private List<Obstacle> mObstacles;
-    private ObstaclePool mObstaclePool;
+    private ObstaclePoolAir mObstaclePoolAir;
+    private ObstaclePoolGround mObstaclePoolGround;
 
     private List<Collectable> mCollectables;
     private CollectablePool mCollectablePool;
@@ -116,23 +117,22 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
     private List<Crap> mCraps = new ArrayList<Crap>();
 
 
-    private boolean mGameOver, mOutOfCrap, mMachineCrapActivated = false, mMachineCrapping = false, mAnimatedCrapMeterBlinking = false,
+    private boolean mGameOver, mOutOfCrap, mMachineCrapActivated = false, mMachineCrapping = false, mAnimatedCrapMeterBlinkingSlow = false, mAnimatedCrapMeterBlinkingFast = false,
             mDoublePointsActivated = false, mMotherShipIncoming = false, mMotherShipOnScreen = false, mMotherShipPassed = false, mSharingVisible = false,
-            mRespawnUsed = false, mCountdownOnScreen = false, mRespawnButtonPressed = false, mMegaCrapActivated = false, mSlowMotionActivated = false, mHasMegaCrap,
-            mHasSlowMotion;
+            mRespawnUsed = false, mCountdownOnScreen = false, mRespawnButtonPressed = false, mMegaCrapActivated = false, mSlowMotionActivated = false, mHyperSpeedActivated = false,
+            mHasMegaCrap, mHasSlowMotion, mHasHyperSpeed, mInvincibilityActivated = false;
 
-    private float machineCrappingTime = 0, machineCrappingLastCrapTime, doublePointsTime = 0, doublePointsLastPointTime, megaCrappingTime = 0, slowMotionTime = 0, maxMachineCrappingTime, maxDoublePointsTime, maxSlowMotionTime, maxMegaCrapTime;
-
-    private PhysicsWorld mPhysicsWorld;
+    private float obstacleGroundSpawnCounter = 0, obstacleAirSpawnCounter = 0, machineCrappingTime = 0, machineCrappingLastCrapTime, doublePointsTime = 0, doublePointsLastPointTime, megaCrappingTime = 0, slowMotionTime = 0, hyperSpeedTime = 0,
+            lastHyperSpeedCrapTime = 0, invincibilityTime = 0, maxMachineCrappingTime, maxDoublePointsTime, maxSlowMotionTime, maxMegaCrapTime, maxHyperSpeedTime;
 
     private CameraScene mGameReadyScene, mGameOverScene, mPauseScene, mCountdownScene;
     private Text scoreText, mostText, pizzaTextOnGameOver;
     private TiledSprite mPlusTwo, playButton, backButton, rateButton, shareButton, facebookButton,
-            twitterButton, otherButton, leaderboardButton, pauseButton, menuButton, marketButton;
+            twitterButton, otherButton, leaderboardButton, pauseButton, volumeButton, menuButton, marketButton;
 
     private Rectangle mGround;
 
-    private float MAX_CRAP_METER_SIZE;
+    private float MAX_CRAP_METER_SIZE, mostX;
 
     private int selectedBird, collectableAllocationIndex, numPlanesOnScreen = 0;
 
@@ -187,6 +187,9 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
             maxMegaCrapTime = 3 + (currentUser.getInt("powerUp3") * 2);
             Log.i("maxMegaCrapTime", String.valueOf(maxMegaCrapTime));
 
+            maxHyperSpeedTime = 3 + (currentUser.getInt("powerUp4") * 2);
+            Log.i("maxHyperSpeedTime", String.valueOf(maxHyperSpeedTime));
+
             collectableAllocationIndex = 0;
 
             if(maxSlowMotionTime > 3) {
@@ -204,19 +207,26 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                 mHasMegaCrap = false;
             }
 
+            if(maxHyperSpeedTime > 3) {
+                mHasHyperSpeed = true;
+                collectableAllocationIndex++;
+            } else {
+                mHasHyperSpeed = false;
+            }
+
         } else {
             maxMachineCrappingTime = DEFAULT_MACHINE_CRAPPING_TIME;
             maxDoublePointsTime = DEFAULT_DOUBLE_POINTS_TIME;
             mHasSlowMotion = false;
             mHasMegaCrap = false;
+            mHasHyperSpeed = false;
 
             collectableAllocationIndex = 0;
         }
 
-        mBird = new AnimatedSprite(birdX, birdY, mResourceManager.mBirdsTextureRegion, mVertexBufferObjectManager);
+        mBird = new Bird(birdX, birdY, mResourceManager.mBirdsTextureRegion, mVertexBufferObjectManager);
         mBird.setZIndex(10);
-        long fDur = 200;
-        mBird.animate(new long[]{fDur, fDur, fDur}, selectedBird * 3, selectedBird * 3 + 2, true);
+        mBird.animate(selectedBird);
         mBird.setCurrentTileIndex(selectedBird * 3);
         attachChild(mBird);
 
@@ -227,12 +237,14 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         final Rectangle roof = new Rectangle(0, 0, SCREEN_WIDTH, 1, mVertexBufferObjectManager);
         roof.setColor(Color.TRANSPARENT);
 
-        mObstaclePool = new ObstaclePool(mResourceManager, mVertexBufferObjectManager, mGround.getY());
-        mObstaclePool.batchAllocatePoolItems(NUM_OBSTACLES);
+        mObstaclePoolAir = new ObstaclePoolAir(mResourceManager, mVertexBufferObjectManager, mGround.getY());
+        mObstaclePoolAir.batchAllocatePoolItems(NUM_OBSTACLES / 2);
+
+        mObstaclePoolGround = new ObstaclePoolGround(mResourceManager, mVertexBufferObjectManager, mGround.getY());
+        mObstaclePoolGround.batchAllocatePoolItems(NUM_OBSTACLES / 2);
 
         mObstacles = new ArrayList<Obstacle>();
-        addObstacle(0);
-        //mObstacles.add(mObstaclePool.obtainPoolItem());
+        addObstacleGround();
 
         mCollectablePool = new CollectablePool(mResourceManager, mVertexBufferObjectManager, mGround.getY());
         mCollectablePool.batchAllocatePoolItems(NUM_COLLECTABLES[collectableAllocationIndex]);
@@ -253,6 +265,11 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
             //Slo-mo muffin slows down obstacles
             CollectableMuffin muffin = new CollectableMuffin(mResourceManager.mCollectableMuffinTextureRegion, mVertexBufferObjectManager, mGround.getY(), mResourceManager.mCollectableMuffinTextureRegion.getHeight());
             mCollectablePool.addAdditionalPoolItem(muffin);
+        }
+        if(mHasHyperSpeed) {
+            //burger is for hyper speed
+            CollectableBurger burger = new CollectableBurger(mResourceManager.mCollectableBurgerTextureRegion, mVertexBufferObjectManager, mGround.getY(), mResourceManager.mCollectableBurgerTextureRegion.getHeight());
+            mCollectablePool.addAdditionalPoolItem(burger);
         }
 
 
@@ -288,21 +305,6 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         attachChild(mTargets.get(mTargets.size() - 1));
         attachChild(mAlertSign);
 
-        mPhysicsWorld = new PhysicsWorld(new Vector2(0, SensorManager.GRAVITY_EARTH * 1.5f), false);
-        mPhysicsWorld.setContactListener(createContactListener());
-
-        //create body and fixture
-        final FixtureDef wallFixtureDef = PhysicsFactory.createFixtureDef(0, 0, 0);
-        final Body groundBody = PhysicsFactory.createBoxBody(mPhysicsWorld, mGround, BodyDef.BodyType.StaticBody, wallFixtureDef);
-        groundBody.setUserData("ground");
-
-        final FixtureDef birdFixtureDef = PhysicsFactory.createFixtureDef(1, 0, 0);
-        final Body birdBody = PhysicsFactory.createCircleBody(mPhysicsWorld, mBird, BodyDef.BodyType.DynamicBody, birdFixtureDef);
-        birdBody.setUserData("bird");
-        mBird.setUserData(birdBody);
-
-        mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(mBird, birdBody, true, false));
-
 
         /* The actual collision-checking. */
         registerUpdateHandler(new IUpdateHandler() {
@@ -312,6 +314,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
             @Override
             public void onUpdate(float pSecondsElapsed) {
+
+                checkForBirdGroundContact();
 
                 checkObstaclePosition(); //handle obstacles leaving screen and update score if bird passes them
 
@@ -329,18 +333,55 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                     addNewCollectable(300); //add a new collectable if the earliest added on the screen passes x
                 }
 
-                //Add new obstacles///////////////////////////////////
-                int obstaclesOnScreen = mObstacles.size();
-                if(obstaclesOnScreen < MAX_OBSTACLES_ON_SCREEN && !mMotherShipIncoming && !mMotherShipOnScreen) { //max obstacles on the screen can't be more than x. Don't add new obstacles if mother ship is coming or on screen
-                    if (mObstaclePool.getObstacleIndex() < 100) {
-                        addObstacle((float)((300 / Math.pow(100.0, 2.0/3)) * Math.pow(mObstaclePool.getObstacleIndex(), 2.0/3))); //add a new obstacle if the earliest added obstacle on the screen passes x
+                if(!mGameOver) {
+                    if(mSlowMotionActivated) {
+                        obstacleAirSpawnCounter += pSecondsElapsed / 2;
+                        obstacleGroundSpawnCounter += pSecondsElapsed / 2;
+                    } else if (mHyperSpeedActivated) {
+                        obstacleAirSpawnCounter += pSecondsElapsed * 3;
+                        obstacleGroundSpawnCounter += pSecondsElapsed * 3;
                     } else {
-                        addObstacle(300);
+                        obstacleAirSpawnCounter += pSecondsElapsed;
+                        obstacleGroundSpawnCounter += pSecondsElapsed;
+                    }
+
+                    float airTimeMin = mResourceManager.mObstaclePlanesTextureRegion.getWidth() / getPlaneSpeed();
+                    float groundTimeMin = mResourceManager.mObstacleHouseTextureRegion.getWidth() / SCROLL_SPEED;
+
+                    double groundDistance = (SCREEN_WIDTH - mResourceManager.mObstacleHouseTextureRegion.getWidth()) / Math.pow(getObstacleIndex(), 1.0/6) + mResourceManager.mObstacleHouseTextureRegion.getWidth();
+                    float groundTime = (float)groundDistance / SCROLL_SPEED;
+
+                    double airDistance = (SCREEN_WIDTH - mResourceManager.mObstaclePlanesTextureRegion.getWidth()) / Math.pow(getObstacleIndex(), 1.0/6) + mResourceManager.mObstaclePlanesTextureRegion.getWidth();
+                    float airTime = (float)airDistance / getPlaneSpeed();
+
+                    if(!mMotherShipOnScreen && !mMotherShipIncoming) {
+                        for(int i = GameScene.MAX_OBSTACLES_ON_SCREEN.length - 1; i >= 0; i--) {
+                            if(getObstacleIndex() >= GameScene.MAX_OBSTACLES_ON_SCREEN_OBSTACLE_INDEX[i]) {
+                                if (mObstacles.size() < MAX_OBSTACLES_ON_SCREEN[i]) {
+                                    int rand = (int)(Math.random() * 2); //here random allows air and ground obstacles to have an equal chance of spawning
+                                    if(rand == 0) {
+                                        if (obstacleAirSpawnCounter > airTime) {
+                                            addObstacleAir();
+                                        } else if (obstacleGroundSpawnCounter > groundTime) {
+                                            addObstacleGround();
+                                        }
+                                    } else {
+                                        if (obstacleGroundSpawnCounter > groundTime) {
+                                            addObstacleGround();
+                                        } else if (obstacleAirSpawnCounter > airTime) {
+                                            addObstacleAir();
+                                        }
+                                    }
+                                }
+                                break;
+                            }
+                        }
                     }
                 }
 
+
                 //Handle mother ship////////////////////////////////
-                if(mObstaclePool.getObstacleIndex() >= MOTHERSHIP_OBSTACLE_INDEX && !mMotherShipIncoming && !mMotherShipOnScreen && !mMotherShipPassed) {
+                if(getObstacleIndex() >= MOTHERSHIP_OBSTACLE_INDEX && !mMotherShipIncoming && !mMotherShipOnScreen && !mMotherShipPassed) {
                     setMotherShipIncoming(true);
                 }
                 if(mMotherShipIncoming && mObstacles.size() == 0) {
@@ -351,11 +392,12 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                     checkForMotherShipContact();
                 }
                 if(!mGameOver) { //only advance powerup times if gameover is true. This way, you will still have them after a respawn
+
                     //Handle machine crap powerup/////////////////////////////////
                     if (mMachineCrapActivated) {
                         if (mMachineCrapping) {
                             if (machineCrappingTime > machineCrappingLastCrapTime + MACHINE_CRAPPING_TIME_BETWEEN_CRAPS) {
-                                jumpBird(mBird);
+                                jumpBird();
                                 machineCrappingLastCrapTime = machineCrappingTime;
                             }
                         }
@@ -364,14 +406,35 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                         if (machineCrappingTime > maxMachineCrappingTime) {
                             setMachineCrap(false);
                             machineCrappingTime = 0;
-                            mAnimatedCrapMeterBlinking = false;
-                        } else if (machineCrappingTime > maxMachineCrappingTime - 2 && !mAnimatedCrapMeterBlinking) {
-                            mAnimatedCrapMeter.animate(new long[]{400, 400}, 5, 6, true);
-                            mAnimatedCrapMeterBlinking = true;
                         }
 
                     }
 
+                    //Handle hyper speed powerup/////////////////////////////////
+                    if (mHyperSpeedActivated) {
+                        if (hyperSpeedTime > lastHyperSpeedCrapTime + HYPER_SPEED_TIME_BETWEEN_CRAPS) {
+                            dropHyperSpeedCrap(mBird.getX(), mBird.getY());
+                            lastHyperSpeedCrapTime = hyperSpeedTime;
+                        }
+
+                        hyperSpeedTime += pSecondsElapsed;
+                        if (hyperSpeedTime > maxHyperSpeedTime) {
+                            setHyperSpeed(false);
+                            hyperSpeedTime = 0;
+                        }
+
+                    }
+
+                    if(mInvincibilityActivated) {
+                        invincibilityTime += pSecondsElapsed;
+                        if (invincibilityTime > MAX_INVINCIBILITY_TIME) {
+                            setInvincibility(false);
+                        } else if (invincibilityTime > MAX_INVINCIBILITY_TIME - 0.5f && !mAnimatedCrapMeterBlinkingFast) {
+                            mAnimatedCrapMeter.animate(new long[]{100, 100}, 5, 6, true);
+                            mAnimatedCrapMeterBlinkingFast = true;
+                            mAnimatedCrapMeterBlinkingSlow = false;
+                        }
+                    }
 
                     //Handle mega crap powerup/////////////////////////////////
                     if (mMegaCrapActivated) {
@@ -418,22 +481,17 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
                 //don't let bird leave top of screen
                 if (mBird.getY() < 0) {
-                    final Body faceBody = (Body)mBird.getUserData();
-                    Vector2 newVelocity = Vector2Pool.obtain(0,0);
-
-                    faceBody.setLinearVelocity(newVelocity);
-                    Vector2Pool.recycle(newVelocity);
+                    mBird.setVelocityY(0);
                 }
 
 
                     //rotate bird with changing velocity
                 if(mBird.getY() + mBird.getHeight() < mGround.getY()) {
-                    Body birdBody = (Body) mBird.getUserData();
-                    mBird.setRotation(birdBody.getLinearVelocity().y * 2 - 10);
+                    mBird.setRotation(mBird.getVelocityY() / 15 - 10);
                 }
 
 
-                mPhysicsWorld.onUpdate(pSecondsElapsed);
+                //mPhysicsWorld.onUpdate(pSecondsElapsed);
 
             }
         });
@@ -509,7 +567,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         final float scoreX = overX + 55;
         final float scoreY = overY + 40;
 
-        final float mostX = overX + 165;
+        mostX = overX + 165;
         final float mostY = scoreY;
 
         mGameOverScene = new CameraScene(mCamera);
@@ -600,6 +658,12 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                     if(!mSharingVisible) {
                         setCurrentTileIndex(0);
                         mSceneManager.setScene(SceneManager.SceneType.SCENE_MARKET);
+                        if(mResourceManager.mMariachiFast.isPlaying()) {
+                            mResourceManager.mMariachiFast.pause();
+                        }
+                        if(mResourceManager.mMariachiSlow.isPlaying()) {
+                            mResourceManager.mMariachiSlow.pause();
+                        }
                     } else {
                         facebookButton.setCurrentTileIndex(0);
                         mActivity.openFacebookShare(score);
@@ -634,7 +698,12 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                     if(!mSharingVisible) {
                         setCurrentTileIndex(0);
                         mSceneManager.setScene(SceneManager.SceneType.SCENE_MENU);
-
+                        if(mResourceManager.mMariachiFast.isPlaying()) {
+                            mResourceManager.mMariachiFast.pause();
+                        }
+                        if(mResourceManager.mMariachiSlow.isPlaying()) {
+                            mResourceManager.mMariachiSlow.pause();
+                        }
                     }
                 }
                 return true;
@@ -855,6 +924,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         mPauseScene.registerTouchArea(restartButtonOnPause);
         mPauseScene.attachChild(restartButtonOnPause);
 
+
         mPauseScene.setBackgroundEnabled(false);
 
 
@@ -884,6 +954,35 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         registerTouchArea(pauseButton);
         attachChild(pauseButton);
         pauseButton.setVisible(false);
+
+        volumeButton = new TiledSprite(0, 0, mResourceManager.mVolumeButtonTextureRegion, mVertexBufferObjectManager) {
+
+            @Override
+            public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+                if (isVisible() && pSceneTouchEvent.isActionUp()) {
+                    if(getCurrentTileIndex() == 0) {
+                        setCurrentTileIndex(1);
+                    } else {
+                        setCurrentTileIndex(0);
+                    }
+                    mActivity.toggleSound();
+                }
+                return true;
+            }
+        };
+        if(mActivity.getSoundOn()) {
+            volumeButton.setCurrentTileIndex(0);
+        } else {
+            volumeButton.setCurrentTileIndex(1);
+        }
+        volumeButton.setScale(0.25f);
+        volumeButton.setX(mCrapMeter.getX() + (mCrapMeter.getWidth() - mCrapMeter.getWidthScaled()) / 2 - (volumeButton.getWidth() - volumeButton.getWidthScaled()) / 2 - volumeButton.getWidthScaled());
+        volumeButton.setY(mCrapMeter.getY() + (mCrapMeter.getHeight() - mCrapMeter.getHeightScaled()) / 2 - (volumeButton.getHeight() - volumeButton.getHeightScaled()) / 2 - (volumeButton.getHeightScaled() - mCrapMeter.getHeightScaled()) / 2);
+        registerTouchArea(volumeButton);
+        mPauseScene.registerTouchArea(volumeButton);
+        mGameOverScene.registerTouchArea(volumeButton);
+        mGameReadyScene.registerTouchArea(volumeButton);
+        attachChild(volumeButton);
 
 
         mCountdownScene = new CameraScene(mCamera);
@@ -1028,7 +1127,6 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
     private void setCountDown(boolean bool) {
         if(bool) {
             mCountdownOnScreen = true;
-            //setChildScene(mCountdownScene, false, true, true);
             setChildScene(mCountdownScene);
             totalPizzaTextOnCountdownScene.setText(Integer.toString(mActivity.getPizza() + pizzaCollected));
             mCountdownSprite.animate(1000);
@@ -1061,9 +1159,6 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         mHudTextPizza.setX(pizzaCollectedSprite.getX() + pizzaCollectedSprite.getWidth());
 
 
-
-        setMachineCrap(true);
-
         if(mCraps.size() > 0) {
             for(int i = mCraps.size() - 1; i >= 0; i--) {
                 mCraps.get(i).moveForRespawn();
@@ -1072,11 +1167,21 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
         if(mObstacles.size() > 0) {
             for (int i = mObstacles.size() - 1; i >= 0; i--) {
-                detachChild(mObstacles.get(i));
-                mObstaclePool.recyclePoolItem(mObstacles.get(i));
+                Obstacle obstacle = mObstacles.get(i);
+                detachChild(obstacle);
+
+                if(obstacle.getObstacleType() == Obstacle.obstacleType.PLANE || obstacle.getObstacleType() == Obstacle.obstacleType.BALLOON) {
+                    mObstaclePoolAir.recyclePoolItem(obstacle);
+                    mObstaclePoolAir.shufflePoolItems();
+                } else {
+                    mObstaclePoolGround.recyclePoolItem(obstacle);
+                    mObstaclePoolGround.shufflePoolItems();
+                }
+
                 mObstacles.remove(i);
             }
         }
+
         if(mTargets.size() > 0) {
             for (int i = mTargets.size() - 1; i >= 0; i--) {
                 detachChild(mTargets.get(i));
@@ -1094,14 +1199,24 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
         setGameOver(false);
 
+        if(!mHyperSpeedActivated) {
+            setInvincibility(true);
 
-        //mBird.setY((mGround.getY() - mBird.getHeight()) / 2);
+            mBird.setAccelerationY(GRAVITY);
 
-        jumpBird(mBird);
-        jumpBird(mBird);
-        jumpBird(mBird);
-        jumpBird(mBird);
-        jumpBird(mBird);
+            jumpBird();
+            jumpBird();
+            jumpBird();
+            jumpBird();
+            jumpBird();
+
+        } else {
+            mBird.setAccelerationY(HYPER_SPEED_Y_ACCELERATION);
+
+            mBird.setVelocityY(-10f * 30);
+        }
+
+        mResourceManager.mRespawnSound.play();
 
     }
 
@@ -1163,7 +1278,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                 mTargetPool.recyclePoolItem(target);
                 mTargetPool.shufflePoolItems();
                 mTargets.remove(i);
-            } else if (target.getClass().getName().equals("com.application.nick.crappybird.entity.TargetPerson1")) {
+            } else if (target.getTargetType() == Target.targetType.PERSON1) {
                 if(((TargetPerson1)target).getFalling() && (target.getY() + target.getHeight()) >= mGround.getY()) {
                     ((TargetPerson1)target).hitsGround(mGameOver);
                 }
@@ -1192,14 +1307,11 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
      */
     private void checkForMotherShipContact() {
         if (!mGameOver && mMotherShip.collidesWith(mBird) && !mMotherShip.getCollidedWith()) {
-            if (mMachineCrapActivated) {
-                final Body faceBody = (Body) mBird.getUserData();
+            if (mMachineCrapActivated || mHyperSpeedActivated || mInvincibilityActivated) {
 
-                Vector2 birdVelocity = faceBody.getLinearVelocity();
-                float birdYVelocity = birdVelocity.y;
-                birdYVelocity = birdYVelocity * 30; //convert from m/s to px/sec
+                float birdYVelocity = mBird.getVelocityY();
                 float velocityY = birdYVelocity * 2;
-                if (Math.abs(velocityY) < 500) {
+                if (velocityY != 0 && Math.abs(velocityY) < 500) {
                     velocityY = (velocityY / Math.abs(velocityY)) * 500;
                 }
                 mMotherShip.blastOff(velocityY);
@@ -1224,6 +1336,10 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
             mMachineCrapping = false; //stop current hold session
             stopCrap();
 
+            if(mInvincibilityActivated) {
+                setInvincibility(false);
+            }
+
             killObstacles();
             killCollectables();
             killTargets();
@@ -1232,14 +1348,15 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
         } else {
             mGameOver = false;
-            long fDur = 200;
-            mBird.animate(new long[]{fDur, fDur, fDur}, selectedBird * 3, selectedBird * 3 + 2, true);
+            mBird.animate(selectedBird);
 
-            addObstacle(0);
+            addObstacleGround();
             mTargets.add(mTargetPool.obtainPoolItem());
             attachChild(mTargets.get(0));
             mCollectables.add(mCollectablePool.obtainPoolItem());
             attachChild(mCollectables.get(0));
+
+
 
             if(mSlowMotionActivated) {
                 mAutoParallaxBackground.setParallaxChangePerSecond(PARALLAX_CHANGE_PER_SECOND / 2);
@@ -1260,6 +1377,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
             mMotherShipIncoming = true;
             mAlertSign.setVisible(true);
             mResourceManager.mAlertSound.play();
+
         } else {
             mMotherShipIncoming = false;
             mAlertSign.setVisible(false);
@@ -1281,6 +1399,9 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                 mMotherShip.setSlowMotion(true);
                 mResourceManager.mMotherShipSound.setRate(0.5f);
             }
+            if (mHyperSpeedActivated) {
+                mMotherShip.setHyperSpeed(true);
+            }
         } else {
             mMotherShipOnScreen = false;
             mMotherShipPassed = true;
@@ -1289,85 +1410,77 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         }
     }
 
-    /**
-     * adds a new obstacle when the earliest added obstacle still on the screen reaches a certain x value
-     * @param x the x value to check
-     */
-    private void addObstacle(float x) {
-        if(!mGameOver) {
-            if(mObstacles.size() == 0) {
-                mObstacles.add(mObstaclePool.obtainPoolItem());
-                Obstacle newObstacle = mObstacles.get(mObstacles.size() - 1);
-                newObstacle.setX(SCREEN_WIDTH);
-                //scale plane velocity according to number of passed obstacles
-                if (newObstacle.getClass().getName().equals("com.application.nick.crappybird.entity.ObstaclePlane")) {
-                    mResourceManager.mPropellerSound.play();
-                    mResourceManager.mPropellerSound.setVolume(1f);
-                    if (mObstaclePool.getObstacleIndex() < 100) {
-                        newObstacle.setVelocity(-200f - mObstaclePool.getObstacleIndex(), 0);
-                        mResourceManager.mPropellerSound.setRate((float)(1 + mObstaclePool.getObstacleIndex() / 100.0));
-                    } else {
-                        newObstacle.setVelocity(-300, 0);
-                        mResourceManager.mPropellerSound.setRate(2);
-                    }
 
-                    numPlanesOnScreen++;
+    private int getObstacleIndex() {
+        return mObstaclePoolAir.getObstacleIndex() + mObstaclePoolGround.getObstacleIndex();
+    }
 
-                    //if passed obstacle number x, have plane fly at random angles across the screen
-                    if (mObstaclePool.getObstacleIndex() > 50) {
-                        ((ObstaclePlane) newObstacle).randomizeYVelocity();
-                    }
-                } else if (newObstacle.getClass().getName().equals("com.application.nick.crappybird.entity.ObstacleBalloon")) {
-                    if (mObstaclePool.getObstacleIndex() > 0) {
-                        ((ObstacleBalloon) newObstacle).randomizeYVelocity();
-                    }
-                }
-                if(mSlowMotionActivated) {
-                    newObstacle.setSlowMotion(true);
-                }
-                attachChild(newObstacle);
-                sortChildren();
+
+    private void addObstacleAir() {
+
+        obstacleAirSpawnCounter = 0;
+
+        mObstacles.add(mObstaclePoolAir.obtainPoolItem());
+        Obstacle newObstacle = mObstacles.get(mObstacles.size() - 1);
+        newObstacle.setX(SCREEN_WIDTH);
+        //scale plane velocity according to number of passed obstacles
+        if (newObstacle.getObstacleType() == Obstacle.obstacleType.PLANE) {
+            mResourceManager.mPropellerSound.play();
+            mResourceManager.mPropellerSound.setVolume(1f);
+            newObstacle.setVelocityX(-getPlaneSpeed());
+
+            //handle sound effect
+            if (getObstacleIndex() < 50) {
+                mResourceManager.mPropellerSound.setRate((float) (1 + getObstacleIndex() / 100.0));
             } else {
-                for (int i = mObstacles.size() - 1; i >= 0; i--) {
-                    Obstacle obstacle = mObstacles.get(i);
-                    if (obstacle.getX() < x && !obstacle.getPassedAddXValue()) {
-                        obstacle.passedAddXValue();
-                        mObstacles.add(mObstaclePool.obtainPoolItem());
-                        Obstacle newObstacle = mObstacles.get(mObstacles.size() - 1);
-                        newObstacle.setX(SCREEN_WIDTH);
-                        //scale plane velocity according to number of passed obstacles
-                        if (newObstacle.getClass().getName().equals("com.application.nick.crappybird.entity.ObstaclePlane")) {
-                            mResourceManager.mPropellerSound.play();
-                            mResourceManager.mPropellerSound.setVolume(1f);
-                            if (mObstaclePool.getObstacleIndex() < 50) {
-                                newObstacle.setVelocity(-200f - mObstaclePool.getObstacleIndex(), 0);
-                                mResourceManager.mPropellerSound.setRate((float) (1 + mObstaclePool.getObstacleIndex() / 100.0));
-                            } else {
-                                newObstacle.setVelocity(-250, 0);
-                                mResourceManager.mPropellerSound.setRate(1.5f);
-                            }
-                            //if passed obstacle number x, have plane fly at random angles across the screen
-                            if (mObstaclePool.getObstacleIndex() > 50) {
-                                ((ObstaclePlane) newObstacle).randomizeYVelocity();
-                            }
-
-                            numPlanesOnScreen++;
-
-                        } else if (newObstacle.getClass().getName().equals("com.application.nick.crappybird.entity.ObstacleBalloon")) {
-                            if (mObstaclePool.getObstacleIndex() > 0) {
-                                ((ObstacleBalloon) newObstacle).randomizeYVelocity();
-                            }
-                        }
-                        if(mSlowMotionActivated) {
-                            newObstacle.setSlowMotion(true);
-                        }
-                        attachChild(newObstacle);
-                        sortChildren();
-                    }
-                }
+                mResourceManager.mPropellerSound.setRate(1.5f);
             }
 
+            numPlanesOnScreen++;
+
+            //if passed obstacle number x, have plane fly at random angles across the screen
+            if (getObstacleIndex() > 50) {
+                ((ObstaclePlane) newObstacle).randomizeYVelocity();
+            }
+        } else if (newObstacle.getObstacleType() == Obstacle.obstacleType.BALLOON) {
+            if (getObstacleIndex() > 0) {
+                ((ObstacleBalloon) newObstacle).randomizeYVelocity();
+            }
         }
+        if(mSlowMotionActivated) {
+            newObstacle.setSlowMotion(true);
+        }
+        if(mHyperSpeedActivated) {
+            newObstacle.setHyperSpeed(true);
+        }
+        attachChild(newObstacle);
+        sortChildren();
+    }
+
+    private float getPlaneSpeed() {
+        if (getObstacleIndex() < 50) {
+            return 200f + getObstacleIndex();
+        } else {
+            return 250;
+        }
+    }
+
+    private void addObstacleGround() {
+
+        obstacleGroundSpawnCounter = 0;
+
+        mObstacles.add(mObstaclePoolGround.obtainPoolItem());
+        Obstacle newObstacle = mObstacles.get(mObstacles.size() - 1);
+        newObstacle.setX(SCREEN_WIDTH);
+
+        if(mSlowMotionActivated) {
+            newObstacle.setSlowMotion(true);
+        }
+        if(mHyperSpeedActivated) {
+            newObstacle.setHyperSpeed(true);
+        }
+        attachChild(newObstacle);
+        sortChildren();
     }
 
     /**
@@ -1409,6 +1522,9 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                         if(mSlowMotionActivated) {
                             newTarget.setSlowMotion(true);
                         }
+                        if(mHyperSpeedActivated) {
+                            newTarget.setHyperSpeed(true);
+                        }
                         attachChild(newTarget);
                         sortChildren();
                     }
@@ -1425,7 +1541,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         for(int i = mTargets.size() - 1; i >= 0; i--) {
             Target target = mTargets.get(i);
             if(!target.getHitValue()) {
-                float xVelocity = target.getXVelocity();
+                float xVelocity = target.getVelocityX();
                 if(mSlowMotionActivated) {
                     target.setVelocity(xVelocity + SCROLL_SPEED / 2, 0);
                 } else {
@@ -1444,7 +1560,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
         for(int i = mObstacles.size() - 1; i >= 0; i--) {
             Obstacle obstacle = mObstacles.get(i);
-            if(obstacle.getClass().getName().equals("com.application.nick.crappybird.entity.ObstaclePlane")) {
+            if(obstacle.getObstacleType() == Obstacle.obstacleType.PLANE) {
                 if(obstacle.getVelocityX() < -(SCROLL_SPEED + MIN_PLANE_SPEED_ON_GAMEOVER)) {
                     obstacle.setVelocityX(obstacle.getVelocityX() + SCROLL_SPEED); //keep vertical velocity //plane keeps flying just at a lower velocity because scrolling stops
                 } else {
@@ -1453,7 +1569,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                 if(!mSlowMotionActivated) {
                     mResourceManager.mPropellerSound.setRate(mResourceManager.mPropellerSound.getRate() / 2);
                 }
-            } else if (obstacle.getClass().getName().equals("com.application.nick.crappybird.entity.ObstacleBalloon")) {
+            } else if (obstacle.getObstacleType() == Obstacle.obstacleType.BALLOON) {
                 obstacle.setVelocityX(0);
             } else {
                 //obstacle.die();
@@ -1486,14 +1602,11 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         for(int i = mObstacles.size() - 1; i >= 0; i--) {
             Obstacle obstacle = mObstacles.get(i);
             if (!mGameOver && obstacle.collidesWith(mBird) && !obstacle.getCollidedWith()) {
-                if(mMachineCrapActivated) {
-                    final Body faceBody = (Body) mBird.getUserData();
+                if(mMachineCrapActivated || mHyperSpeedActivated || mInvincibilityActivated) {
 
-                    Vector2 birdVelocity = faceBody.getLinearVelocity();
-                    float birdYVelocity = birdVelocity.y;
-                    birdYVelocity = birdYVelocity * 30; //convert from m/s to px/sec
+                    float birdYVelocity = mBird.getVelocityY(); //convert from m/s to px/sec
                     float velocityY = birdYVelocity * 2;
-                    if (Math.abs(velocityY) < 500) {
+                    if (velocityY != 0 && Math.abs(velocityY) < 500) {
                         velocityY = (velocityY / Math.abs(velocityY)) * 500;
                     }
                     obstacle.blastOff(velocityY);
@@ -1506,21 +1619,27 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                 }
                 return;
             } else if //if this is a hot air balloon and the bird hits the basket... knock the person out
-                    (!mGameOver &&  obstacle.getClass().getName().equals("com.application.nick.crappybird.entity.ObstacleBalloon") &&
+                    (!mGameOver &&  obstacle.getObstacleType() == Obstacle.obstacleType.BALLOON &&
                             ((ObstacleBalloon)obstacle).collidesWithBasket(mBird) && !((ObstacleBalloon) obstacle).getBasketHit()) {
                 ((ObstacleBalloon) obstacle).birdHitsBasket();
+
                 mTargets.add(mTargetPool.obtainPoolItem());
 
-                mResourceManager.mWilhelmScream.play();
+                ((TargetPerson1)(mTargets.get(mTargets.size() - 1))).setFalling(obstacle.getVelocityX(), obstacle.getX() + 28, obstacle.getY() + 110);
+                attachChild(mTargets.get(mTargets.size() - 1));
+
+                mResourceManager.mWilhelmScreamSound.play();
 
                 if(mSlowMotionActivated) {
                     mTargets.get(mTargets.size() - 1).setSlowMotion(true);
-                    mResourceManager.mWilhelmScream.setRate(0.5f);
+                    mResourceManager.mWilhelmScreamSound.setRate(0.5f);
                 } else {
-                    mResourceManager.mWilhelmScream.setRate(1);
+                    mResourceManager.mWilhelmScreamSound.setRate(1);
                 }
-                ((TargetPerson1)(mTargets.get(mTargets.size() - 1))).setFalling(obstacle.getVelocityX(), obstacle.getX() + 28, obstacle.getY() + 110);
-                attachChild(mTargets.get(mTargets.size() - 1));
+
+                if(mHyperSpeedActivated) {
+                    mTargets.get(mTargets.size() - 1).setHyperSpeed(true);
+                }
                 sortChildren();
 
                 addPoint();
@@ -1531,11 +1650,16 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                 addPoint();
             } else if (obstacle.getX() < -obstacle.getWidth() || obstacle.getY() < -obstacle.getHeight() || obstacle.getY() > SCREEN_HEIGHT) {
                 detachChild(obstacle);
-                if (obstacle.getClass().getName().equals("com.application.nick.crappybird.entity.ObstaclePlane")) {
+                if (obstacle.getObstacleType() == Obstacle.obstacleType.PLANE) {
                     numPlanesOnScreen--;
                 }
-                mObstaclePool.recyclePoolItem(obstacle);
-                mObstaclePool.shufflePoolItems();
+                if(obstacle.getObstacleType() == Obstacle.obstacleType.PLANE || obstacle.getObstacleType() == Obstacle.obstacleType.BALLOON) {
+                    mObstaclePoolAir.recyclePoolItem(obstacle);
+                    mObstaclePoolAir.shufflePoolItems();
+                } else {
+                    mObstaclePoolGround.recyclePoolItem(obstacle);
+                    mObstaclePoolGround.shufflePoolItems();
+                }
                 mObstacles.remove(i);
             }
 
@@ -1554,15 +1678,17 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
             } else if (!mGameOver && collectable.collidesWith(mBird) && !collectable.getCollected()) {
                 collectable.setVisible(false);
                 collectable.collect();
-                if(collectable.getClass().getName().equals("com.application.nick.crappybird.entity.CollectableTaco")) {
+                if(collectable.getCollectableType() == Collectable.collectableType.TACO && !mHyperSpeedActivated) {
                     setMachineCrap(true);
-                } else if(collectable.getClass().getName().equals("com.application.nick.crappybird.entity.CollectableHam")) {
+                } else if(collectable.getCollectableType() == Collectable.collectableType.HAM) {
                     setDoublePoints(true);
-                } else if(collectable.getClass().getName().equals("com.application.nick.crappybird.entity.CollectableMelon")) {
+                } else if(collectable.getCollectableType() == Collectable.collectableType.MELON && !mHyperSpeedActivated) {
                     setMegaCrap(true);
-                } else if(collectable.getClass().getName().equals("com.application.nick.crappybird.entity.CollectableMuffin")) {
+                } else if(collectable.getCollectableType() == Collectable.collectableType.MUFFIN && !mHyperSpeedActivated) {
                     setSlowMotion(true);
-                } else if(collectable.getClass().getName().equals("com.application.nick.crappybird.entity.CollectablePizza")) {
+                } else if(collectable.getCollectableType() == Collectable.collectableType.BURGER) {
+                    setHyperSpeed(true);
+                } else if(collectable.getCollectableType() == Collectable.collectableType.PIZZA) {
                     pizzaCollected++;
                     mHudTextPizza.setText(String.valueOf(pizzaCollected));
                     //update margins
@@ -1615,7 +1741,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
             Crap crap = mCraps.get(i);
             if(crap.getX() < -crap.getWidth()) {
                 detachChild(crap);
-                if(crap.getClass().getName().equals("com.application.nick.crappybird.entity.MegaCrap")) {
+                if(crap.getCrapType() == Crap.crapType.MEGA) {
                     mMegaCrapPool.recyclePoolItem(crap);
                 } else {
                     mCrapPool.recyclePoolItem(crap);
@@ -1631,21 +1757,25 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                     Target target = mTargets.get(j);
 
                     //if target hits crap, target is not hit yet, and the target isn't a person FALLING from a balloon...
-                    if(target.collidesWith(crap) && !target.getHitValue() && !(target.getClass().getName().equals("com.application.nick.crappybird.entity.TargetPerson1") && ((TargetPerson1)target).getFalling())) {
-                        target.hitByCrap(mGameOver);
-                        crapContactWithTarget = true;
+                    if(target.collidesWith(crap) && !target.getHitValue() && !(target.getTargetType() == Target.targetType.PERSON1 && ((TargetPerson1)target).getFalling())) {
+                        target.hitByCrap(mGameOver); //turn target to gravestone. sets velocity to scroll (unless gameover, then 0)
+
+                        if(mHyperSpeedActivated) {
+                            target.setHyperSpeed(true);
+                        }
+
+                        crapContactWithTarget = true; //boolean allows one crap to take out multiple targets
+
                         addPoint();
 
-
-                        mHudTextScore.setText(String.valueOf(score));
                     }
                 }
-                if(crapContactWithTarget && !crap.getClass().getName().equals("com.application.nick.crappybird.entity.MegaCrap")) {
-                    detachChild(mCraps.get(i));
+                if(crapContactWithTarget && crap.getCrapType() == Crap.crapType.NORMAL) {
+                    detachChild(mCraps.get(i)); //now we remove the crap
                     mCrapPool.recyclePoolItem(mCraps.get(i));
                     mCraps.remove(i);
                 }
-                if(crap.getClass().getName().equals("com.application.nick.crappybird.entity.MegaCrap")) {
+                if(crap.getCrapType() == Crap.crapType.MEGA) {
                     for(int j = mObstacles.size() - 1; j >= 0; j--) {
                         Obstacle obstacle = mObstacles.get(j);
                         if(obstacle.collidesWith(crap) && !obstacle.getHitByMegaCrap()) {
@@ -1700,6 +1830,9 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
      */
     private void setMachineCrap(boolean bool) {
         if(bool) {
+
+            setInvincibility(false);
+
             mMachineCrapActivated = true;
             mAnimatedCrapMeter.setVisible(true);
             mAnimatedCrapMeter.animate(new long[]{100, 100, 100, 100, 100, 100}, 0, 5, true);
@@ -1707,6 +1840,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
             machineCrappingLastCrapTime = 0;
             machineCrappingTime = 0;
 
+            mAnimatedCrapMeterBlinkingFast = false;
+            mAnimatedCrapMeterBlinkingSlow = false;
 
             mResourceManager.mMusic.pause();
             if(mSlowMotionActivated) {
@@ -1717,10 +1852,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
         } else {
             mMachineCrapActivated = false;
-            mAnimatedCrapMeter.setVisible(false);
-            mCrapMeter.setVisible(true);
-            growCrapMeter(MAX_CRAP_METER_SIZE);
 
+            setInvincibility(true);
 
             mResourceManager.mMariachiFast.pause();
             mResourceManager.mMariachiSlow.pause();
@@ -1728,6 +1861,90 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
         }
     }
+
+    /**
+     * for turning on and off the hyper speed power up
+     * @param bool
+     */
+    private void setHyperSpeed(boolean bool) {
+        if(bool) {
+
+            if(mSlowMotionActivated) {
+                setSlowMotion(false);
+            }
+            if(mMachineCrapActivated) {
+                setMachineCrap(false);
+            }
+            if(mMegaCrapActivated) {
+                setMegaCrap(false);
+            }
+            if(mInvincibilityActivated) {
+                setInvincibility(false);
+            }
+
+            mHyperSpeedActivated = true;
+            mAnimatedCrapMeter.setVisible(true);
+            mAnimatedCrapMeter.animate(new long[]{100, 100, 100, 100, 100, 100}, 0, 5, true);
+            mCrapMeter.setVisible(false);
+            lastHyperSpeedCrapTime = 0;
+            hyperSpeedTime = 0;
+
+            mAnimatedCrapMeterBlinkingFast = false;
+            mAnimatedCrapMeterBlinkingSlow = false;
+
+            mBird.setVelocityY(0);
+            mBird.setAccelerationY(HYPER_SPEED_Y_ACCELERATION);
+
+
+            for (int i = 0; i < mObstacles.size(); i++) {
+                mObstacles.get(i).setHyperSpeed(true);
+            }
+            for(int i = 0; i < mTargets.size(); i++) {
+                mTargets.get(i).setHyperSpeed(true);
+            }
+            if(mMotherShipOnScreen) {
+                mMotherShip.setHyperSpeed(true);
+            }
+
+        } else {
+
+            mHyperSpeedActivated = false;
+
+            setInvincibility(true);
+
+            mBird.setAccelerationY(GRAVITY);
+
+            for (int i = 0; i < mObstacles.size(); i++) {
+                mObstacles.get(i).setHyperSpeed(false);
+            }
+            for(int i = 0; i < mTargets.size(); i++) {
+                mTargets.get(i).setHyperSpeed(false);
+            }
+        }
+    }
+
+    private void setInvincibility(boolean bool) {
+        if(bool) {
+            mInvincibilityActivated = true;
+            invincibilityTime = 0;
+            mAnimatedCrapMeter.setVisible(true);
+            mCrapMeter.setVisible(false);
+
+            mAnimatedCrapMeter.animate(new long[]{400, 400}, 5, 6, true);
+            mAnimatedCrapMeterBlinkingSlow = true;
+
+        } else {
+            mInvincibilityActivated = false;
+
+            mAnimatedCrapMeter.setVisible(false);
+            mCrapMeter.setVisible(true);
+            growCrapMeter(MAX_CRAP_METER_SIZE);
+
+            mAnimatedCrapMeterBlinkingSlow = false;
+            mAnimatedCrapMeterBlinkingFast = false;
+        }
+    }
+
 
     /**
      * for turning on and off the machine crap power up
@@ -1755,7 +1972,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
                 for(int i = 0; i < mTargets.size(); i++) {
                     mTargets.get(i).setSlowMotion(true);
                     if(((TargetPerson1)mTargets.get(i)).getFalling()) {
-                        mResourceManager.mWilhelmScream.setRate(0.5f);
+                        mResourceManager.mWilhelmScreamSound.setRate(0.5f);
                     }
                 }
                 for(int i = 0; i < mCraps.size(); i++) {
@@ -1786,7 +2003,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
             for(int i = 0; i < mTargets.size(); i++) {
                 mTargets.get(i).setSlowMotion(false);
                 if(((TargetPerson1)mTargets.get(i)).getFalling()) {
-                    mResourceManager.mWilhelmScream.setRate(1);
+                    mResourceManager.mWilhelmScreamSound.setRate(1);
                 }
             }
             for(int i = 0; i < mCraps.size(); i++) {
@@ -1847,10 +2064,10 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
         crap.setCurrentTileIndex(selectedBird * 2);
 
-        if(mObstaclePool.getObstacleIndex() < CRAP_METER_SHRINK_STOP_OBSTACLE_INDEX) {
-            shrinkCrapMeter((float) Math.sqrt((double) mObstaclePool.getObstacleIndex() * 4));
+        if(getObstacleIndex() < CRAP_METER_SHRINK_STOP_OBSTACLE_INDEX) {
+            shrinkCrapMeter((float) Math.sqrt((double) getObstacleIndex() * 2));
         } else {
-            shrinkCrapMeter((float) Math.sqrt((double) CRAP_METER_SHRINK_STOP_OBSTACLE_INDEX * 4));
+            shrinkCrapMeter((float) Math.sqrt((double) CRAP_METER_SHRINK_STOP_OBSTACLE_INDEX * 2));
         }
 
         if(selectedBird == 6) { //if ninja bird, spin throwing star crap
@@ -1861,58 +2078,6 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
             crap.setSlowMotion(true);
         }
 
-    }
-
-    @Override
-    public boolean onSceneTouchEvent(Scene pScene, TouchEvent pSceneTouchEvent) {
-        if(mPhysicsWorld != null) {
-            if(!mGameOver && !mOutOfCrap && pSceneTouchEvent.isActionDown() && !mMachineCrapActivated) {
-                jumpBird(mBird);
-                return true;
-            } else if(!mGameOver && mMachineCrapActivated && pSceneTouchEvent.isActionDown()) {
-                mMachineCrapping = true;
-                machineCrappingLastCrapTime = 0;
-            } else if(mMachineCrapping && pSceneTouchEvent.isActionUp()) {
-                mMachineCrapping = false;
-            }
-        }
-        return false;
-    }
-
-    private void jumpBird(final AnimatedSprite face) {
-
-        face.setRotation(-15);
-        final Body faceBody = (Body)face.getUserData();
-
-        float currentYPosition = face.getY();
-        float currentXPosition = face.getX();
-        Vector2 currentVelocity = faceBody.getLinearVelocity();
-        float currentYVelocity = currentVelocity.y;
-
-
-        Vector2 newVelocity;
-
-        if(currentYVelocity < 0) {
-            float newYVelocity;
-            if(!mMegaCrapActivated) {
-                newYVelocity = currentYVelocity - (20 + currentYVelocity) * (1.0f / 4.0f);
-            } else {
-                newYVelocity = currentYVelocity - (20 + currentYVelocity) * (1.0f / 2.0f);
-            }
-            newVelocity = Vector2Pool.obtain(0, newYVelocity);
-        } else {
-            if(!mMegaCrapActivated) {
-                newVelocity = Vector2Pool.obtain(0, -5f);
-            } else {
-                newVelocity = Vector2Pool.obtain(0, -10f);
-
-            }
-        }
-
-        faceBody.setLinearVelocity(newVelocity);
-        Vector2Pool.recycle(newVelocity);
-
-        dropCrap(currentXPosition, currentYPosition);
         if(mMegaCrapActivated) {
             mResourceManager.mMegaCrapSound.play();
             mResourceManager.mMegaCrapSound.setVolume(2);
@@ -1933,13 +2098,106 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
     }
 
-    private void displayScore() {
+    private void dropHyperSpeedCrap(float currentXPosition, float currentYPosition) {
 
+        if(mMegaCrapActivated) {
+            mCraps.add(mMegaCrapPool.obtainPoolItem());
+        } else {
+            mCraps.add(mCrapPool.obtainPoolItem());
+        }
+
+        Crap crap = mCraps.get(mCraps.size() - 1);
+
+        crap.setPosition(currentXPosition, currentYPosition + (mBird.getHeight() - crap.getHeight()) / 2);
+
+        attachChild(crap);
+
+        crap.setHyperSpeed(mBird.getVelocityY());
+
+        crap.setCurrentTileIndex(selectedBird * 2);
+
+        if(selectedBird == 6) { //if ninja bird, spin throwing star crap
+            crap.setAngularVelocity(600);
+        }
+
+        if(mMegaCrapActivated) {
+            mResourceManager.mMegaCrapSound.play();
+            mResourceManager.mMegaCrapSound.setVolume(2);
+            mResourceManager.mMegaCrapSound.setRate(1);
+
+        } else {
+            mResourceManager.mJumpSound.play();
+            mResourceManager.mJumpSound.setVolume(0.75f);
+            mResourceManager.mJumpSound.setRate(1);
+
+        }
+
+    }
+
+
+    @Override
+    public boolean onSceneTouchEvent(Scene pScene, TouchEvent pSceneTouchEvent) {
+
+        if(pSceneTouchEvent.isActionDown()) {
+            if(!mGameOver) {
+                if (!mOutOfCrap && !mMachineCrapActivated && !mHyperSpeedActivated) {
+                    jumpBird();
+                    return true;
+                } else if (mMachineCrapActivated) {
+                    mMachineCrapping = true;
+                    machineCrappingLastCrapTime = 0;
+                } else if (mHyperSpeedActivated) {
+                    mBird.setAccelerationY(-HYPER_SPEED_Y_ACCELERATION);
+                }
+            }
+        }
+        if(pSceneTouchEvent.isActionUp()) {
+            if(mMachineCrapping) {
+                mMachineCrapping = false;
+            } else if (mHyperSpeedActivated) {
+                mBird.setAccelerationY(HYPER_SPEED_Y_ACCELERATION);
+            }
+        }
+
+
+        if(!mGameOver && !mOutOfCrap && pSceneTouchEvent.isActionDown() && !mMachineCrapActivated && !mHyperSpeedActivated) {
+                jumpBird();
+                return true;
+            } else if(!mGameOver && mMachineCrapActivated && pSceneTouchEvent.isActionDown()) {
+                mMachineCrapping = true;
+                machineCrappingLastCrapTime = 0;
+            } else if(mMachineCrapping && pSceneTouchEvent.isActionUp()) {
+                mMachineCrapping = false;
+            }
+
+        return false;
+    }
+
+
+    private void jumpBird() {
+        mBird.setRotation(-15);
+        float currentYPosition = mBird.getY();
+        float currentXPosition = mBird.getX();
+
+        mBird.jump(mMegaCrapActivated);
+
+        dropCrap(currentXPosition, currentYPosition);
+
+    }
+
+
+    private void displayScore() {
 
         if (score > most) {
             most = score;
             mActivity.setMaxScore(most);
         }
+
+        scoreText.setText(String.valueOf(score)); //update values
+        mostText.setText(String.valueOf(most));
+
+        scoreText.setX(scoreText.getX() - (scoreText.getWidth() / 2)); //adjust margins
+        mostText.setX(mostText.getX() - (mostText.getWidth() / 2));
 
         mActivity.addPizza(pizzaCollected);
 
@@ -1973,13 +2231,6 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
         pauseButton.setVisible(false);
 
 
-        scoreText.setText(String.valueOf(score)); //update values
-        mostText.setText(String.valueOf(most));
-
-        scoreText.setX(scoreText.getX() - (scoreText.getWidth() / 2)); //adjust margins
-        mostText.setX(mostText.getX() - (mostText.getWidth() / 2));
-
-
         //Display pizza collected
         pizzaTextOnGameOver.setText(String.valueOf(mActivity.getPizza()));
 
@@ -1996,13 +2247,9 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
     public void updateGameOverScreenAfterSync() {
         Log.i("updating gameover", "Pizza = " + String.valueOf(mActivity.getPizza()) + " & Most = " + mActivity.getMaxScore());
 
-        float originalWidth = mostText.getWidth();
-        Log.i("original width", String.valueOf(originalWidth));
         mostText.setText(String.valueOf(mActivity.getMaxScore()));
-        float newWidth = mostText.getWidth();
-        Log.i("new width", String.valueOf(newWidth));
 
-        mostText.setX(mostText.getX() - (newWidth - originalWidth) / 2);
+        mostText.setX(mostX - mostText.getWidth() / 2);
 
         pizzaTextOnGameOver.setText(String.valueOf(mActivity.getPizza()));
         pizzaCollectedSpriteOnGameOver.setX((SCREEN_WIDTH - pizzaCollectedSpriteOnGameOver.getWidth() - pizzaTextOnGameOver.getWidth()) / 2); //adjust margins
@@ -2010,49 +2257,25 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener {
 
     }
 
-    private ContactListener createContactListener() {
-        ContactListener contactListener = new ContactListener() {
-            @Override
-            public void beginContact(Contact pContact) {
-                final Fixture fixtureA = pContact.getFixtureA();
-                final Body bodyA = fixtureA.getBody();
-                final String userDataA = (String) bodyA.getUserData();
+    private void checkForBirdGroundContact() {
+        if(mBird.getY() + mBird.getHeight() > mGround.getY()) {
 
-                final Fixture fixtureB = pContact.getFixtureB();
-                final Body bodyB = fixtureB.getBody();
-                final String userDataB = (String) bodyB.getUserData();
+            mBird.setVelocityY(0);
+            mBird.setAcceleration(0,0);
+            mBird.setY(mGround.getY() - mBird.getHeight() - 5);
 
-                if (("bird".equals(userDataA) && "ground".equals(userDataB)) || ("ground".equals(userDataA) && "bird".equals(userDataB))) {
-
-                    if(!mGameOver) { //if the bird hasn't already hit an obstacle
-                        setGameOver();
-                    }
-
-                    if(!mRespawnUsed) {
-                        //display countdown screen
-                        setCountDown(true);
-                    } else {
-                        //display game over with score
-                        displayScore();
-                    }
-
-
-                }
+            if(!mGameOver) { //if the bird hasn't already hit an obstacle
+                setGameOver();
             }
 
-            @Override
-            public void endContact(Contact contact) {
+            if(!mRespawnUsed) {
+                //display countdown screen
+                setCountDown(true);
+            } else {
+                //display game over with score
+                displayScore();
             }
-
-            @Override
-            public void preSolve(Contact contact, Manifold oldManifold) {
-            }
-
-            @Override
-            public void postSolve(Contact contact, ContactImpulse impulse) {
-            }
-        };
-        return contactListener;
+        }
     }
 
     @Override

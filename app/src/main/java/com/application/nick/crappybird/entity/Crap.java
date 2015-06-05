@@ -1,6 +1,7 @@
 package com.application.nick.crappybird.entity;
 
 import com.application.nick.crappybird.GameActivity;
+import com.application.nick.crappybird.scene.GameScene;
 
 import org.andengine.engine.handler.physics.PhysicsHandler;
 import org.andengine.entity.primitive.Rectangle;
@@ -27,7 +28,9 @@ public class Crap extends AnimatedSprite {
 
     private final PhysicsHandler mPhysicsHandler;
 
-    private boolean falling = true, slowMotion = false;
+    public enum crapType {NORMAL, MEGA}
+
+    private boolean falling = true, slowMotion = false, hyperSpeedActivated = false;
 
     public Crap(TiledTextureRegion pTiledTextureRegion, VertexBufferObjectManager pVertexBufferObjectManager) {
         super(POSITION_INITIAL, -pTiledTextureRegion.getHeight(), pTiledTextureRegion, pVertexBufferObjectManager);
@@ -64,6 +67,7 @@ public class Crap extends AnimatedSprite {
         setVelocity(-FALLING_X_VELOCITY, FALLING_Y_VELOCITY_INITIAL);
         setAcceleration(0, FALLING_Y_ACCELERATION);
         setPosition(POSITION_INITIAL, 0);
+        hyperSpeedActivated = false;
     }
 
     /**
@@ -114,6 +118,14 @@ public class Crap extends AnimatedSprite {
         mPhysicsHandler.setVelocity(x, y);
     }
 
+    public void setVelocityX(float x) {
+        mPhysicsHandler.setVelocityX(x);
+    }
+
+    public void setVelocityY(float y) {
+        mPhysicsHandler.setVelocityY(y);
+    }
+
     public float getVelocityX() {return mPhysicsHandler.getVelocityX();}
 
     public float getVelocityY() {return mPhysicsHandler.getVelocityY();}
@@ -144,6 +156,25 @@ public class Crap extends AnimatedSprite {
         }
     }
 
+    public void setHyperSpeed(float birdVelocityY) {
+        setHyperSpeed(true);
+        setVelocityY(-birdVelocityY);
+    }
+
+    public void setHyperSpeed(boolean bool) {
+        if (bool) {
+            hyperSpeedActivated = true;
+            setVelocityX(getVelocityX() - 2 * GameScene.HYPER_SPEED_VELOCITY_SHIFT);
+            //setAcceleration(0,0);
+
+            setVelocityY(0);
+        } else {
+            hyperSpeedActivated = false;
+            setVelocityX(getVelocityX() + 2 * GameScene.HYPER_SPEED_VELOCITY_SHIFT);
+            //setAcceleration(0, FALLING_Y_ACCELERATION);
+        }
+    }
+
     /**
      * for setting a new x velocity (in px/s). Y stays the same
      * @param x
@@ -153,6 +184,8 @@ public class Crap extends AnimatedSprite {
         mPhysicsHandler.setVelocityX(x);
     }
 
+
+    public crapType getCrapType() {return crapType.NORMAL;}
 
 
 }

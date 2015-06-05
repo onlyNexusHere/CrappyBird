@@ -12,4 +12,7 @@ public class CollectablePizza extends Collectable {
 
         super(pTiledTextureRegion, pVertexBufferObjectManager, pGroundY - pHeight, pHeight);
     }
+
+    public Collectable.collectableType getCollectableType() {return collectableType.PIZZA;}
+
 }

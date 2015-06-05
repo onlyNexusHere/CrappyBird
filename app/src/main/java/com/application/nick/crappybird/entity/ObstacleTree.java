@@ -8,7 +8,7 @@ import org.andengine.opengl.vbo.VertexBufferObjectManager;
 /**
  * Created by Nick on 4/9/2015.
  */
-public class ObstacleTree extends Obstacle {
+public class ObstacleTree extends ObstacleGround {
 
     float mGroundY, mHeight, mWidth;
 
@@ -67,6 +67,9 @@ public class ObstacleTree extends Obstacle {
         }
         return false;
     }
+
+    @Override
+    public Obstacle.obstacleType getObstacleType() {return obstacleType.TREE;}
 
 
 }

@@ -2,10 +2,6 @@ package com.application.nick.crappybird.entity;
 
 import com.application.nick.crappybird.GameActivity;
 
-import org.andengine.engine.handler.physics.PhysicsHandler;
-import org.andengine.entity.shape.IShape;
-import org.andengine.entity.sprite.AnimatedSprite;
-import org.andengine.entity.sprite.Sprite;
 import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 
@@ -39,7 +35,7 @@ public class TargetPerson1 extends Target {
             } else {
                 setCurrentTileIndex(0); //make person stationary
             }
-            setXVelocity(-150);
+            setVelocityX(-150);
         } else {
             randomizeVelocity();
         }
@@ -54,7 +50,7 @@ public class TargetPerson1 extends Target {
     }
 
     public void setAnimation(float scrollSpeed) {
-        float difference = Math.abs(getXVelocity() - scrollSpeed);
+        float difference = Math.abs(getVelocityX() - scrollSpeed);
         int fDur = (int)(5000 / difference); //frame duration
         if(fDur < 50) {
             fDur = 50;
@@ -63,11 +59,11 @@ public class TargetPerson1 extends Target {
         }
 
 
-        if(this.getXVelocity() < scrollSpeed) {
+        if(this.getVelocityX() < scrollSpeed) {
             this.animate(new long[]{fDur, fDur, fDur, fDur, fDur, fDur, fDur, fDur}, 16, 23, true); //walk facing left
-        } else if(this.getXVelocity() > scrollSpeed) {
+        } else if(this.getVelocityX() > scrollSpeed) {
             this.animate(new long[]{fDur, fDur, fDur, fDur, fDur, fDur, fDur, fDur}, 24, 31, true); //walk facing right
-        } else if(this.getXVelocity() == scrollSpeed) {
+        } else if(this.getVelocityX() == scrollSpeed) {
             this.setCurrentTileIndex(0);
         }
     }
@@ -86,9 +82,9 @@ public class TargetPerson1 extends Target {
     public void reset() {
         super.reset();
         falling = false;
-        setYVelocity(0);
+        setVelocityY(0);
         setRotation(0);
-        setYAcceleration(0);
+        setAccelerationY(0);
         setY(mGroundY - getHeight());
 
     }
@@ -111,11 +107,11 @@ public class TargetPerson1 extends Target {
             falling = true;
             long fDur;
             if(getSlowMotion()) {
-                setYAcceleration(150);
+                setAccelerationY(150);
                 fDur = 100;
 
             } else {
-                setYAcceleration(300);
+                setAccelerationY(300);
                 fDur = 50;
 
             }
@@ -129,7 +125,7 @@ public class TargetPerson1 extends Target {
 
         } else {
             falling = false;
-            setYAcceleration(0);
+            setAccelerationY(0);
             setRotation(0);
             stopAnimation();
 
@@ -143,7 +139,7 @@ public class TargetPerson1 extends Target {
      * @param y y coordinate of the balloon's basket
      */
     public void setFalling(float v, float x, float y) {
-        setXVelocity(v);
+        setVelocityX(v);
         setY(y);
         setX(x);
         setFalling(true);
@@ -157,5 +153,8 @@ public class TargetPerson1 extends Target {
     public boolean getFalling() {
         return falling;
     }
+
+    @Override
+    public Target.targetType getTargetType() {return targetType.PERSON1;}
 
 }

@@ -7,8 +7,8 @@ android {
     defaultConfig {
         minSdkVersion 10
         targetSdkVersion 21
-        versionCode 37
-        versionName "4.73"
+        versionCode 42
+        versionName "4.771"
     }
     buildTypes {
         release {
@@ -21,6 +21,6 @@ android {
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     compile 'com.android.support:appcompat-v7:21.0.3'
-    compile 'com.google.android.gms:play-services:7.3.0'
-
 }
+
+

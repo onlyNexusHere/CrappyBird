@@ -8,7 +8,7 @@ import org.andengine.opengl.vbo.VertexBufferObjectManager;
 /**
  * Created by Nick on 4/9/2015.
  */
-public class ObstacleBalloon extends Obstacle {
+public class ObstacleBalloon extends ObstacleAir {
 
     private final float PLANE_VELOCITY = 200f;
     float mGroundY, mHeight;
@@ -110,5 +110,8 @@ public class ObstacleBalloon extends Obstacle {
 
     //returns whether or not the basket has been basketHit by the bird and the person knocked out
     public boolean getBasketHit() {return basketHit;}
+
+    @Override
+    public Obstacle.obstacleType getObstacleType() {return obstacleType.BALLOON;}
 
 }

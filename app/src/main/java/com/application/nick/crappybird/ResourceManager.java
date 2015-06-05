@@ -51,6 +51,7 @@ public class ResourceManager {
     public TiledTextureRegion mCollectableHamTextureRegion;
     public TiledTextureRegion mCollectableMelonTextureRegion;
     public TiledTextureRegion mCollectableMuffinTextureRegion;
+    public TiledTextureRegion mCollectableBurgerTextureRegion;
 
     public TiledTextureRegion mTargetPerson1TextureRegion;
 
@@ -116,8 +117,7 @@ public class ResourceManager {
     public TiledTextureRegion mNoButtonTextureRegion;
     public TiledTextureRegion mGetMorePizzaButtonTextureRegion;
     public TiledTextureRegion mMenuButtonTextureRegion;
-
-
+    public TiledTextureRegion mVolumeButtonTextureRegion;
 
     public ITextureRegion mTitleTextureRegion;
 
@@ -128,7 +128,7 @@ public class ResourceManager {
     public Font mFont5;
     public Font mFont6;
 
-    public Sound mHitSound, mCoinSound, mButtonSound, mJumpSound, mMegaCrapSound, mMotherShipSound, mPropellerSound, mAlertSound, mCollectionSound, mWilhelmScream;
+    public Sound mHitSound, mCoinSound, mButtonSound, mJumpSound, mMegaCrapSound, mMotherShipSound, mPropellerSound, mAlertSound, mCollectionSound, mWilhelmScreamSound, mRespawnSound;
     public Music mMusic, mMariachiFast, mMariachiSlow;
 
     private ResourceManager() {}
@@ -174,7 +174,6 @@ public class ResourceManager {
 
         mTargetPerson1TextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "person1.png", 0, 30, 8, 4);
 
-        //mMeterTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "crap_supply_meter.png", 0, 270, 1, 1);
         mMeter2TextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "crap_supply_meter2.png", 0, 290, 1, 7);
 
         mObstacleHouseTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "house.png", 0, 450, 1, 1);
@@ -187,6 +186,7 @@ public class ResourceManager {
         mCollectableHamTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "ham.png", 70, 650, 1, 1);
         mCollectableMelonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "melon.png", 120, 650, 1, 1);
         mCollectableMuffinTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "muffin.png", 185, 650, 1, 1);
+        mCollectableBurgerTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "burger.png", 220, 650, 1, 1);
 
         mAlertTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "alert_sign.png", 0, 700, 1, 1);
         mPlusTwoTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, mActivity, "plus_two.png", 50, 700, 1, 1);
@@ -220,7 +220,7 @@ public class ResourceManager {
 
         mLeaderboardBitmapTextureAtlas.load();
 
-        mMarketBitmapTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 360, 1625, TextureOptions.BILINEAR);
+        mMarketBitmapTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 360, 1705, TextureOptions.BILINEAR);
         mMarketLoginTextTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mMarketBitmapTextureAtlas, mActivity, "market_login_text.png", 0, 0);
         mArrowLeftButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mMarketBitmapTextureAtlas, mActivity, "arrow_button_left.png", 0, 200, 2, 1);
         mArrowRightButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mMarketBitmapTextureAtlas, mActivity, "arrow_button_right.png", 0, 350, 2, 1);
@@ -230,8 +230,8 @@ public class ResourceManager {
         mMarketButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mMarketBitmapTextureAtlas, mActivity, "market_button.png", 0, 825, 2, 1);
         mPizzaPurchasesTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mMarketBitmapTextureAtlas, mActivity, "pizza_purchases.png", 0, 900, 1, 3);
         mGetMorePizzaButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mMarketBitmapTextureAtlas, mActivity, "get_more_button.png", 0, 1150, 2, 1);
-        mPowerUpPurchasesTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mMarketBitmapTextureAtlas, mActivity, "power-up_purchases.png", 0, 1225, 1, 4);
-        mSelectButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mMarketBitmapTextureAtlas, mActivity, "select_button.png", 0, 1550, 2, 1);
+        mPowerUpPurchasesTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mMarketBitmapTextureAtlas, mActivity, "power-up_purchases.png", 0, 1225, 1, 5);
+        mSelectButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mMarketBitmapTextureAtlas, mActivity, "select_button.png", 0, 1630, 2, 1);
 
         mMarketBitmapTextureAtlas.load();
 
@@ -261,10 +261,11 @@ public class ResourceManager {
         mYesButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mSubBitmapTextureAtlas, mActivity, "yes_button.png", 0, 950, 2, 1);
         mNoButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mSubBitmapTextureAtlas, mActivity, "no_button.png", 250, 950, 2, 1);
         mMenuButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mSubBitmapTextureAtlas, mActivity, "menu_button.png", 0, 1025, 2, 1);
+        mVolumeButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mSubBitmapTextureAtlas, mActivity, "volume_button.png", 250, 1025, 2, 1);
 
         mSubBitmapTextureAtlas.load();
             //load fonts
-        mFont4 = FontFactory.create(mActivity.getFontManager(), mActivity.getTextureManager(), 256, 256, Typeface.create(Typeface.DEFAULT, Typeface.NORMAL), 45, Color.BLACK);
+        mFont4 = FontFactory.create(mActivity.getFontManager(), mActivity.getTextureManager(), 256, 256, Typeface.create(Typeface.DEFAULT, Typeface.NORMAL), 30, Color.BLACK);
         mFont4.load();
 
         FontFactory.setAssetBasePath("font/");
@@ -299,7 +300,8 @@ public class ResourceManager {
             mPropellerSound = SoundFactory.createSoundFromAsset(mActivity.getEngine().getSoundManager(), mActivity, "propeller.ogg");
             mAlertSound = SoundFactory.createSoundFromAsset(mActivity.getEngine().getSoundManager(), mActivity, "alert.ogg");
             mCollectionSound = SoundFactory.createSoundFromAsset(mActivity.getEngine().getSoundManager(), mActivity, "collection.ogg");
-            mWilhelmScream = SoundFactory.createSoundFromAsset(mActivity.getEngine().getSoundManager(), mActivity, "wilhelm.ogg");
+            mWilhelmScreamSound = SoundFactory.createSoundFromAsset(mActivity.getEngine().getSoundManager(), mActivity, "wilhelm.ogg");
+            mRespawnSound = SoundFactory.createSoundFromAsset(mActivity.getEngine().getSoundManager(), mActivity, "respawn.ogg");
         } catch (final IOException e) {
             Debug.e(e);
         }
@@ -356,6 +358,7 @@ public class ResourceManager {
         mCollectableHamTextureRegion = null;
         mCollectableMelonTextureRegion = null;
         mCollectableMuffinTextureRegion = null;
+        mCollectableBurgerTextureRegion = null;
 
         mTargetPerson1TextureRegion = null;
 
@@ -411,6 +414,7 @@ public class ResourceManager {
         mNoButtonTextureRegion = null;
         mGetMorePizzaButtonTextureRegion = null;
         mMenuButtonTextureRegion = null;
+        mVolumeButtonTextureRegion = null;
 
         mTitleTextureRegion = null;
             //unload fonts
@@ -457,8 +461,11 @@ public class ResourceManager {
         mCollectionSound.release();
         mCollectionSound = null;
 
-        mWilhelmScream.release();
-        mWilhelmScream = null;
+        mWilhelmScreamSound.release();
+        mWilhelmScreamSound = null;
+
+        mRespawnSound.release();
+        mRespawnSound = null;
 
         mMusic.stop();
         mMusic.release();

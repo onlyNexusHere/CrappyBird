@@ -12,7 +12,7 @@ import org.andengine.opengl.vbo.VertexBufferObjectManager;
 /**
  * Created by Nick on 4/5/2015.
  */
-public class Collectable extends AnimatedSprite {
+public abstract class Collectable extends AnimatedSprite {
 
     private static final float DEMO_VELOCITY = 150.0f;
     private static final float VELOCITY_RANGE = 100.0f;
@@ -25,6 +25,7 @@ public class Collectable extends AnimatedSprite {
     boolean passedAddXValue = false;
     boolean collected = false;
 
+    public enum collectableType {BURGER, HAM, MELON, MUFFIN, PIZZA, TACO}
 
     private final PhysicsHandler mPhysicsHandler;
 
@@ -126,5 +127,7 @@ public class Collectable extends AnimatedSprite {
     public boolean getPassedAddXValue() {
         return passedAddXValue;
     }
+
+    public abstract collectableType getCollectableType();
 
 }

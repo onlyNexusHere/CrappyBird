@@ -12,4 +12,8 @@ public class MegaCrap extends Crap {
         super(pTiledTextureRegion, pVertexBufferObjectManager);
     }
 
+    @Override
+    public crapType getCrapType() {return crapType.MEGA;}
+
+
 }
