@@ -147,7 +147,9 @@ public class GameActivity extends LayoutGameActivity {
     public boolean isGooglePlayServicesAvailable() {
         return GooglePlayServicesUtil.isGooglePlayServicesAvailable(this) == ConnectionResult.SUCCESS;
     }
-
+    /**
+     * comment
+     **/
     public void openGooglePlayServicesErrorDialog() {
 
         runOnUiThread(new Runnable() {
